@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36301.6 d17.14
+VisualStudioVersion = 17.14.36301.6
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ELearning_ToanHocHay_Control", "ELearning_ToanHocHay_Control\ELearning_ToanHocHay_Control.csproj", "{6BEB192B-7A0C-4540-9313-BCD862BDECAA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ToanHocHay.WebApp", "ToanHocHay.WebApp\ToanHocHay.WebApp.csproj", "{7606E606-39B7-FC60-C32B-98DA5832C334}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{6BEB192B-7A0C-4540-9313-BCD862BDECAA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6BEB192B-7A0C-4540-9313-BCD862BDECAA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6BEB192B-7A0C-4540-9313-BCD862BDECAA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7606E606-39B7-FC60-C32B-98DA5832C334}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7606E606-39B7-FC60-C32B-98DA5832C334}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7606E606-39B7-FC60-C32B-98DA5832C334}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7606E606-39B7-FC60-C32B-98DA5832C334}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

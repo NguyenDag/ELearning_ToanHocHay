@@ -1,0 +1,6 @@
+@ELearning_ToanHocHay_Control_HostAddress = http://localhost:5052
+
+GET {{ELearning_ToanHocHay_Control_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

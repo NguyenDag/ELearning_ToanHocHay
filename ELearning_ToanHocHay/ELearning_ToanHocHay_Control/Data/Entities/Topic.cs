@@ -19,6 +19,8 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         public string? Description { get; set; }
 
         public bool IsFree { get; set; } = false;
+        public bool IsActive { get; set; }
+        public DateTime CreatedAt { get; set; }
 
         // Navigation
         public Chapter? Chapter { get; set; }

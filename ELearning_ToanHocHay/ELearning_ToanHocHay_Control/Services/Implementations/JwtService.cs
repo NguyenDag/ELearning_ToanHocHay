@@ -44,7 +44,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 issuer: _issuer,
                 audience: _audience,
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(_expirationMinutes),
+                expires: DateTime.Now.AddMinutes(_expirationMinutes),
                 signingCredentials: credentials
             );
 

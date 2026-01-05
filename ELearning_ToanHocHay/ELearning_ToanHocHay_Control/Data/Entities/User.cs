@@ -31,8 +31,6 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
 
         [MaxLength(20)]
         public string? Phone { get; set; }
-        public string? RefreshToken { get; set; }
-        public DateTime? RefreshTokenExpiry { get; set; }
 
         public DateTime? Dob { get; set; }
 
@@ -41,7 +39,7 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         [Required]
         public UserType UserType { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
 
         public DateTime? UpdatedAt { get; set; }
 

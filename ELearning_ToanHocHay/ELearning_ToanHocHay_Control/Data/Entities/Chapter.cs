@@ -17,6 +17,8 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         public int OrderIndex { get; set; }
 
         public string? Description { get; set; }
+        public bool IsActive { get; set; }
+        public DateTime CreatedAt { get; set; }
 
         // Navigation
         public Curriculum? Curriculum { get; set; }

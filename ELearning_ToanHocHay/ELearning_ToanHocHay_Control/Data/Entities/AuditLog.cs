@@ -24,7 +24,7 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         [MaxLength(50)]
         public string? IpAddress { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
 
         // Navigation
         public User? User { get; set; }

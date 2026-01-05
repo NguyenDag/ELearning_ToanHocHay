@@ -111,11 +111,17 @@ namespace ELearning_ToanHocHay_Control.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<int>("CurriculumId")
                         .HasColumnType("int");
 
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
 
                     b.Property<int>("OrderIndex")
                         .HasColumnType("int");
@@ -155,7 +161,12 @@ namespace ELearning_ToanHocHay_Control.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("UpdatedAt")
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<int>("Version")
@@ -196,14 +207,23 @@ namespace ELearning_ToanHocHay_Control.Migrations
                     b.Property<int>("ExerciseType")
                         .HasColumnType("int");
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsFree")
                         .HasColumnType("bit");
+
+                    b.Property<double>("PassingScore")
+                        .HasColumnType("float");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
                     b.Property<int?>("TopicId")
                         .HasColumnType("int");
+
+                    b.Property<double>("TotalPoints")
+                        .HasColumnType("float");
 
                     b.Property<int>("TotalQuestions")
                         .HasColumnType("int");
@@ -237,7 +257,7 @@ namespace ELearning_ToanHocHay_Control.Migrations
                     b.Property<DateTime?>("EndTime")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("ExerciseId")
+                    b.Property<int?>("ExerciseId")
                         .HasColumnType("int");
 
                     b.Property<int>("MaxScore")
@@ -334,6 +354,9 @@ namespace ELearning_ToanHocHay_Control.Migrations
 
                     b.Property<int?>("DurationMinutes")
                         .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
 
                     b.Property<bool>("IsFree")
                         .HasColumnType("bit");
@@ -459,6 +482,9 @@ namespace ELearning_ToanHocHay_Control.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("DurationDays")
                         .HasColumnType("int");
 
@@ -576,7 +602,6 @@ namespace ELearning_ToanHocHay_Control.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("CorrectAnswer")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedAt")
@@ -591,8 +616,11 @@ namespace ELearning_ToanHocHay_Control.Migrations
                     b.Property<string>("Explanation")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("Points")
-                        .HasColumnType("int");
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<double>("Points")
+                        .HasColumnType("float");
 
                     b.Property<DateTime?>("PublishedAt")
                         .HasColumnType("datetime2");
@@ -619,6 +647,9 @@ namespace ELearning_ToanHocHay_Control.Migrations
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("Version")
                         .HasColumnType("int");
@@ -653,8 +684,14 @@ namespace ELearning_ToanHocHay_Control.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("GradeLevel")
                         .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
 
                     b.Property<int?>("TopicId")
                         .HasColumnType("int");
@@ -666,6 +703,37 @@ namespace ELearning_ToanHocHay_Control.Migrations
                     b.HasIndex("TopicId");
 
                     b.ToTable("QuestionBank");
+                });
+
+            modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.QuestionOption", b =>
+                {
+                    b.Property<int>("OptionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("OptionId"));
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsCorrect")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("OptionText")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("OrderIndex")
+                        .HasColumnType("int");
+
+                    b.Property<int>("QuestionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("OptionId");
+
+                    b.HasIndex("QuestionId");
+
+                    b.ToTable("QuestionOption");
                 });
 
             modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.QuestionTag", b =>
@@ -726,13 +794,16 @@ namespace ELearning_ToanHocHay_Control.Migrations
                     b.Property<int>("AttemptId")
                         .HasColumnType("int");
 
-                    b.Property<bool?>("IsCorrect")
+                    b.Property<bool>("IsCorrect")
                         .HasColumnType("bit");
 
-                    b.Property<int>("PointsEarned")
-                        .HasColumnType("int");
+                    b.Property<double>("PointsEarned")
+                        .HasColumnType("float");
 
                     b.Property<int>("QuestionId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("SelectedOptionId")
                         .HasColumnType("int");
 
                     b.HasKey("AnswerId");
@@ -740,6 +811,10 @@ namespace ELearning_ToanHocHay_Control.Migrations
                     b.HasIndex("AttemptId");
 
                     b.HasIndex("QuestionId");
+
+                    b.HasIndex("SelectedOptionId")
+                        .IsUnique()
+                        .HasFilter("[SelectedOptionId] IS NOT NULL");
 
                     b.ToTable("StudentAnswer");
                 });
@@ -985,8 +1060,14 @@ namespace ELearning_ToanHocHay_Control.Migrations
                     b.Property<int>("ChapterId")
                         .HasColumnType("int");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
 
                     b.Property<bool>("IsFree")
                         .HasColumnType("bit");
@@ -1047,12 +1128,6 @@ namespace ELearning_ToanHocHay_Control.Migrations
                     b.Property<string>("Phone")
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("RefreshToken")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("RefreshTokenExpiry")
-                        .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -1148,8 +1223,7 @@ namespace ELearning_ToanHocHay_Control.Migrations
                     b.HasOne("ELearning_ToanHocHay_Control.Data.Entities.Exercise", "Exercise")
                         .WithMany("ExerciseAttempts")
                         .HasForeignKey("ExerciseId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("ELearning_ToanHocHay_Control.Data.Entities.Student", "Student")
                         .WithMany("ExerciseAttempts")
@@ -1314,6 +1388,17 @@ namespace ELearning_ToanHocHay_Control.Migrations
                     b.Navigation("Topic");
                 });
 
+            modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.QuestionOption", b =>
+                {
+                    b.HasOne("ELearning_ToanHocHay_Control.Data.Entities.Question", "Question")
+                        .WithMany("QuestionOptions")
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Question");
+                });
+
             modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.QuestionTag", b =>
                 {
                     b.HasOne("ELearning_ToanHocHay_Control.Data.Entities.Question", "Question")
@@ -1346,7 +1431,7 @@ namespace ELearning_ToanHocHay_Control.Migrations
 
             modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.StudentAnswer", b =>
                 {
-                    b.HasOne("ELearning_ToanHocHay_Control.Data.Entities.ExerciseAttempt", "Attempt")
+                    b.HasOne("ELearning_ToanHocHay_Control.Data.Entities.ExerciseAttempt", "ExerciseAttempt")
                         .WithMany("StudentAnswers")
                         .HasForeignKey("AttemptId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1358,9 +1443,15 @@ namespace ELearning_ToanHocHay_Control.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Attempt");
+                    b.HasOne("ELearning_ToanHocHay_Control.Data.Entities.QuestionOption", "SelectedOption")
+                        .WithOne("StudentAnswer")
+                        .HasForeignKey("ELearning_ToanHocHay_Control.Data.Entities.StudentAnswer", "SelectedOptionId");
+
+                    b.Navigation("ExerciseAttempt");
 
                     b.Navigation("Question");
+
+                    b.Navigation("SelectedOption");
                 });
 
             modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.StudentParent", b =>
@@ -1541,6 +1632,8 @@ namespace ELearning_ToanHocHay_Control.Migrations
 
                     b.Navigation("ExerciseQuestions");
 
+                    b.Navigation("QuestionOptions");
+
                     b.Navigation("QuestionTags");
 
                     b.Navigation("StudentAnswers");
@@ -1549,6 +1642,12 @@ namespace ELearning_ToanHocHay_Control.Migrations
             modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.QuestionBank", b =>
                 {
                     b.Navigation("Questions");
+                });
+
+            modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.QuestionOption", b =>
+                {
+                    b.Navigation("StudentAnswer")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.Student", b =>

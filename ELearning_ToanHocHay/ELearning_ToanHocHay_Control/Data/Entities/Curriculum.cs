@@ -19,6 +19,9 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         [Range(6, 9)]
         public int GradeLevel { get; set; }
 
+        [Required, MaxLength(100)]
+        public string Subject { get; set; }
+
         [Required, MaxLength(255)]
         public string CurriculumName { get; set; }
 
@@ -27,8 +30,8 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         [Required]
         public int CreatedBy { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
 
         public int Version { get; set; } = 1;
 

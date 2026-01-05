@@ -87,6 +87,20 @@ namespace ELearning_ToanHocHay_Control.Controllers
             return Ok(ApiResponse<object>.SuccessResponse(user, "Lấy thông tin thành công"));
         }
 
+        [HttpPost("logout")]
+        [Authorize]
+        public async Task<IActionResult> Logout()
+        {
+            var userId = GetUserIdFromToken();
+            if (!userId.HasValue)
+            {
+                return Unauthorized(ApiResponse<bool>.ErrorResponse("Token không hợp lệ"));
+            }
+
+            var result = await _authService.LogoutAsync(userId.Value);
+            return Ok(result);
+        }
+
         private int? GetUserIdFromToken()
         {
             var token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");

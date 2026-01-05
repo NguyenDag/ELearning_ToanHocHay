@@ -13,30 +13,68 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
         {
             _context = context;
         }
-        public async Task<User> GetByEmailAsync(string email)
+
+        public async Task<User> CreateUserAsync(User user)
+        {
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+            return user;
+        }
+
+        public async Task<bool> DeleteUserAsync(int userId)
+        {
+            var user = await GetByIdAsync(userId);
+            if (user == null)
+            {
+                return false;
+            }
+            user.UpdatedAt = DateTime.Now;
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> ExistsByEmail(string email)
+        {
+            var user = await GetByEmailAsync(email);
+            if (user == null) return false;
+            return true;
+        }
+
+        public async Task<IEnumerable<User>> GetAllAsync()
+        {
+            return await _context.Users
+                .Where(u => u.IsActive)
+                .OrderByDescending(u => u.CreatedAt)
+                .ToListAsync();
+        }
+
+        public async Task<User?> GetByEmailAsync(string email)
         {
             return await _context.Users
                 .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
         }
 
-        public async Task<User> GetByIdAsync(int userId)
+        public async Task<User?> GetByIdAsync(int userId)
         {
             return await _context.Users
-                .FirstOrDefaultAsync(u => u.UserId == userId);
+                .FindAsync(userId);
         }
 
-        public async Task<bool> UpdateAsync(User user)
+        public async Task<User?> UpdateUserAsync(User user)
         {
+            _context.Entry(user).State = EntityState.Modified;
+
             try
             {
-                user.UpdatedAt = DateTime.UtcNow;
-                _context.Users.Update(user);
                 await _context.SaveChangesAsync();
-                return true;
+                return user;
             }
-            catch
+            catch (DbUpdateConcurrencyException)
             {
-                return false;
+                if (await GetByIdAsync(user.UserId) == null)
+                    return null;
+                throw;
             }
         }
 
@@ -46,8 +84,9 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             if (user == null)
                 return false;
 
-            user.LastLogin = DateTime.UtcNow;
-            return await UpdateAsync(user);
+            user.LastLogin = DateTime.Now;
+            await UpdateUserAsync(user);
+            return true;
         }
     }
 }

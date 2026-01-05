@@ -29,6 +29,7 @@ namespace ELearning_ToanHocHay_Control.Data
         public DbSet<QuestionBank> QuestionBanks { get; set; }
         public DbSet<Tag> Tags { get; set; }
         public DbSet<Question> Questions { get; set; }
+        public DbSet<QuestionOption> QuestionOptions { get; set; }
         public DbSet<QuestionTag> QuestionTags { get; set; }
         public DbSet<Exercise> Exercises { get; set; }
         public DbSet<ExerciseQuestion> ExerciseQuestions { get; set; }
@@ -187,6 +188,14 @@ namespace ELearning_ToanHocHay_Control.Data
                       .OnDelete(DeleteBehavior.SetNull);
             });
 
+            modelBuilder.Entity<QuestionOption>(entity =>
+            {
+                entity.HasOne(o => o.Question)
+                    .WithMany(q => q.QuestionOptions)
+                    .HasForeignKey(o => o.QuestionId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
             modelBuilder.Entity<QuestionTag>(entity =>
             {
                 entity.HasKey(qt => new { qt.QuestionId, qt.TagId });
@@ -255,7 +264,7 @@ namespace ELearning_ToanHocHay_Control.Data
 
             modelBuilder.Entity<StudentAnswer>(entity =>
             {
-                entity.HasOne(sa => sa.Attempt)
+                entity.HasOne(sa => sa.ExerciseAttempt)
                       .WithMany(a => a.StudentAnswers)
                       .HasForeignKey(sa => sa.AttemptId)
                       .OnDelete(DeleteBehavior.Cascade);

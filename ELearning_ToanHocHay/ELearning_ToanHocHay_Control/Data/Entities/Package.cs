@@ -15,6 +15,8 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         [Required, MaxLength(100)]
         public string PackageName { get; set; }
 
+        public string? Description { get; set; }
+
         [Range(0, double.MaxValue)]
         public decimal Price { get; set; }
 
@@ -22,17 +24,17 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
 
         public int? AiHintLimitDaily { get; set; }
 
-        public bool UnlimitedAiHint { get; set; }
-        public bool PersonalizedPath { get; set; }
-        public bool MistakeRetry { get; set; }
-        public bool SmartReminder { get; set; }
-        public bool PrioritySupport { get; set; }
+        public bool UnlimitedAiHint { get; set; } = true;
+        public bool PersonalizedPath { get; set; } = false;
+        public bool MistakeRetry { get; set; } = false;
+        public bool SmartReminder { get; set; } = false;
+        public bool PrioritySupport { get; set; } = false;
 
         public string? FeaturesJson { get; set; }
 
         public bool IsActive { get; set; } = true;
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime? LastUpdated { get; set; }
 
         // Navigation

@@ -15,7 +15,7 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         [Required]
         public string MessageText { get; set; }
 
-        public DateTime SentAt { get; set; } = DateTime.UtcNow;
+        public DateTime SentAt { get; set; } = DateTime.Now;
 
         // Navigation
         public SupportTicket? Ticket { get; set; }

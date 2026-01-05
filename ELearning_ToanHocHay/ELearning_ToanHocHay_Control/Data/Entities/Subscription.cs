@@ -28,7 +28,7 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
 
         public decimal AmountPaid { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
 
         // Navigation
         public Student? Student { get; set; }

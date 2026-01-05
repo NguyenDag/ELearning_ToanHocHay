@@ -15,7 +15,7 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         public string? WeakAreasJson { get; set; }
         public string? StrongAreasJson { get; set; }
 
-        public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
+        public DateTime LastUpdated { get; set; } = DateTime.Now;
 
         public bool IsPersonalized { get; set; } = false;
 

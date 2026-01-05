@@ -12,16 +12,20 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         public int AttemptId { get; set; }
         public int QuestionId { get; set; }
 
+        // Use for answer: text (FillBlank, Essay)
         public string? AnswerText { get; set; }
 
-        public bool? IsCorrect { get; set; }
+        // Use for answer: MultipleChoice, TrueFalse
+        public int? SelectedOptionId { get; set; }
+        public bool IsCorrect { get; set; } = false;
 
-        public int PointsEarned { get; set; } = 0;
+        public double PointsEarned { get; set; } = 0;
 
-        public DateTime AnsweredAt { get; set; } = DateTime.UtcNow;
+        public DateTime AnsweredAt { get; set; } = DateTime.Now;
 
         // Navigation
-        public ExerciseAttempt? Attempt { get; set; }
+        public ExerciseAttempt? ExerciseAttempt { get; set; }
         public Question? Question { get; set; }
+        public QuestionOption? SelectedOption { get; set; }
     }
 }

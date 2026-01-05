@@ -3,6 +3,7 @@ using System.Text;
 using ELearning_ToanHocHay_Control.Data;
 using ELearning_ToanHocHay_Control.Repositories.Implementations;
 using ELearning_ToanHocHay_Control.Repositories.Interfaces;
+using ELearning_ToanHocHay_Control.Services.Helpers;
 using ELearning_ToanHocHay_Control.Services.Implementations;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -23,12 +24,21 @@ namespace ELearning_ToanHocHay_Control
 
             // Register Repositories
             builder.Services.AddScoped<IUserRepository, UserRepository>();
+            builder.Services.AddScoped<IExerciseRepository, ExerciseRepository>();
+            builder.Services.AddScoped<IExerciseAttemptRepository, ExerciseAttemptRepository>();
+            builder.Services.AddScoped<IStudentAnswerRepository, StudentAnswerRepository>();
 
             // Register Services
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IJwtService, JwtService>();
+            builder.Services.AddScoped<IExerciseService, ExerciseService>();
+            builder.Services.AddScoped<IExerciseAttemptService, ExerciseAttemptService>();
             builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
 
+
+            //Register AutoMapper
+            builder.Services.AddAutoMapper(typeof(UserProfile));
             // Configure JWT Authentication
             var jwtSettings = builder.Configuration.GetSection("JwtSettings");
             var secretKey = jwtSettings["SecretKey"];
@@ -119,6 +129,8 @@ namespace ELearning_ToanHocHay_Control
 
             var app = builder.Build();
 
+         
+
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
@@ -138,3 +150,33 @@ namespace ELearning_ToanHocHay_Control
         }
     }
 }
+
+/*
+ class Program
+    {
+        static void Main(string[] args)
+        {
+            Console.WriteLine("=== Password Hash Generator ===");
+            Console.WriteLine("Nhập mật khẩu cần hash (hoặc nhấn Enter để hash 'password123'):");
+            
+            string password = Console.ReadLine();
+            if (string.IsNullOrEmpty(password))
+            {
+                password = "password123";
+            }
+
+            string hashedPassword = BCrypt.Net.BCrypt.HashPassword(password);
+            
+            Console.WriteLine($"\nMật khẩu gốc: {password}");
+            Console.WriteLine($"Password Hash: {hashedPassword}");
+            Console.WriteLine("\nCopy hash này vào file SampleUsers.sql để thay thế cho '$2a$11$XYZ...'");
+            
+            Console.WriteLine("\n=== Test Verify ===");
+            bool isValid = BCrypt.Net.BCrypt.Verify(password, hashedPassword);
+            Console.WriteLine($"Verify kết quả: {isValid}");
+            
+            Console.WriteLine("\nNhấn Enter để thoát...");
+            Console.ReadLine();
+        }
+    }
+ */

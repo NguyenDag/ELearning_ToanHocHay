@@ -70,7 +70,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     FullName = user.FullName,
                     UserType = user.UserType.ToString(),
                     Token = token,
-                    TokenExpiration = DateTime.UtcNow.AddMinutes(expirationMinutes),
+                    TokenExpiration = DateTime.Now.AddMinutes(expirationMinutes),
                     AvatarUrl = user.AvatarUrl
                 };
 

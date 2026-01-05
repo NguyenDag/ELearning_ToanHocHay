@@ -34,38 +34,42 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
 
         public int BankId { get; set; }
 
-        public string QuestionText { get; set; }
+        public required string QuestionText { get; set; }
 
         [MaxLength(500)]
         public string? QuestionImageUrl { get; set; }
 
-        public QuestionType QuestionType { get; set; }
+        public required QuestionType QuestionType { get; set; }
 
         public DifficultyLevel DifficultyLevel { get; set; }
 
-        [Required]
-        public string CorrectAnswer { get; set; }
+        // Đáp án đúng (dùng cho TrueFalse, FillInBlank)
+        public string? CorrectAnswer { get; set; }
 
         public string? Explanation { get; set; }
 
-        public int Points { get; set; } = 1;
+        public double Points { get; set; } = 1.0;
 
         public QuestionStatus Status { get; set; }
+        public bool IsActive { get; set; } = true;
 
         public int CreatedBy { get; set; }
         public int? ReviewedBy { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime? ReviewedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+
         public string? RejectReason { get; set; }
         public DateTime? PublishedAt { get; set; }
-
+        
         public int Version { get; set; } = 1;
 
         // Navigation
         public QuestionBank? QuestionBank { get; set; }
         public User? Creator { get; set; }
         public User? Reviewer { get; set; }
+        public ICollection<QuestionOption> QuestionOptions { get; set; }
         public ICollection<QuestionTag> QuestionTags { get; set; }
         public ICollection<ExerciseQuestion> ExerciseQuestions { get; set; }
         public ICollection<StudentAnswer> StudentAnswers { get; set; }

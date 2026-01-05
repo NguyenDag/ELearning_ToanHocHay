@@ -30,7 +30,7 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
 
         public bool IsRead { get; set; } = false;
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime? ReadAt { get; set; }
 
         // Navigation

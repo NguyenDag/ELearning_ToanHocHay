@@ -35,7 +35,7 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
 
         public PaymentStatus Status { get; set; }
 
-        public DateTime PaymentDate { get; set; } = DateTime.UtcNow;
+        public DateTime PaymentDate { get; set; } = DateTime.Now;
 
         [MaxLength(255)]
         public string? TransactionId { get; set; }

@@ -38,11 +38,18 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
 
         public bool IsFree { get; set; } = false;
 
+        public bool IsActive { get; set; } = false;
+
+        public double TotalPoints { get; set; }
+        
+        public double PassingScore { get; set; }
+
+
         public ExerciseStatus Status { get; set; }
 
         public int CreatedBy { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
 
         // Navigation
         public Topic? Topic { get; set; }
@@ -50,6 +57,6 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         public User? Creator { get; set; }
 
         public ICollection<ExerciseQuestion> ExerciseQuestions { get; set; }
-        public ICollection<ExerciseAttempt> ExerciseAttempts { get; set; }
+        public ICollection<ExerciseAttempt>? ExerciseAttempts { get; set; }
     }
 }

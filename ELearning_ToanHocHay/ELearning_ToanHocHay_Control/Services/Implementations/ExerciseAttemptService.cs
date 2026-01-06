@@ -11,25 +11,33 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         private readonly IExerciseAttemptRepository _attemptRepository;
         private readonly IExerciseRepository _exerciseRepository;
         private readonly IStudentAnswerRepository _answerRepository;
+        private readonly IUserRepository _userRepository;
+        private readonly IQuestionBankRepository _questionBankRepository;
         private readonly IMapper _mapper;
 
         public ExerciseAttemptService(
             IExerciseAttemptRepository attemptRepository,
             IExerciseRepository exerciseRepository,
             IStudentAnswerRepository answerRepository,
+            IUserRepository userRepository,
+            IQuestionBankRepository questionBankRepository,
             IMapper mapper)
         {
             _attemptRepository = attemptRepository;
             _exerciseRepository = exerciseRepository;
             _answerRepository = answerRepository;
+            _userRepository = userRepository;
+            _questionBankRepository = questionBankRepository;
             _mapper = mapper;
         }
         public async Task<ApiResponse<ExerciseResultDto>> CompleteExerciseAsync(CompleteExerciseDto dto)
         {
             try
             {
+                // Get attempt detail (not scored)
                 var attempt = await _attemptRepository.GetAttemptWithDetailsAsync(dto.AttemptId);
 
+                // Check has attempt or not
                 if (attempt == null)
                 {
                     return ApiResponse<ExerciseResultDto>.ErrorResponse(
@@ -38,6 +46,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     );
                 }
 
+                // Check attempt finished or not
                 if (attempt.EndTime != null)
                 {
                     return ApiResponse<ExerciseResultDto>.ErrorResponse(
@@ -50,7 +59,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 var answers = await _answerRepository.GetAttemptAnswersAsync(dto.AttemptId);
 
                 // Tính điểm
-                int totalScore = 0;
+                double totalScore = 0;
                 int correctAnswers = 0;
                 int wrongAnswers = 0;
 
@@ -83,7 +92,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     if (isCorrect)
                     {
                         pointsEarned = question.Points;
-                        totalScore += (int)pointsEarned;
+                        totalScore += pointsEarned;
                         correctAnswers++;
                     }
                     else
@@ -116,7 +125,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 attempt.CorrectAnswers = correctAnswers;
                 attempt.WrongAnswers = wrongAnswers;
                 attempt.CompletionPercentage = attempt.MaxScore > 0
-                    ? (decimal)totalScore / attempt.MaxScore * 100
+                    ? (decimal)(totalScore / attempt.MaxScore) * 100
                     : 0;
 
                 await _attemptRepository.UpdateAttemptAsync(attempt);
@@ -190,7 +199,8 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                         a.Question.QuestionOptions?.FirstOrDefault(o => o.IsCorrect)?.OptionText,
                     IsCorrect = a.IsCorrect,
                     PointsEarned = a.PointsEarned,
-                    MaxPoints = a.Question.Points
+                    MaxPoints = a.Question.Points,
+                    Explanation = a.Question.Explanation
                 }).ToList();
 
                 var result = new ExerciseResultDto
@@ -296,7 +306,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     );
                 }
 
-                if (!exercise.IsActive || exercise.Status != ExerciseStatus.Published)
+                if (!exercise.IsActive || exercise.Status != ExerciseStatus.Published || !exercise.IsFree)
                 {
                     return ApiResponse<ExerciseAttemptDto>.ErrorResponse(
                         "Exercise is not available",
@@ -310,13 +320,14 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     StudentId = dto.StudentId,
                     ExerciseId = dto.ExerciseId,
                     StartTime = DateTime.Now,
-                    MaxScore = (int)exercise.TotalPoints
+                    MaxScore = exercise.TotalPoints
                 };
 
                 var createdAttempt = await _attemptRepository.CreateAttemptAsync(attempt);
 
                 // Map sang DTO
-                var attemptDto = _mapper.Map<ExerciseAttemptDto>(createdAttempt);
+                //var attemptDto = _mapper.Map<ExerciseAttemptDto>(createdAttempt);
+                var attemptDto = await MapToAttemptDto(createdAttempt, exercise);
 
                 return ApiResponse<ExerciseAttemptDto>.SuccessResponse(
                     attemptDto,
@@ -338,8 +349,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             {
                 // Lấy câu hỏi random từ question bank
                 var questions = await _exerciseRepository.GetRandomQuestionsAsync(
-                    dto.TopicId,
-                    dto.ChapterId,
+                    dto.BankId,
                     dto.NumberOfQuestions
                 );
 
@@ -351,24 +361,35 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     );
                 }
 
+                // Get UserId from StudentId to save to CreatedBy attribute
+                var user = await _userRepository.GetUserByStudentIdAsync(dto.StudentId);
+
+                // Get QuestionBank from bankId
+                var questionBank = await _questionBankRepository.GetQuestionBankByIdAsync(dto.BankId);
+
                 // Tạo exercise tạm thời (hoặc lưu vào DB nếu cần)
                 var exercise = new Exercise
                 {
                     ExerciseName = $"Random {dto.ExerciseType} - {DateTime.Now:yyyy-MM-dd HH:mm}",
+                    ChapterId = questionBank.ChapterId,
+                    TopicId = questionBank.TopicId,
                     ExerciseType = dto.ExerciseType,
                     TotalQuestions = questions.Count,
                     DurationMinutes = dto.DurationMinutes,
                     TotalPoints = questions.Sum(q => q.Points),
                     Status = ExerciseStatus.Published,
                     IsActive = true,
+                    CreatedBy = user.UserId,
                     CreatedAt = DateTime.Now
                 };
+
+                await _exerciseRepository.CreateExerciseAsync(exercise);
 
                 // Tạo attempt
                 var attempt = new ExerciseAttempt
                 {
                     StudentId = dto.StudentId,
-                    ExerciseId = 0, // Hoặc tạo exercise trong DB trước
+                    ExerciseId = exercise.ExerciseId,
                     StartTime = DateTime.Now,
                     MaxScore = (int)exercise.TotalPoints
                 };
@@ -380,7 +401,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 {
                     AttemptId = createdAttempt.AttemptId,
                     StudentId = createdAttempt.StudentId,
-                    //ExerciseId = createdAttempt.ExerciseId,
+                    ExerciseId = createdAttempt.ExerciseId,
                     ExerciseName = exercise.ExerciseName,
                     ExerciseType = exercise.ExerciseType,
                     StartTime = createdAttempt.StartTime,
@@ -490,7 +511,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             {
                 AttemptId = attempt.AttemptId,
                 StudentId = attempt.StudentId,
-                //ExerciseId = attempt.ExerciseId,
+                ExerciseId = attempt.ExerciseId,
                 ExerciseName = exercise.ExerciseName,
                 ExerciseType = exercise.ExerciseType,
                 StartTime = attempt.StartTime,
@@ -504,12 +525,13 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     QuestionText = eq.Question.QuestionText,
                     QuestionType = eq.Question.QuestionType.ToString(),
                     Points = eq.Question.Points,
-                    //ImageUrl = eq.Question.ImageUrl,
+                    ImageUrl = eq.Question.QuestionImageUrl,
                     Options = eq.Question.QuestionOptions?.Select(o => new AnswerOptionDto
                     {
                         OptionId = o.OptionId,
                         OptionText = o.OptionText,
-                        ImageUrl = o.ImageUrl
+                        ImageUrl = o.ImageUrl,
+                        IsCorrect = o.IsCorrect,
                     }).ToList() ?? new List<AnswerOptionDto>()
                 }).ToList() ?? new List<QuestionInAttemptDto>()
             };

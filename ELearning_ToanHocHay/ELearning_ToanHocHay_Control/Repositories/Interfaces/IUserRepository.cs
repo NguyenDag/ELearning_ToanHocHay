@@ -7,6 +7,8 @@ namespace ELearning_ToanHocHay_Control.Repositories.Interfaces
     {
         Task<User?> GetByEmailAsync(string email);
         Task<User?> GetByIdAsync(int userId);
+        Task<User?> GetUserByStudentIdAsync(int studentId);
+        Task<User?> GetUserByParentIdAsync(int parentId);
         Task<IEnumerable<User>> GetAllAsync();
         Task<User> CreateUserAsync(User user);
         Task<bool> UpdateLastLoginAsync(int userId);

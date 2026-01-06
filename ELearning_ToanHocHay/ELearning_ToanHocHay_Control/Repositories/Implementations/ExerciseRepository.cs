@@ -50,24 +50,19 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             return await _context.Exercises
                 .Include(e => e.ExerciseQuestions)
                     .ThenInclude(eq => eq.Question)
-                        .ThenInclude(qb => qb.QuestionBank)
+                        .ThenInclude(qb => qb.QuestionOptions)
                 .FirstOrDefaultAsync(e => e.ExerciseId == exerciseId);
         }
 
-        public async Task<List<Question>> GetRandomQuestionsAsync(int? topicId, int? chapterId, int count)
+        public async Task<List<Question>> GetRandomQuestionsAsync(int? questionBankId, int count)
         {
             var query = _context.Questions
-                .Include(qb => qb.QuestionBank)
+                .Include(qb => qb.QuestionOptions)
                 .Where(q => q.IsActive);
 
-            if (topicId.HasValue)
+            if (questionBankId.HasValue)
             {
-                query = query.Where(q => q.QuestionBank.TopicId == topicId.Value);
-            }
-
-            if (chapterId.HasValue)
-            {
-                query = query.Where(q => q.QuestionBank.ChapterId == chapterId.Value);
+                query = query.Where(q => q.BankId == questionBankId.Value);
             }
 
             var totalQuestions = await query.CountAsync();

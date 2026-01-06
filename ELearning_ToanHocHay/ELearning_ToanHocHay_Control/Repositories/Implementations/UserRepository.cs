@@ -88,5 +88,19 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             await UpdateUserAsync(user);
             return true;
         }
+
+        public async Task<User?> GetUserByStudentIdAsync(int studentId)
+        {
+            return await _context.Users
+                .Include(u => u.Student)
+                .FirstOrDefaultAsync(s => s.Student.StudentId == studentId);
+        }
+
+        public async Task<User?> GetUserByParentIdAsync(int parentId)
+        {
+            return await _context.Users
+                .Include(u => u.Parent)
+                .FirstOrDefaultAsync(s => s.Parent.ParentId == parentId);
+        }
     }
 }

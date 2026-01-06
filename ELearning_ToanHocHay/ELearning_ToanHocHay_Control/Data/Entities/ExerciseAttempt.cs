@@ -15,8 +15,8 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         public DateTime StartTime { get; set; } = DateTime.Now;
         public DateTime? EndTime { get; set; }
 
-        public int TotalScore { get; set; } = 0;
-        public int MaxScore { get; set; }
+        public double TotalScore { get; set; } = 0;
+        public double MaxScore { get; set; }
 
         public decimal CompletionPercentage { get; set; } = 0;
         public int CorrectAnswers { get; set; } = 0;

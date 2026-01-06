@@ -24,7 +24,7 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
         {
             return await _context.StudentAnswers
                 .Include(a => a.Question)
-                    .ThenInclude(q => q.QuestionBank)
+                    .ThenInclude(q => q.QuestionOptions)
                 .FirstOrDefaultAsync(a => a.AttemptId == attemptId
                     && a.QuestionId == questionId);
         }
@@ -33,14 +33,14 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
         {
             return await _context.StudentAnswers
                 .Include(a => a.Question)
-                    .ThenInclude(q => q.QuestionBank)
+                    .ThenInclude(q => q.QuestionOptions)
                 .Where(a => a.AttemptId == attemptId)
                 .ToListAsync();
         }
 
         public async Task<StudentAnswer> UpdateAnswerAsync(StudentAnswer answer)
         {
-            _context.Update(answer);
+            _context.Entry(answer).State = EntityState.Modified;
             await _context.SaveChangesAsync();
             return answer;
         }

@@ -4,6 +4,7 @@ using ELearning_ToanHocHay_Control.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ELearning_ToanHocHay_Control.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class MyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260106151202_InitialCreateV7")]
+    partial class InitialCreateV7
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

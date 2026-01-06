@@ -38,6 +38,7 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
                 .Include(a => a.StudentAnswers)
                 .Include(a => a.Student)
                     .ThenInclude(s => s.User)
+                .Include(a => a.AIFeedbacks)
                 .FirstOrDefaultAsync(a => a.AttemptId == attemptId);
         }
 

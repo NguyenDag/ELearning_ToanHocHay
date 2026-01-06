@@ -6,7 +6,7 @@ namespace ELearning_ToanHocHay_Control.Repositories.Interfaces
     {
         Task<Exercise?> GetExerciseByIdAsync(int exerciseId);
         Task<Exercise> GetExerciseWithQuestionsAsync(int exerciseId);
-        Task<List<Question>> GetRandomQuestionsAsync(int? topicId, int? chapterId, int count);
+        Task<List<Question>> GetRandomQuestionsAsync(int? questionBankId, int count);
         Task<IEnumerable<Exercise>> GetAllAsync();
         Task<Exercise> CreateExerciseAsync(Exercise exercise);
         Task<Exercise?> UpdateExerciseAsync(Exercise exercise);

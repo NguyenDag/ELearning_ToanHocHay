@@ -27,6 +27,7 @@ namespace ELearning_ToanHocHay_Control
             builder.Services.AddScoped<IExerciseRepository, ExerciseRepository>();
             builder.Services.AddScoped<IExerciseAttemptRepository, ExerciseAttemptRepository>();
             builder.Services.AddScoped<IStudentAnswerRepository, StudentAnswerRepository>();
+            builder.Services.AddScoped<IQuestionBankRepository, QuestionBankRepository>();
 
             // Register Services
             builder.Services.AddScoped<IAuthService, AuthService>();

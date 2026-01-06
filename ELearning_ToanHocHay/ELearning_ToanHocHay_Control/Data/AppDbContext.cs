@@ -262,6 +262,10 @@ namespace ELearning_ToanHocHay_Control.Data
                       .OnDelete(DeleteBehavior.Restrict);
             });
 
+            modelBuilder.Entity<StudentAnswer>()
+                .HasIndex(x => new { x.AttemptId, x.QuestionId })
+                .IsUnique();
+
             modelBuilder.Entity<StudentAnswer>(entity =>
             {
                 entity.HasOne(sa => sa.ExerciseAttempt)

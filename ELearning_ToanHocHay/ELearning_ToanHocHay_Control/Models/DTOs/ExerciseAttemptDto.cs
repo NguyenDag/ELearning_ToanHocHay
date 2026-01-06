@@ -12,8 +12,7 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs
     public class StartRandomExerciseDto
     {
         public int StudentId { get; set; }
-        public int? TopicId { get; set; }
-        public int? ChapterId { get; set; }
+        public int BankId { get; set; }
         public ExerciseType ExerciseType { get; set; }
         public int NumberOfQuestions { get; set; } = 10;
         public int? DurationMinutes { get; set; }
@@ -23,7 +22,7 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs
     {
         public int AttemptId { get; set; }
         public int QuestionId { get; set; }
-        public string AnswerText { get; set; }
+        public string? AnswerText { get; set; }
         public int? SelectedOptionId { get; set; }
     }
 
@@ -37,7 +36,7 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs
     {
         public int AttemptId { get; set; }
         public int StudentId { get; set; }
-        public int ExerciseId { get; set; }
+        public int? ExerciseId { get; set; }
         public string ExerciseName { get; set; }
         public ExerciseType ExerciseType { get; set; }
         public DateTime StartTime { get; set; }
@@ -63,6 +62,7 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs
         public int OptionId { get; set; }
         public string OptionText { get; set; }
         public string? ImageUrl { get; set; }
+        public bool IsCorrect { get; set; }
     }
 
     public class ExerciseResultDto
@@ -74,8 +74,8 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs
         public DateTime StartTime { get; set; }
         public DateTime EndTime { get; set; }
         public TimeSpan Duration { get; set; }
-        public int TotalScore { get; set; }
-        public int MaxScore { get; set; }
+        public double TotalScore { get; set; }
+        public double MaxScore { get; set; }
         public decimal CompletionPercentage { get; set; }
         public int CorrectAnswers { get; set; }
         public int WrongAnswers { get; set; }
@@ -93,5 +93,6 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs
         public bool IsCorrect { get; set; }
         public double PointsEarned { get; set; }
         public double MaxPoints { get; set; }
+        public string? Explanation { get; set; }
     }
 }

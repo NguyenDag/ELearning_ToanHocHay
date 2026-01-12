@@ -20,6 +20,11 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             return attempt;
         }
 
+        public async Task<bool> ExistsByExerciseIdAsync(int exerciseId)
+        {
+            return await _context.ExerciseAttempts.AnyAsync(a => a.ExerciseId == exerciseId);
+        }
+
         public async Task<ExerciseAttempt> GetAttemptByIdAsync(int attemptId)
         {
             return await _context.ExerciseAttempts

@@ -14,6 +14,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         private readonly IUserRepository _userRepository;
         private readonly IQuestionBankRepository _questionBankRepository;
         private readonly IMapper _mapper;
+        private readonly IExerciseQuestionRepository _exerciseQuestionRepository;
 
         public ExerciseAttemptService(
             IExerciseAttemptRepository attemptRepository,
@@ -21,6 +22,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             IStudentAnswerRepository answerRepository,
             IUserRepository userRepository,
             IQuestionBankRepository questionBankRepository,
+            IExerciseQuestionRepository exerciseQuestionRepository,
             IMapper mapper)
         {
             _attemptRepository = attemptRepository;
@@ -29,8 +31,9 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             _userRepository = userRepository;
             _questionBankRepository = questionBankRepository;
             _mapper = mapper;
+            _exerciseQuestionRepository = exerciseQuestionRepository;
         }
-        public async Task<ApiResponse<ExerciseResultDto>> CompleteExerciseAsync(CompleteExerciseDto dto)
+        /*public async Task<ApiResponse<ExerciseResultDto>> CompleteExerciseAsync(CompleteExerciseDto dto)
         {
             try
             {
@@ -58,6 +61,18 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 // Lấy tất cả câu trả lời
                 var answers = await _answerRepository.GetAttemptAnswersAsync(dto.AttemptId);
 
+                // Lấy ExerciseQuestion để biết điểm từng câu
+                var exerciseQuestions = await _exerciseQuestionRepository
+                    .GetByExerciseIdAsync(attempt.ExerciseId);
+
+                var scoreLookup = exerciseQuestions.ToDictionary(
+                    eq => eq.QuestionId,
+                    eq => eq.Score
+                );
+
+                // Map Answer theo QuestionId
+                var answerLookup = answers.ToDictionary(a => a.QuestionId);
+
                 // Tính điểm
                 double totalScore = 0;
                 int correctAnswers = 0;
@@ -65,33 +80,44 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
                 var answerDetails = new List<AnswerDetailDto>();
 
-                foreach (var answer in answers)
+                foreach (var eq in exerciseQuestions)
                 {
-                    var question = answer.Question;
+                    answerLookup.TryGetValue(eq.QuestionId, out var answer);
                     bool isCorrect = false;
-                    double pointsEarned = 0;
 
-                    // Kiểm tra đáp án đúng
-                    if (question.QuestionType == QuestionType.MultipleChoice && answer.SelectedOptionId.HasValue)
-                    {
-                        var correctOption = question.QuestionOptions
-                            ?.FirstOrDefault(o => o.IsCorrect);
+                    var question = answer.Question;
 
-                        isCorrect = correctOption?.OptionId == answer.SelectedOptionId;
-                    }
-                    else if (question.QuestionType == QuestionType.TrueFalse)
+                    if (answer != null)
                     {
-                        isCorrect = answer.AnswerText?.ToLower() == question.CorrectAnswer?.ToLower();
+                        
+
+                        if (question.QuestionType == QuestionType.MultipleChoice &&
+                            answer.SelectedOptionId.HasValue)
+                        {
+                            var correctOption = question.QuestionOptions
+                                .FirstOrDefault(o => o.IsCorrect);
+
+                            isCorrect = correctOption?.OptionId == answer.SelectedOptionId;
+                        }
+                        else if (question.QuestionType == QuestionType.TrueFalse)
+                        {
+                            isCorrect = answer.AnswerText?.ToLower() ==
+                                        question.CorrectAnswer?.ToLower();
+                        }
+                        else if (question.QuestionType == QuestionType.FillBlank)
+                        {
+                            isCorrect = answer.AnswerText?.Trim().ToLower() ==
+                                        question.CorrectAnswer?.Trim().ToLower();
+                        }
                     }
-                    else if (question.QuestionType == QuestionType.FillBlank)
-                    {
-                        isCorrect = answer.AnswerText?.Trim().ToLower() ==
-                                   question.CorrectAnswer?.Trim().ToLower();
-                    }
+
+                    // LẤY ĐIỂM TỪ ExerciseQuestion
+                    //var maxScore = scoreLookup.TryGetValue(question.QuestionId, out var s) ? s : 0;
+                    var maxScore = eq.Score;
+                    var pointsEarned = isCorrect ? maxScore : 0;
 
                     if (isCorrect)
                     {
-                        pointsEarned = question.Points;
                         totalScore += pointsEarned;
                         correctAnswers++;
                     }
@@ -100,10 +126,13 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                         wrongAnswers++;
                     }
 
-                    // Cập nhật điểm cho câu trả lời
-                    answer.IsCorrect = isCorrect;
-                    answer.PointsEarned = pointsEarned;
-                    await _answerRepository.UpdateAnswerAsync(answer);
+                    // Nếu có answer thì update
+                    if (answer != null)
+                    {
+                        answer.IsCorrect = isCorrect;
+                        answer.PointsEarned = pointsEarned;
+                        await _answerRepository.UpdateAnswerAsync(answer);
+                    }
 
                     answerDetails.Add(new AnswerDetailDto
                     {
@@ -115,7 +144,8 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                             question.QuestionOptions?.FirstOrDefault(o => o.IsCorrect)?.OptionText,
                         IsCorrect = isCorrect,
                         PointsEarned = pointsEarned,
-                        MaxPoints = question.Points
+                        MaxScores = maxScore,
+                        Explanation = question.Explanation
                     });
                 }
 
@@ -163,12 +193,180 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     new List<string> { ex.Message }
                 );
             }
+        }*/
+
+        public async Task<ApiResponse<ExerciseResultDto>> CompleteExerciseAsync(CompleteExerciseDto dto)
+        {
+            try
+            {
+                // 1. Lấy attempt + kiểm tra
+                var attempt = await _attemptRepository.GetAttemptWithDetailsAsync(dto.AttemptId);
+
+                if (attempt == null)
+                {
+                    return ApiResponse<ExerciseResultDto>.ErrorResponse(
+                        "Attempt not found",
+                        new List<string> { $"No attempt found with ID: {dto.AttemptId}" }
+                    );
+                }
+
+                if (attempt.EndTime != null)
+                {
+                    return ApiResponse<ExerciseResultDto>.ErrorResponse(
+                        "Attempt already completed",
+                        new List<string> { "This attempt has already been completed" }
+                    );
+                }
+
+                // 2. Lấy danh sách câu hỏi của bài
+                var exerciseQuestions = await _exerciseQuestionRepository
+                    .GetByExerciseIdAsync(attempt.ExerciseId);
+
+                // 3. Lấy các câu trả lời đã làm
+                var answers = await _answerRepository
+                    .GetAttemptAnswersAsync(dto.AttemptId);
+
+                // Map Answer theo QuestionId
+                var answerLookup = answers.ToDictionary(a => a.QuestionId);
+
+                // 4. Biến chấm điểm
+                double totalScore = 0;
+                int correctAnswers = 0;
+                int wrongAnswers = 0;
+
+                var answerDetails = new List<AnswerDetailDto>();
+
+                // 5. DUYỆT THEO CÂU HỎI (CHUẨN)
+                foreach (var eq in exerciseQuestions)
+                {
+                    answerLookup.TryGetValue(eq.QuestionId, out var answer);
+                    var question = eq.Question;
+
+                    bool isCorrect = false;
+
+                    // Nếu có trả lời thì mới chấm
+                    if (answer != null)
+                    {
+                        switch (question.QuestionType)
+                        {
+                            case QuestionType.MultipleChoice:
+                                if (answer.SelectedOptionId.HasValue)
+                                {
+                                    var correctOption = question.QuestionOptions
+                                        ?.FirstOrDefault(o => o.IsCorrect);
+
+                                    isCorrect = correctOption?.OptionId == answer.SelectedOptionId;
+                                }
+                                break;
+
+                            case QuestionType.TrueFalse:
+                                isCorrect = answer.AnswerText?.Trim().ToLower() ==
+                                            question.CorrectAnswer?.Trim().ToLower();
+                                break;
+
+                            case QuestionType.FillBlank:
+                                isCorrect = answer.AnswerText?.Trim().ToLower() ==
+                                            question.CorrectAnswer?.Trim().ToLower();
+                                break;
+                        }
+                    }
+                    // else: không trả lời => sai
+
+                    var maxScore = eq.Score;
+                    var pointsEarned = isCorrect ? maxScore : 0;
+
+                    if (isCorrect)
+                    {
+                        totalScore += pointsEarned;
+                        correctAnswers++;
+                    }
+                    else
+                    {
+                        wrongAnswers++;
+                    }
+
+                    // Cập nhật Answer nếu có
+                    if (answer != null)
+                    {
+                        answer.IsCorrect = isCorrect;
+                        answer.PointsEarned = pointsEarned;
+                        await _answerRepository.UpdateAnswerAsync(answer);
+                    }
+
+                    // Chi tiết câu trả lời
+                    answerDetails.Add(new AnswerDetailDto
+                    {
+                        QuestionId = question.QuestionId,
+                        QuestionText = question.QuestionText,
+                        StudentAnswer = answer == null
+                            ? null
+                            : answer.AnswerText ??
+                              question.QuestionOptions?
+                                  .FirstOrDefault(o => o.OptionId == answer.SelectedOptionId)
+                                  ?.OptionText,
+                        CorrectAnswer = question.CorrectAnswer ??
+                            question.QuestionOptions?
+                                .FirstOrDefault(o => o.IsCorrect)
+                                ?.OptionText,
+                        IsCorrect = isCorrect,
+                        PointsEarned = pointsEarned,
+                        MaxScores = maxScore,
+                        Explanation = question.Explanation
+                    });
+                }
+
+                // 6. Cập nhật attempt
+                attempt.EndTime = DateTime.Now;
+                attempt.TotalScore = totalScore;
+                attempt.CorrectAnswers = correctAnswers;
+                attempt.WrongAnswers = wrongAnswers;
+                attempt.CompletionPercentage = attempt.MaxScore > 0
+                    ? (decimal)(totalScore / attempt.MaxScore) * 100
+                    : 0;
+
+                await _attemptRepository.UpdateAttemptAsync(attempt);
+
+                // 7. Trả kết quả
+                var result = new ExerciseResultDto
+                {
+                    AttemptId = attempt.AttemptId,
+                    StudentId = attempt.StudentId,
+                    StudentName = attempt.Student?.User?.FullName,
+                    ExerciseName = attempt.Exercise?.ExerciseName,
+                    StartTime = attempt.StartTime,
+                    EndTime = attempt.EndTime.Value,
+                    Duration = attempt.EndTime.Value - attempt.StartTime,
+                    TotalScore = attempt.TotalScore,
+                    MaxScore = attempt.MaxScore,
+                    CompletionPercentage = attempt.CompletionPercentage,
+                    CorrectAnswers = attempt.CorrectAnswers,
+                    WrongAnswers = attempt.WrongAnswers,
+                    TotalQuestions = exerciseQuestions.Count, // ✅ ĐÚNG
+                    IsPassed = attempt.Exercise != null &&
+                               attempt.TotalScore >= attempt.Exercise.PassingScore,
+                    AnswerDetails = answerDetails
+                };
+
+                return ApiResponse<ExerciseResultDto>.SuccessResponse(
+                    result,
+                    "Exercise completed successfully"
+                );
+            }
+            catch (Exception ex)
+            {
+                return ApiResponse<ExerciseResultDto>.ErrorResponse(
+                    "Error completing exercise",
+                    new List<string> { ex.Message }
+                );
+            }
         }
+
 
         public async Task<ApiResponse<ExerciseResultDto>> GetExerciseResultAsync(int attemptId)
         {
             try
             {
+                // Lấy attempt + exercise + student
                 var attempt = await _attemptRepository.GetAttemptWithDetailsAsync(attemptId);
 
                 if (attempt == null)
@@ -187,20 +385,36 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     );
                 }
 
+                // Lấy answers
                 var answers = await _answerRepository.GetAttemptAnswersAsync(attemptId);
 
-                var answerDetails = answers.Select(a => new AnswerDetailDto
+                // Lấy ExerciseQuestion để biết điểm từng câu
+                var exerciseQuestions = await _exerciseQuestionRepository
+                    .GetByExerciseIdAsync(attempt.ExerciseId);
+
+                var scoreLookup = exerciseQuestions.ToDictionary(
+                    eq => eq.QuestionId,
+                    eq => eq.Score
+                );
+
+                // Map AnswerDetails (LẤY SCORE TỪ ExerciseQuestion)
+                var answerDetails = answers.Select(a =>
                 {
-                    QuestionId = a.QuestionId,
-                    QuestionText = a.Question.QuestionText,
-                    StudentAnswer = a.AnswerText ??
+                    var maxScore = scoreLookup.TryGetValue(a.QuestionId, out var s) ? s : 0;
+
+                    return new AnswerDetailDto
+                    {
+                        QuestionId = a.QuestionId,
+                        QuestionText = a.Question.QuestionText,
+                        StudentAnswer = a.AnswerText ??
                         a.Question.QuestionOptions?.FirstOrDefault(o => o.OptionId == a.SelectedOptionId)?.OptionText,
-                    CorrectAnswer = a.Question.CorrectAnswer ??
+                        CorrectAnswer = a.Question.CorrectAnswer ??
                         a.Question.QuestionOptions?.FirstOrDefault(o => o.IsCorrect)?.OptionText,
-                    IsCorrect = a.IsCorrect,
-                    PointsEarned = a.PointsEarned,
-                    MaxPoints = a.Question.Points,
-                    Explanation = a.Question.Explanation
+                        IsCorrect = a.IsCorrect,
+                        PointsEarned = a.PointsEarned,
+                        MaxScores = maxScore,
+                        Explanation = a.Question.Explanation
+                    };
                 }).ToList();
 
                 var result = new ExerciseResultDto
@@ -212,14 +426,14 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     StartTime = attempt.StartTime,
                     EndTime = attempt.EndTime.Value,
                     Duration = attempt.EndTime.Value - attempt.StartTime,
-                    TotalScore = attempt.TotalScore,
-                    MaxScore = attempt.MaxScore,
+                    TotalScore = answerDetails.Sum(a => a.PointsEarned),
+                    MaxScore = scoreLookup.Values.Sum(),
                     CompletionPercentage = attempt.CompletionPercentage,
-                    CorrectAnswers = attempt.CorrectAnswers,
-                    WrongAnswers = attempt.WrongAnswers,
-                    TotalQuestions = answers.Count,
+                    CorrectAnswers = answerDetails.Count(a => a.IsCorrect),
+                    WrongAnswers = answerDetails.Count(a => !a.IsCorrect),
+                    TotalQuestions = answerDetails.Count,
                     IsPassed = attempt.Exercise != null &&
-                               attempt.TotalScore >= attempt.Exercise.PassingScore,
+                       answerDetails.Sum(a => a.PointsEarned) >= attempt.Exercise.PassingScore,
                     AnswerDetails = answerDetails
                 };
 
@@ -320,7 +534,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     StudentId = dto.StudentId,
                     ExerciseId = dto.ExerciseId,
                     StartTime = DateTime.Now,
-                    MaxScore = exercise.TotalPoints
+                    MaxScore = exercise.TotalScores
                 };
 
                 var createdAttempt = await _attemptRepository.CreateAttemptAsync(attempt);
@@ -364,8 +578,24 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 // Get UserId from StudentId to save to CreatedBy attribute
                 var user = await _userRepository.GetUserByStudentIdAsync(dto.StudentId);
 
+                if (user == null)
+                {
+                    return ApiResponse<ExerciseAttemptDto>.ErrorResponse(
+                        "User not found",
+                        new List<string> { "Invalid StudentId" }
+                    );
+                }
+
                 // Get QuestionBank from bankId
                 var questionBank = await _questionBankRepository.GetQuestionBankByIdAsync(dto.BankId);
+
+                if (questionBank == null)
+                {
+                    return ApiResponse<ExerciseAttemptDto>.ErrorResponse(
+                        "Question bank not found",
+                        new List<string> { "Invalid BankId" }
+                    );
+                }
 
                 // Tạo exercise tạm thời (hoặc lưu vào DB nếu cần)
                 var exercise = new Exercise
@@ -376,7 +606,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     ExerciseType = dto.ExerciseType,
                     TotalQuestions = questions.Count,
                     DurationMinutes = dto.DurationMinutes,
-                    TotalPoints = questions.Sum(q => q.Points),
+                    TotalScores = dto.MaxScore,
                     Status = ExerciseStatus.Published,
                     IsActive = true,
                     CreatedBy = user.UserId,
@@ -385,16 +615,33 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
                 await _exerciseRepository.CreateExerciseAsync(exercise);
 
+                // Tạo ExerciseQuestion (NƠI LƯU SCORE)
+                var exerciseQuestions = questions.Select((q, index) => new ExerciseQuestion
+                {
+                    ExerciseId = exercise.ExerciseId,
+                    QuestionId = q.QuestionId,
+                    Score = dto.MaxScore / questions.Count,   // chia đều điểm
+                    OrderIndex = index + 1
+                }).ToList();
+
+                await _exerciseQuestionRepository.AddRangeAsync(exerciseQuestions);
+
                 // Tạo attempt
                 var attempt = new ExerciseAttempt
                 {
                     StudentId = dto.StudentId,
                     ExerciseId = exercise.ExerciseId,
                     StartTime = DateTime.Now,
-                    MaxScore = (int)exercise.TotalPoints
+                    MaxScore = dto.MaxScore,
                 };
 
                 var createdAttempt = await _attemptRepository.CreateAttemptAsync(attempt);
+
+                // Tạo lookup để lấy Score nhanh
+                var scoreLookup = exerciseQuestions.ToDictionary(
+                    eq => eq.QuestionId,
+                    eq => eq.Score
+                );
 
                 // Map sang DTO với questions
                 var attemptDto = new ExerciseAttemptDto
@@ -413,7 +660,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                         QuestionId = q.QuestionId,
                         QuestionText = q.QuestionText,
                         QuestionType = q.QuestionType.ToString(),
-                        Points = q.Points,
+                        Score = scoreLookup[q.QuestionId],
                         ImageUrl = q.QuestionImageUrl,
                         Options = q.QuestionOptions?.Select(o => new AnswerOptionDto
                         {
@@ -524,7 +771,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     QuestionId = eq.Question.QuestionId,
                     QuestionText = eq.Question.QuestionText,
                     QuestionType = eq.Question.QuestionType.ToString(),
-                    Points = eq.Question.Points,
+                    Score = eq.Score,
                     ImageUrl = eq.Question.QuestionImageUrl,
                     Options = eq.Question.QuestionOptions?.Select(o => new AnswerOptionDto
                     {

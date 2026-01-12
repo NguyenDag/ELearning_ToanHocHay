@@ -7,7 +7,7 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
     {
         public int ExerciseId { get; set; }
         public int QuestionId { get; set; }
-
+        public double Score { get; set; }
         public int OrderIndex { get; set; }
 
         // Navigation

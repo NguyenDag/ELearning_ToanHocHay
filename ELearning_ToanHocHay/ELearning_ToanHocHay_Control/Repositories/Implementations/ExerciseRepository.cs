@@ -12,11 +12,49 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
         {
             _context = context;
         }
+
+        public async Task<bool> AddQuestionsToExerciseAsync(int exerciseId, List<int> questionIds, double scorePerQuestion)
+        {
+            var exercise = await _context.Exercises
+                .Include(e => e.ExerciseQuestions)
+                .FirstOrDefaultAsync(e => e.ExerciseId == exerciseId);
+
+            if (exercise == null) return false;
+
+            var currentMaxOrder = exercise.ExerciseQuestions.Any()
+                ? exercise.ExerciseQuestions.Max(eq => eq.OrderIndex)
+                : 0;
+
+            var existingQuestionIds = exercise.ExerciseQuestions
+                .Select(eq => eq.QuestionId)
+                .ToHashSet();
+
+            var newExerciseQuestions = new List<ExerciseQuestion>();
+
+            foreach (var questionId in questionIds)
+            {
+                if (existingQuestionIds.Contains(questionId))
+                    continue;
+
+                newExerciseQuestions.Add(new ExerciseQuestion
+                {
+                    ExerciseId = exerciseId,
+                    QuestionId = questionId,
+                    Score = scorePerQuestion,
+                    OrderIndex = ++currentMaxOrder
+                });
+            }
+
+            if (!newExerciseQuestions.Any())
+                return true;
+
+            _context.ExerciseQuestions.AddRange(newExerciseQuestions);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
         public async Task<Exercise> CreateExerciseAsync(Exercise exercise)
         {
-            exercise.IsFree = false;
-            exercise.CreatedAt = DateTime.Now;
-            exercise.IsActive = true;
             _context.Exercises.Add(exercise);
             await _context.SaveChangesAsync();
             return exercise;
@@ -39,10 +77,40 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             return await _context.Exercises.ToListAsync();
         }
 
+        public async Task<IEnumerable<Exercise>> GetByChapterIdAsync(int chapterId)
+        {
+            return await _context.Exercises
+                .Where(e => e.ChapterId == chapterId)
+                .ToListAsync();
+        }
+
+        // Không có
+        public Task<IEnumerable<Exercise>> GetByLessonIdAsync(int lessonId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task<IEnumerable<Exercise>> GetByTopicIdAsync(int topicId)
+        {
+            return await _context.Exercises
+                .Where(e => e.TopicId == topicId)
+                .ToListAsync();
+        }
+
         public async Task<Exercise?> GetExerciseByIdAsync(int exerciseId)
         {
             return await _context.Exercises
                 .FirstOrDefaultAsync(e => e.ExerciseId == exerciseId);
+        }
+
+        public async Task<List<ExerciseQuestion>> GetExerciseQuestionsAsync(int exerciseId)
+        {
+            return await _context.ExerciseQuestions
+                .Include(eq => eq.Question)
+                    .ThenInclude(q => q.QuestionOptions)
+                .Where(eq => eq.ExerciseId == exerciseId)
+                .OrderBy(eq => eq.OrderIndex)
+                .ToListAsync();
         }
 
         public async Task<Exercise> GetExerciseWithQuestionsAsync(int exerciseId)
@@ -82,12 +150,25 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
                 .ToListAsync();
         }
 
+        public async Task<bool> RemoveQuestionFromExerciseAsync(int exerciseId, int questionId)
+        {
+            var eq = await _context.ExerciseQuestions
+                .FirstOrDefaultAsync(x =>
+                x.ExerciseId == exerciseId &&
+                x.QuestionId == questionId);
+
+            if (eq == null) return false;
+
+            _context.ExerciseQuestions.Remove(eq);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
         public async Task<Exercise?> UpdateExerciseAsync(Exercise exercise)
         {
             _context.Entry(exercise).State = EntityState.Modified;
             try
             {
-                _context.Update(exercise);
                 await _context.SaveChangesAsync();
                 return exercise;
             }
@@ -97,6 +178,20 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
                     return null;
                 throw;
             }
+        }
+
+        public async Task<bool> UpdateExerciseQuestionScoreAsync(int exerciseId, int questionId, double score)
+        {
+            var eq = await _context.ExerciseQuestions
+                .FirstOrDefaultAsync(x =>
+                x.ExerciseId == exerciseId &&
+                x.QuestionId == questionId);
+
+            if (eq == null) return false;
+
+            eq.Score = score;
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 }

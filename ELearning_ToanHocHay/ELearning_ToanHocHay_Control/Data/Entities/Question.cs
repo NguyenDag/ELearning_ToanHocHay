@@ -48,8 +48,6 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
 
         public string? Explanation { get; set; }
 
-        public double Points { get; set; } = 1.0;
-
         public QuestionStatus Status { get; set; }
         public bool IsActive { get; set; } = true;
 

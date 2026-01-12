@@ -14,7 +14,7 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
 
         public string? HintText { get; set; }
         public string? FeedbackText { get; set; }
-
+        public int HintLevel { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
         // Navigation

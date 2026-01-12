@@ -10,13 +10,48 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
     public class ExerciseService : IExerciseService
     {
         private readonly IExerciseRepository _exerciseRepository;
+        private readonly IExerciseAttemptRepository _exerciseAttemptRepository;
         private readonly IMapper _mapper;
 
-        public ExerciseService(IExerciseRepository exerciseRepository, IMapper mapper)
+        public ExerciseService(IExerciseRepository exerciseRepository, IExerciseAttemptRepository exerciseAttemptRepository, IMapper mapper)
         {
             _exerciseRepository = exerciseRepository;
+            _exerciseAttemptRepository = exerciseAttemptRepository;
             _mapper = mapper;
         }
+
+        public async Task<ApiResponse<bool>> AddQuestionsToExerciseAsync(int exerciseId, AddQuestionsToExerciseDto dto)
+        {
+            var exercise = await _exerciseRepository.GetExerciseByIdAsync(exerciseId);
+            if (exercise == null)
+            {
+                return ApiResponse<bool>.ErrorResponse(
+                    "Exercise not found",
+                    new List<string> { $"ExerciseId {exerciseId} not found" }
+                );
+            }
+
+            if (!dto.QuestionIds.Any())
+            {
+                return ApiResponse<bool>.ErrorResponse(
+                    "QuestionIds is empty"
+                );
+            }
+
+            var scorePerQuestion = dto.ScorePerQuestion
+                ?? (exercise.TotalScores / exercise.TotalQuestions);
+
+            var success = await _exerciseRepository.AddQuestionsToExerciseAsync(
+                exerciseId,
+                dto.QuestionIds,
+                scorePerQuestion
+            );
+
+            return success
+                ? ApiResponse<bool>.SuccessResponse(true, "Questions added successfully")
+                : ApiResponse<bool>.ErrorResponse("Failed to add questions");
+        }
+
         public async Task<ApiResponse<ExerciseDto>> CreateExerciseAsync(ExerciseRequestDto exercise)
         {
             try
@@ -31,9 +66,11 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     DurationMinutes = exercise.DurationMinutes,
                     IsFree = exercise.IsFree,
                     IsActive = exercise.IsActive,
-                    TotalPoints = exercise.TotalPoints,
+                    TotalScores = exercise.TotalScores,
                     PassingScore = exercise.PassingScore,
                     Status = exercise.Status,
+                    CreatedBy = 3, // Use UserId in session for CreatedBy
+                    CreatedAt = DateTime.Now,
                 };
                 await _exerciseRepository.CreateExerciseAsync(_exercise);
                 return ApiResponse<ExerciseDto>.SuccessResponse(
@@ -63,7 +100,21 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                         {
                             $"No exercise found with id: {exerciseId}"
                         }
-                        );
+                    );
+                }
+
+                var hasAttempt = await _exerciseAttemptRepository
+                    .ExistsByExerciseIdAsync(exerciseId);
+
+                if (hasAttempt)
+                {
+                    return ApiResponse<bool>.ErrorResponse(
+                        "EXERCISE_HAS_ATTEMPTS",
+                        new List<string>
+                        {
+                            "Cannot delete exercise that has attempts"
+                        }
+                    );
                 }
                 var deleted = await _exerciseRepository.DeleteExerciseAsync(exerciseId);
                 return ApiResponse<bool>.SuccessResponse(deleted,
@@ -92,6 +143,13 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             }
         }
 
+        public async Task<ApiResponse<IEnumerable<ExerciseDto>>> GetByChapterIdAsync(int chapterId)
+        {
+            var exercises = await _exerciseRepository.GetByChapterIdAsync(chapterId);
+            return ApiResponse<IEnumerable<ExerciseDto>>
+                .SuccessResponse(_mapper.Map<IEnumerable<ExerciseDto>>(exercises));
+        }
+
         public async Task<ApiResponse<ExerciseDto>> GetByIdAsync(int exerciseId)
         {
             try
@@ -108,6 +166,40 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     new List<string> { ex.Message }
                 );
             }
+        }
+
+        public async Task<ApiResponse<IEnumerable<ExerciseDto>>> GetByLessonIdAsync(int lessonId)
+        {
+            var exercises = await _exerciseRepository.GetByLessonIdAsync(lessonId);
+            return ApiResponse<IEnumerable<ExerciseDto>>
+                .SuccessResponse(_mapper.Map<IEnumerable<ExerciseDto>>(exercises));
+        }
+
+        public async Task<ApiResponse<IEnumerable<ExerciseDto>>> GetByTopicIdAsync(int topicId)
+        {
+            var exercises = await _exerciseRepository.GetByTopicIdAsync(topicId);
+            return ApiResponse<IEnumerable<ExerciseDto>>
+                .SuccessResponse(_mapper.Map<IEnumerable<ExerciseDto>>(exercises));
+        }
+        /*public async Task<ApiResponse<IEnumerable<ExerciseQuestionDto>>> GetExerciseQuestionsAsync(int exerciseId)
+        {
+            var questions = await _exerciseRepository.GetExerciseQuestionsAsync(exerciseId);
+            return ApiResponse<IEnumerable<ExerciseQuestionDto>>
+                .SuccessResponse(_mapper.Map<IEnumerable<ExerciseQuestionDto>>(questions));
+        }*/
+
+        public async Task<ApiResponse<bool>> RemoveQuestionFromExerciseAsync(int exerciseId, int questionId)
+        {
+            var isExist = await _exerciseRepository.GetExerciseByIdAsync(exerciseId);
+            if (isExist == null)
+                return ApiResponse<bool>.ErrorResponse("Exercise not found");
+
+            var success = await _exerciseRepository
+                .RemoveQuestionFromExerciseAsync(exerciseId, questionId);
+
+            return success
+                ? ApiResponse<bool>.SuccessResponse(true, "Question removed")
+                : ApiResponse<bool>.ErrorResponse("Question not found");
         }
 
         public async Task<ApiResponse<ExerciseDto>> UpdateExerciseAsync(int id, ExerciseRequestDto exerciseRequestDto)
@@ -129,7 +221,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 exercise.DurationMinutes = exerciseRequestDto.DurationMinutes;
                 exercise.IsFree = exerciseRequestDto.IsFree;
                 exercise.IsActive = exerciseRequestDto.IsActive;
-                exercise.TotalPoints = exerciseRequestDto.TotalPoints;
+                exercise.TotalScores = exerciseRequestDto.TotalScores;
                 exercise.PassingScore = exerciseRequestDto.PassingScore;
                 exercise.Status = exerciseRequestDto.Status;
                 await _exerciseRepository.UpdateExerciseAsync(exercise);
@@ -143,6 +235,16 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     new List<string> { ex.Message }
                 );
             }
+        }
+
+        public async Task<ApiResponse<bool>> UpdateExerciseQuestionScoreAsync(int exerciseId, int questionId, double score)
+        {
+            var success = await _exerciseRepository
+                .UpdateExerciseQuestionScoreAsync(exerciseId, questionId, score);
+
+            return success
+                ? ApiResponse<bool>.SuccessResponse(true, "Score updated")
+                : ApiResponse<bool>.ErrorResponse("Question not found");
         }
     }
 }

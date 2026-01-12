@@ -12,7 +12,7 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs
         public int? DurationMinutes { get; set; }
         public bool IsFree { get; set; } = false;
         public bool IsActive { get; set; } = false;
-        public double TotalPoints { get; set; }
+        public double TotalScores { get; set; }
         public double PassingScore { get; set; }
         public ExerciseStatus Status { get; set; }
     }

@@ -28,6 +28,7 @@ namespace ELearning_ToanHocHay_Control
             builder.Services.AddScoped<IExerciseAttemptRepository, ExerciseAttemptRepository>();
             builder.Services.AddScoped<IStudentAnswerRepository, StudentAnswerRepository>();
             builder.Services.AddScoped<IQuestionBankRepository, QuestionBankRepository>();
+            builder.Services.AddScoped<IExerciseQuestionRepository, ExerciseQuestionRepository>();
 
             // Register Services
             builder.Services.AddScoped<IAuthService, AuthService>();
@@ -36,6 +37,7 @@ namespace ELearning_ToanHocHay_Control
             builder.Services.AddScoped<IExerciseService, ExerciseService>();
             builder.Services.AddScoped<IExerciseAttemptService, ExerciseAttemptService>();
             builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
+            builder.Services.AddHttpClient<IAIService, AIService>();
 
 
             //Register AutoMapper

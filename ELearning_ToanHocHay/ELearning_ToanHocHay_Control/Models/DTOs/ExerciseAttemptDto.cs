@@ -15,6 +15,7 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs
         public int BankId { get; set; }
         public ExerciseType ExerciseType { get; set; }
         public int NumberOfQuestions { get; set; } = 10;
+        public double MaxScore { get; set; } = 10;
         public int? DurationMinutes { get; set; }
     }
 
@@ -52,7 +53,7 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs
         public int QuestionId { get; set; }
         public string QuestionText { get; set; }
         public string QuestionType { get; set; }
-        public double Points { get; set; }
+        public double Score { get; set; }
         public List<AnswerOptionDto> Options { get; set; }
         public string ImageUrl { get; set; }
     }
@@ -92,7 +93,7 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs
         public string CorrectAnswer { get; set; }
         public bool IsCorrect { get; set; }
         public double PointsEarned { get; set; }
-        public double MaxPoints { get; set; }
+        public double MaxScores { get; set; }
         public string? Explanation { get; set; }
     }
 }

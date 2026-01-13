@@ -1,29 +1,29 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ELearning_ToanHocHay_Control.Data.Entities
 {
-    [Table("AIFeedback")]
-    public class AIFeedback
+    [Table("AIHint")]
+    public class AIHint
     {
         [Key]
-        public int FeedbackId { get; set; }
+        public int HintId { get; set; }
 
         [ForeignKey("Attempt")]
         public int AttemptId { get; set; }
 
-        [Column(TypeName = "nvarchar(max)")]
-        public string? FullSolution { get; set; }
+        [ForeignKey("Question")]
+        public int QuestionId { get; set; }
 
         [Column(TypeName = "nvarchar(max)")]
-        public string? MistakeAnalysis { get; set; }
+        public string? HintText { get; set; }
 
-        [Column(TypeName = "nvarchar(max)")]
-        public string? ImprovementAdvice { get; set; }
+        public int HintLevel { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
         // Navigation
         public ExerciseAttempt? Attempt { get; set; }
+        public Question? Question { get; set; }
     }
 }

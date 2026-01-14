@@ -12,6 +12,9 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         [ForeignKey("Attempt")]
         public int AttemptId { get; set; }
 
+        [ForeignKey("Question")]
+        public int QuestionId { get; set; }
+
         [Column(TypeName = "nvarchar(max)")]
         public string? FullSolution { get; set; }
 
@@ -25,5 +28,6 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
 
         // Navigation
         public ExerciseAttempt? Attempt { get; set; }
+        public Question? Question { get; set; }
     }
 }

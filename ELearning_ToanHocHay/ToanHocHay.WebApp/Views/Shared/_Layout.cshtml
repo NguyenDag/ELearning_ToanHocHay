@@ -11,7 +11,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
     <style>
-        body { font-family: 'Nunito', sans-serif; }
+        body {
+            font-family: 'Nunito', sans-serif;
+        }
 
         /* Fix UX: Giúp menu không bị mất khi di chuột nhanh */
         .group:hover .group-hover\:visible,
@@ -37,21 +39,19 @@
 </head>
 <body class="bg-gray-50 text-gray-800 flex flex-col min-h-screen">
 
-    <!-- 2. HEADER (LOGO NẰM GỌN TRONG HEADER) -->
+    <!-- 2. HEADER -->
     <header class="bg-white shadow-sm sticky top-0 z-50">
-        <div class="container mx-auto px-4 py-3"> <!-- Tăng padding py-3 để header cao hơn chút -->
+        <div class="container mx-auto px-4 py-2 relative">
 
-            <!-- Flex Container chính -->
-            <div class="flex items-center gap-8">
+            <div class="flex gap-8">
 
-                <!-- CỘT TRÁI: LOGO (Không dùng absolute nữa để tránh tràn) -->
-                <a href="/" class="flex-shrink-0 block">
-                    <!-- Logo sạch sẽ, không viền, kích thước vừa vặn -->
-                    <img src="~/images/brand/logo_header.png" 
-                         asp-append-version="true" 
-                         alt="ToanHocHay Logo" 
-                         class="h-24 w-auto object-contain hover:scale-105 transition duration-300" 
-                         onerror="this.src='https://placehold.co/200x100?text=Logo'" /> 
+                <!-- CỘT TRÁI: LOGO -->
+                <a href="/" class="flex-shrink-0 block -mb-4 z-10">
+                    <img src="~/images/brand/logo.png"
+                         asp-append-version="true"
+                         alt="ToanHocHay Logo"
+                         class="h-24 w-auto object-contain hover:scale-105 transition duration-300 ml-0"
+                         onerror="this.src='https://placehold.co/200x100?text=Logo'" />
                 </a>
 
                 <!-- CỘT PHẢI: NỘI DUNG (Search + Menu) -->
@@ -60,24 +60,36 @@
                     <!-- HÀNG 1: Search Bar + Auth Buttons -->
                     <div class="flex items-center justify-between gap-6 pt-1 mb-2">
                         <!-- Search Bar -->
-                        <div class="flex-1 max-w-3xl relative mx-auto"> <!-- Căn giữa search bar -->
+                        <div class="flex-1 max-w-xl relative mx-auto">
                             <input type="text" placeholder="Tìm kiếm khóa học, bài giảng..." class="w-full pl-6 pr-12 py-2.5 rounded-full border border-gray-300 focus:outline-none focus:border-primary focus:ring-2 focus:ring-blue-100 bg-gray-50 text-sm transition">
                             <button class="absolute right-4 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-700 text-lg">
                                 <i class="fa-solid fa-magnifying-glass"></i>
                             </button>
                         </div>
 
-                        <!-- Auth Buttons -->
+                        <!-- Auth Buttons + Extra Buttons -->
                         <div class="flex items-center gap-3 flex-shrink-0">
-                            <a href="/Account/Register" class="px-6 py-2 rounded-full border border-blue-600 text-blue-600 font-bold text-sm hover:bg-blue-50 transition">Đăng Ký</a>
-                            <a href="/Account/Login" class="px-6 py-2 rounded-full bg-primary text-white font-bold text-sm hover:bg-blue-700 shadow-md transition">Đăng Nhập</a>
+                            <!-- Nút Đăng Ký -->
+                            <a href="/Account/Register" class="px-5 py-2 rounded-full border border-blue-600 text-blue-600 font-bold text-sm hover:bg-blue-50 transition">Đăng Ký</a>
+
+                            <!-- Nút Dashboard (Mới thêm) -->
+                            <a href="/Student/Dashboard" class="px-4 py-2 rounded-full bg-orange-100 text-orange-600 font-bold text-sm hover:bg-orange-200 transition flex items-center gap-2">
+                                <i class="fa-solid fa-chart-pie"></i> Dashboard
+                            </a>
+
+                            <!-- Nút Profile (Mới thêm) -->
+                            <a href="/Student/Profile" class="px-4 py-2 rounded-full bg-purple-100 text-purple-600 font-bold text-sm hover:bg-purple-200 transition flex items-center gap-2">
+                                <i class="fa-solid fa-user"></i> Profile
+                            </a>
+
+                            <!-- Nút Đăng Nhập -->
+                            <a href="/Account/Login" class="px-5 py-2 rounded-full bg-primary text-white font-bold text-sm hover:bg-blue-700 shadow-md transition">Đăng Nhập</a>
                         </div>
                     </div>
 
                     <!-- HÀNG 2: Menu Navigation -->
-                    <nav class="overflow-visible w-full">
-                        <!-- CĂN GIỮA MENU: justify-center -->
-                        <ul class="flex justify-center gap-10 items-center text-sm md:text-base font-bold text-gray-600">
+                    <nav class="overflow-visible pt-1 w-full pl-32 md:pl-40">
+                        <ul class="flex justify-start gap-16 items-center text-sm md:text-base font-bold text-gray-600">
                             <!-- Trang chủ -->
                             <li>
                                 <a href="/" class="flex items-center gap-2 text-primary hover:text-blue-700 transition pb-1 border-b-2 border-transparent hover:border-primary">
@@ -90,12 +102,12 @@
                             <!-- MENU BÀI GIẢNG -->
                             <li class="relative group">
                                 <a href="/Course" class="flex items-center gap-2 hover:text-primary transition cursor-pointer pb-1 border-b-2 border-transparent hover:border-primary">
-                                    <i class="fa-solid fa-book-open"></i> Bài giảng 
+                                    <i class="fa-solid fa-book-open"></i> Bài giảng
                                     <i class="fa-solid fa-chevron-down text-xs ml-1 transition-transform group-hover:rotate-180"></i>
                                 </a>
 
                                 <!-- Dropdown Cấp 1 -->
-                                <ul class="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-56 bg-white border border-gray-100 shadow-xl rounded-xl z-50 py-2 border-t-4 border-t-primary 
+                                <ul class="absolute left-0 top-full mt-2 w-56 bg-white border border-gray-100 shadow-xl rounded-xl z-50 py-2 border-t-4 border-t-primary
                                            invisible opacity-0 translate-y-2 transition-all duration-200 ease-in-out delay-100
                                            group-hover:visible group-hover:opacity-100 group-hover:translate-y-0
                                            before:absolute before:-top-4 before:left-0 before:w-full before:h-4 before:bg-transparent">
@@ -137,13 +149,13 @@
 
                             <!-- MENU KIỂM TRA -->
                             <li class="relative group">
-                                <a href="#" class="flex items-center gap-2 hover:text-primary transition cursor-pointer pb-1 border-b-2 border-transparent hover:border-primary">
+                                <a href="/Exam" class="flex items-center gap-2 hover:text-primary transition cursor-pointer pb-1 border-b-2 border-transparent hover:border-primary">
                                     <i class="fa-solid fa-pen-to-square"></i> Kiểm tra
                                     <i class="fa-solid fa-chevron-down text-xs ml-1 transition-transform group-hover:rotate-180"></i>
                                 </a>
 
                                 <!-- Dropdown KIỂM TRA -->
-                                <ul class="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-60 bg-white border border-gray-100 shadow-xl rounded-xl z-50 py-2 border-t-4 border-t-secondary
+                                <ul class="absolute left-0 top-full mt-2 w-60 bg-white border border-gray-100 shadow-xl rounded-xl z-50 py-2 border-t-4 border-t-secondary
                                            invisible opacity-0 translate-y-2 transition-all duration-200 ease-in-out delay-100
                                            group-hover:visible group-hover:opacity-100 group-hover:translate-y-0
                                            before:absolute before:-top-4 before:left-0 before:w-full before:h-4 before:bg-transparent">
@@ -161,12 +173,13 @@
             </div>
         </div>
     </header>
+
     <!-- 3. MAIN CONTENT -->
     <main role="main" class="flex-grow">
         @RenderBody()
     </main>
 
-    <!-- 4. FOOTER -->
+    <!-- 4. FOOTER (Giữ nguyên) -->
     <footer class="bg-[#1a237e] text-white pt-16 pb-8 mt-auto">
         <div class="container mx-auto px-4">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
@@ -174,10 +187,10 @@
                 <div>
                     <div class="flex items-center gap-3 mb-6">
                         <div class="w-auto h-24 rounded-lg flex items-center justify-center shadow-sm p-2 bg-white/10 backdrop-blur-sm border border-white/20">
-                             <img src="~/images/brand/logo.png" 
-                                 asp-append-version="true" 
-                                 alt="ToanHocHay Logo" 
-                                 class="h-full w-auto object-contain brightness-0 invert opacity-90" 
+                            <img src="~/images/brand/logo.png"
+                                 asp-append-version="true"
+                                 alt="ToanHocHay Logo"
+                                 class="h-full w-auto object-contain brightness-0 invert opacity-90"
                                  onerror="this.src='https://placehold.co/200x80?text=Logo'" />
                         </div>
                     </div>
@@ -185,7 +198,7 @@
                         Nền tảng giáo dục trực tuyến tiên phong ứng dụng AI giúp học sinh cấp 2 học Toán hiệu quả, xóa bỏ nỗi lo mất gốc.
                     </p>
                 </div>
-                <!-- Col 2 & 3 (Giữ nguyên) -->
+                <!-- Col 2 & 3 -->
                 <div class="md:pl-10">
                     <h4 class="font-bold text-xl mb-6">Về chúng tôi</h4>
                     <ul class="space-y-4 text-sm text-blue-100">

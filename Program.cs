@@ -47,6 +47,15 @@ namespace ELearning_ToanHocHay_Control
                 connectionString = builder.Configuration.GetConnectionString("MyCnn")!;
             }
 
+            Console.WriteLine($"ENV: {builder.Environment.EnvironmentName}");
+            Console.WriteLine($"DB URL: {Environment.GetEnvironmentVariable("DATABASE_URL")}");
+
+            Console.WriteLine(
+                string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DATABASE_URL"))
+                ? "Using LOCAL DB"
+                : "Using RAILWAY DB"
+                );
+
             builder.Services.AddDbContext<AppDbContext>(options =>
                 options.UseNpgsql(connectionString));
 
@@ -170,11 +179,14 @@ namespace ELearning_ToanHocHay_Control
 
 
             // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
+            /*if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
-            }
+            }*/
+
+            app.UseSwagger();
+            app.UseSwaggerUI();
 
             app.UseHttpsRedirection();
 

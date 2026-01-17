@@ -1,6 +1,6 @@
 # ELearning\_ToanHocHay\_API
 
-This is API project for the system.
+This is API project for the system
 
 
 

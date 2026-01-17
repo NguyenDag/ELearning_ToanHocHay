@@ -32,7 +32,7 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         [MaxLength(20)]
         public string? Phone { get; set; }
 
-        public DateTime? Dob { get; set; }
+        public DateOnly? Dob { get; set; }
 
         public string? AvatarUrl { get; set; }
 

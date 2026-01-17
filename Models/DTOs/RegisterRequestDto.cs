@@ -20,7 +20,7 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs
         [MaxLength(20)]
         public string? Phone { get; set; }
 
-        public DateTime? Dob { get; set; }
+        public DateOnly? Dob { get; set; }
 
         [Required]
         public UserType UserType { get; set; }

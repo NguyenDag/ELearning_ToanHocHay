@@ -25,7 +25,7 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs
         public required string Password { get; set; }
         public required string FullName { get; set; }
         public string? Phone { get; set; }
-        public DateTime? Dob { get; set; }
+        public DateOnly? Dob { get; set; }
         public string? AvatarUrl { get; set; }
         public UserType UserType { get; set; }
     }
@@ -35,7 +35,7 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs
         public required string Password { get; set; }
         public required string FullName { get; set; }
         public string? Phone { get; set; }
-        public DateTime? Dob { get; set; }
+        public DateOnly? Dob { get; set; }
         public string? AvatarUrl { get; set; }
         public UserType UserType { get; set; }
         public bool IsActive { get; set; }

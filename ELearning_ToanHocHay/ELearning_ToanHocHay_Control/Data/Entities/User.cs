@@ -39,7 +39,7 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         [Required]
         public UserType UserType { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public DateTime? UpdatedAt { get; set; }
 

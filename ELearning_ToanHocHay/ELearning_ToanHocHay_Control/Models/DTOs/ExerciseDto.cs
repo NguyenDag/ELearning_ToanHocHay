@@ -18,6 +18,6 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs
         public double PassingScore { get; set; }
         public ExerciseStatus Status { get; set; }
         public int CreatedBy { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

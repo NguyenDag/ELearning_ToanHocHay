@@ -21,7 +21,7 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
 
         public double PointsEarned { get; set; } = 0;
 
-        public DateTime AnsweredAt { get; set; } = DateTime.Now;
+        public DateTime AnsweredAt { get; set; } = DateTime.UtcNow;
 
         // Navigation
         public ExerciseAttempt? ExerciseAttempt { get; set; }

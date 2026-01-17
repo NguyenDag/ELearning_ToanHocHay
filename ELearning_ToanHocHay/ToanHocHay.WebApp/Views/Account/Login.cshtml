@@ -1,6 +1,12 @@
-﻿@{
+﻿@using ToanHocHay.WebApp.Models.ViewModels
+@{
     Layout = null;
     var initialMode = ViewBag.Mode as string ?? "login";
+}
+@model LoginViewModel
+
+@{
+    ViewData["Title"] = "Đăng nhập";
 }
 
 <!DOCTYPE html>

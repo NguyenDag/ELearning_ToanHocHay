@@ -150,7 +150,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 }
 
                 // Cập nhật attempt
-                attempt.EndTime = DateTime.Now;
+                attempt.EndTime = DateTime.UtcNow;
                 attempt.TotalScore = totalScore;
                 attempt.CorrectAnswers = correctAnswers;
                 attempt.WrongAnswers = wrongAnswers;
@@ -316,7 +316,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 }
 
                 // 6. Cập nhật attempt
-                attempt.EndTime = DateTime.Now;
+                attempt.EndTime = DateTime.UtcNow;
                 attempt.TotalScore = totalScore;
                 attempt.CorrectAnswers = correctAnswers;
                 attempt.WrongAnswers = wrongAnswers;
@@ -533,7 +533,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 {
                     StudentId = dto.StudentId,
                     ExerciseId = dto.ExerciseId,
-                    StartTime = DateTime.Now,
+                    StartTime = DateTime.UtcNow,
                     MaxScore = exercise.TotalScores
                 };
 
@@ -600,7 +600,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 // Tạo exercise tạm thời (hoặc lưu vào DB nếu cần)
                 var exercise = new Exercise
                 {
-                    ExerciseName = $"Random {dto.ExerciseType} - {DateTime.Now:yyyy-MM-dd HH:mm}",
+                    ExerciseName = $"Random {dto.ExerciseType} - {DateTime.UtcNow:yyyy-MM-dd HH:mm}",
                     ChapterId = questionBank.ChapterId,
                     TopicId = questionBank.TopicId,
                     ExerciseType = dto.ExerciseType,
@@ -610,7 +610,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     Status = ExerciseStatus.Published,
                     IsActive = true,
                     CreatedBy = user.UserId,
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow
                 };
 
                 await _exerciseRepository.CreateExerciseAsync(exercise);
@@ -631,7 +631,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 {
                     StudentId = dto.StudentId,
                     ExerciseId = exercise.ExerciseId,
-                    StartTime = DateTime.Now,
+                    StartTime = DateTime.UtcNow,
                     MaxScore = dto.MaxScore,
                 };
 
@@ -719,7 +719,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     // Cập nhật câu trả lời
                     existingAnswer.AnswerText = dto.AnswerText;
                     existingAnswer.SelectedOptionId = dto.SelectedOptionId;
-                    existingAnswer.AnsweredAt = DateTime.Now;
+                    existingAnswer.AnsweredAt = DateTime.UtcNow;
 
                     await _answerRepository.UpdateAnswerAsync(existingAnswer);
                 }
@@ -732,7 +732,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                         QuestionId = dto.QuestionId,
                         AnswerText = dto.AnswerText,
                         SelectedOptionId = dto.SelectedOptionId,
-                        AnsweredAt = DateTime.Now
+                        AnsweredAt = DateTime.UtcNow
                     };
 
                     await _answerRepository.CreateAnswerAsync(answer);

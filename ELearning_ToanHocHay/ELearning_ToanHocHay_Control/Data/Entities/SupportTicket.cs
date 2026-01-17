@@ -34,7 +34,7 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         public TicketStatus Status { get; set; }
         public TicketPriority Priority { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? ResolvedAt { get; set; }
 
         // Navigation

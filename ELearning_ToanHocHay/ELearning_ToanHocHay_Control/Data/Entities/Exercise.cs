@@ -51,7 +51,7 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
 
         public int CreatedBy { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation
         public Topic? Topic { get; set; }

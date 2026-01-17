@@ -16,7 +16,7 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
 
         public string? Description { get; set; }
 
-        public DateTime UpdatedAt { get; set; } = DateTime.Now;
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
         public int? UpdatedBy { get; set; }
 

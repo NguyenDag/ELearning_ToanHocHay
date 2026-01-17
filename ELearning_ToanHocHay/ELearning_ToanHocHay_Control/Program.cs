@@ -19,11 +19,16 @@ namespace ELearning_ToanHocHay_Control
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            /*builder.Services.AddDbContext<AppDbContext>(options =>
+                options.UseSqlServer(builder.Configuration.GetConnectionString("MyCnn")));*/
+
             builder.Services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("MyCnn")));
+                options.UseNpgsql(builder.Configuration.GetConnectionString("MyCnn")));
 
             // Register Repositories
             builder.Services.AddScoped<IUserRepository, UserRepository>();
+            builder.Services.AddScoped<IStudentRepository, StudentRepository>();
+            builder.Services.AddScoped<IParentRepository, ParentRepository>();
             builder.Services.AddScoped<IExerciseRepository, ExerciseRepository>();
             builder.Services.AddScoped<IExerciseAttemptRepository, ExerciseAttemptRepository>();
             builder.Services.AddScoped<IStudentAnswerRepository, StudentAnswerRepository>();
@@ -138,7 +143,7 @@ namespace ELearning_ToanHocHay_Control
 
             var app = builder.Build();
 
-         
+
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())

@@ -34,7 +34,7 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
 
         public bool IsActive { get; set; } = true;
 
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? LastUpdated { get; set; }
 
         // Navigation

@@ -1,4 +1,5 @@
-﻿using ELearning_ToanHocHay_Control.Data.Entities;
+﻿using ELearning_ToanHocHay_Control.Attributes;
+using ELearning_ToanHocHay_Control.Data.Entities;
 using ELearning_ToanHocHay_Control.Models.DTOs;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
@@ -52,6 +53,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
 
         // POST: api/user
         [HttpPost]
+        [AuthorizeUserType(UserType.SystemAdmin)]
         public async Task<IActionResult> Create([FromBody] CreateUserDto user)
         {
             if (!ModelState.IsValid)

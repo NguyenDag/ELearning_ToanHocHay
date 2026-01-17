@@ -9,11 +9,13 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
+        private readonly IPasswordHasher _passwordHasher;
         private readonly IMapper _mapper;
 
-        public UserService(IUserRepository userRepository, IMapper mapper)
+        public UserService(IUserRepository userRepository, IPasswordHasher passwordHasher, IMapper mapper)
         {
             _userRepository = userRepository;
+            _passwordHasher = passwordHasher;
             _mapper = mapper;
         }
         public async Task<ApiResponse<UserDto>> CreateUserAsync(CreateUserDto user)
@@ -33,14 +35,14 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 var newUser = new User
                 {
                     Email = user.Email,
-                    PasswordHash = user.Password,
+                    PasswordHash = _passwordHasher.HashPassword(user.Password),
                     FullName = user.FullName,
                     Phone = user.Phone,
                     Dob = user.Dob,
                     AvatarUrl = user.AvatarUrl,
                     UserType = user.UserType,
                     IsActive = true,
-                    CreatedAt = DateTime.Now,
+                    CreatedAt = DateTime.UtcNow,
                 };
                 var createdUser = await _userRepository.CreateUserAsync(newUser);
                 return ApiResponse<UserDto>.SuccessResponse(
@@ -181,7 +183,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 user.AvatarUrl = updateUserDto.AvatarUrl;
                 user.UserType = updateUserDto.UserType;
                 user.IsActive = updateUserDto.IsActive;
-                user.UpdatedAt = DateTime.Now;
+                user.UpdatedAt = DateTime.UtcNow;
 
                 var updatedUser = await _userRepository.UpdateUserAsync(user);
 

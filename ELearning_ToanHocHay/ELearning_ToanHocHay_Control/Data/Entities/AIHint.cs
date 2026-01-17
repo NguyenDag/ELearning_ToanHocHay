@@ -15,12 +15,12 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         [ForeignKey("Question")]
         public int QuestionId { get; set; }
 
-        [Column(TypeName = "nvarchar(max)")]
+        //[Column(TypeName = "nvarchar(max)")]
         public string? HintText { get; set; }
 
         public int HintLevel { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation
         public ExerciseAttempt? Attempt { get; set; }

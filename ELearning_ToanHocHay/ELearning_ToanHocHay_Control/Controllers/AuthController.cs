@@ -106,5 +106,43 @@ namespace ELearning_ToanHocHay_Control.Controllers
             var token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
             return _jwtService.GetUserIdFromToken(token);
         }
+
+        [HttpPost("register")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Register(RegisterRequestDto request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ApiResponse<bool>.ErrorResponse(
+                    "Dữ liệu không hợp lệ",
+                    ModelState.Values.SelectMany(v => v.Errors)
+                                     .Select(e => e.ErrorMessage)
+                                     .ToList()
+                ));
+            }
+
+            var result = await _authService.RegisterAsync(request);
+            return result.Success ? Ok(result) : BadRequest(result);
+        }
+        [HttpPost("refresh-token")]
+        [AllowAnonymous]
+        public async Task<IActionResult> RefreshToken(RefreshTokenRequestDto request)
+        {
+            var result = await _authService.RefreshTokenAsync(request.RefreshToken);
+            return result.Success ? Ok(result) : Unauthorized(result);
+        }
+
+        [Authorize]
+        [HttpPost("change-password")]
+        public async Task<IActionResult> ChangePassword(ChangePasswordDto request)
+        {
+            var userId = GetUserIdFromToken();
+            if (!userId.HasValue)
+                return Unauthorized();
+
+            var result = await _authService.ChangePasswordAsync(userId.Value, request);
+            return result.Success ? Ok(result) : BadRequest(result);
+        }
+
     }
 }

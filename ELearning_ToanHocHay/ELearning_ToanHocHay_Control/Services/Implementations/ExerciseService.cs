@@ -70,7 +70,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     PassingScore = exercise.PassingScore,
                     Status = exercise.Status,
                     CreatedBy = 3, // Use UserId in session for CreatedBy
-                    CreatedAt = DateTime.Now,
+                    CreatedAt = DateTime.UtcNow,
                 };
                 await _exerciseRepository.CreateExerciseAsync(_exercise);
                 return ApiResponse<ExerciseDto>.SuccessResponse(

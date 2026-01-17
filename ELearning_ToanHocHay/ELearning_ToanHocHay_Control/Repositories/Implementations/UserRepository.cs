@@ -28,7 +28,7 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             {
                 return false;
             }
-            user.UpdatedAt = DateTime.Now;
+            user.UpdatedAt = DateTime.UtcNow;
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
             return true;
@@ -84,7 +84,7 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             if (user == null)
                 return false;
 
-            user.LastLogin = DateTime.Now;
+            user.LastLogin = DateTime.UtcNow;
             await UpdateUserAsync(user);
             return true;
         }

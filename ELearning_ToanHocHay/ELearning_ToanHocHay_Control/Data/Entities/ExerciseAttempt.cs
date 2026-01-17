@@ -12,7 +12,7 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         public int StudentId { get; set; }
         public int ExerciseId { get; set; }
 
-        public DateTime StartTime { get; set; } = DateTime.Now;
+        public DateTime StartTime { get; set; } = DateTime.UtcNow;
         public DateTime? EndTime { get; set; }
 
         public double TotalScore { get; set; } = 0;

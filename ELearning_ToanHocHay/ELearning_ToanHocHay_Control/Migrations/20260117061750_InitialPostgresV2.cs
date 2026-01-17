@@ -5,7 +5,7 @@
 namespace ELearning_ToanHocHay_Control.Migrations
 {
     /// <inheritdoc />
-    public partial class UpdateUserTablev2 : Migration
+    public partial class InitialPostgresV2 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

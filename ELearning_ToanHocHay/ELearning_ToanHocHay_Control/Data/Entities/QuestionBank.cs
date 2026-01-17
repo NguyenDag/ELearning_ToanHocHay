@@ -22,7 +22,7 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
 
         public bool IsActive { get; set; } = false;
 
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation
         public Chapter? Chapter { get; set; }

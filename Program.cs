@@ -47,13 +47,6 @@ namespace ELearning_ToanHocHay_Control
                 connectionString = builder.Configuration.GetConnectionString("MyCnn")!;
             }
 
-            Console.WriteLine(
-    string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DATABASE_URL"))
-        ? "❌ Using LOCAL database"
-        : "✅ Using RAILWAY database"
-);
-
-
             builder.Services.AddDbContext<AppDbContext>(options =>
                 options.UseNpgsql(connectionString));
 
@@ -194,18 +187,20 @@ namespace ELearning_ToanHocHay_Control
 
             app.MapControllers();
 
-            using (var scope = app.Services.CreateScope())
+            /*using (var scope = app.Services.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                 db.Database.Migrate();
-            }
+            }*/
 
-            app.MapGet("/", () => Results.Ok(new
+            /*app.MapGet("/", () => Results.Ok(new
             {
                 status = "OK",
                 app = "ELearning ToanHocHay API",
                 env = app.Environment.EnvironmentName
-            }));
+            }));*/
+
+            app.MapGet("/", () => Results.Redirect("/swagger"));
 
             app.Run();
         }

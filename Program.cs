@@ -20,10 +20,36 @@ namespace ELearning_ToanHocHay_Control
             var builder = WebApplication.CreateBuilder(args);
 
             /*builder.Services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("MyCnn")));*/
+                options.UseNpgsql(builder.Configuration.GetConnectionString("MyCnn")));*/
+
+            // ===== Database configuration (Railway + Local) =====
+            var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+
+            string connectionString;
+
+            if (!string.IsNullOrEmpty(databaseUrl))
+            {
+                // Railway (Production)
+                var uri = new Uri(databaseUrl);
+                var userInfo = uri.UserInfo.Split(':');
+
+                connectionString =
+                    $"Host={uri.Host};" +
+                    $"Port={uri.Port};" +
+                    $"Database={uri.AbsolutePath.TrimStart('/')};" +
+                    $"Username={userInfo[0]};" +
+                    $"Password={userInfo[1]};" +
+                    $"Ssl Mode=Require;Trust Server Certificate=true;";
+            }
+            else
+            {
+                // Local
+                connectionString = builder.Configuration.GetConnectionString("MyCnn")!;
+            }
 
             builder.Services.AddDbContext<AppDbContext>(options =>
-                options.UseNpgsql(builder.Configuration.GetConnectionString("MyCnn")));
+                options.UseNpgsql(connectionString));
+
 
             // Register Repositories
             builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -34,7 +60,6 @@ namespace ELearning_ToanHocHay_Control
             builder.Services.AddScoped<IStudentAnswerRepository, StudentAnswerRepository>();
             builder.Services.AddScoped<IQuestionBankRepository, QuestionBankRepository>();
             builder.Services.AddScoped<IExerciseQuestionRepository, ExerciseQuestionRepository>();
-            builder.Services.AddScoped<IUserRepository, UserRepository>();
             builder.Services.AddScoped<ICurriculumRepository, CurriculumRepository>();
             builder.Services.AddScoped<IChapterRepository, ChapterRepository>();
 
@@ -44,7 +69,6 @@ namespace ELearning_ToanHocHay_Control
             builder.Services.AddScoped<IJwtService, JwtService>();
             builder.Services.AddScoped<IExerciseService, ExerciseService>();
             builder.Services.AddScoped<IExerciseAttemptService, ExerciseAttemptService>();
-            builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<ICurriculumService, CurriculumService>();
             builder.Services.AddScoped<IChapterService, ChapterService>();
             builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
@@ -160,37 +184,13 @@ namespace ELearning_ToanHocHay_Control
 
             app.MapControllers();
 
+            using (var scope = app.Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                db.Database.Migrate();
+            }
+
             app.Run();
         }
     }
 }
-
-/*
- class Program
-    {
-        static void Main(string[] args)
-        {
-            Console.WriteLine("=== Password Hash Generator ===");
-            Console.WriteLine("Nhập mật khẩu cần hash (hoặc nhấn Enter để hash 'password123'):");
-            
-            string password = Console.ReadLine();
-            if (string.IsNullOrEmpty(password))
-            {
-                password = "password123";
-            }
-
-            string hashedPassword = BCrypt.Net.BCrypt.HashPassword(password);
-            
-            Console.WriteLine($"\nMật khẩu gốc: {password}");
-            Console.WriteLine($"Password Hash: {hashedPassword}");
-            Console.WriteLine("\nCopy hash này vào file SampleUsers.sql để thay thế cho '$2a$11$XYZ...'");
-            
-            Console.WriteLine("\n=== Test Verify ===");
-            bool isValid = BCrypt.Net.BCrypt.Verify(password, hashedPassword);
-            Console.WriteLine($"Verify kết quả: {isValid}");
-            
-            Console.WriteLine("\nNhấn Enter để thoát...");
-            Console.ReadLine();
-        }
-    }
- */

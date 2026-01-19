@@ -16,7 +16,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
             _topicService = topicService;
         }
 
-        [HttpGet("chapter/{chapterId:int}")]
+        [HttpGet("by-chapter/{chapterId:int}")]
         public async Task<IActionResult> GetByChapter(int chapterId)
         {
             var result = await _topicService.GetByChapterAsync(chapterId);

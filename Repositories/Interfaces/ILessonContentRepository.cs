@@ -5,7 +5,7 @@ namespace ELearning_ToanHocHay_Control.Repositories.Interfaces
 {
     public interface ILessonContentRepository
     {
-        Task<IEnumerable<LessonContentDto>> GetByLessonAsync(int lessonId);
+        Task<IEnumerable<LessonContent>> GetByLessonAsync(int lessonId);
         Task<LessonContent?> GetByIdAsync(int contentId);
         Task<LessonContent> AddAsync(LessonContent content);
         Task<LessonContent?> UpdateAsync(LessonContent content);

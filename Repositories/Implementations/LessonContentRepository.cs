@@ -40,19 +40,11 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
                 .FirstOrDefaultAsync(x => x.ContentId == contentId);
         }
 
-        public async Task<IEnumerable<LessonContentDto>> GetByLessonAsync(int lessonId)
+        public async Task<IEnumerable<LessonContent>> GetByLessonAsync(int lessonId)
         {
             return await _context.LessonContents
                 .Where(x => x.LessonId == lessonId)
                 .OrderBy(x => x.OrderIndex)
-                .Select(x => new LessonContentDto
-                {
-                    ContentId = x.ContentId,
-                    BlockType = x.BlockType,
-                    ContentText = x.ContentText,
-                    ContentUrl = x.ContentUrl,
-                    OrderIndex = x.OrderIndex
-                })
                 .ToListAsync();
         }
 
@@ -64,6 +56,7 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             if (existing == null)
                 return null;
 
+            existing.LessonId = content.LessonId;
             existing.BlockType = content.BlockType;
             existing.ContentText = content.ContentText;
             existing.ContentUrl = content.ContentUrl;

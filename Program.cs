@@ -60,9 +60,19 @@ namespace ELearning_ToanHocHay_Control
                 options.UseNpgsql(connectionString));
 
             // ===== APP BASE URL =====
-            var appBaseUrl =
-                Environment.GetEnvironmentVariable("APP_BASE_URL")
-                ?? "https://localhost:5001";
+            var env = builder.Environment;
+
+            string appBaseUrl;
+
+            if (env.IsDevelopment())
+            {
+                appBaseUrl = "https://localhost:5001";
+            }
+            else
+            {
+                appBaseUrl = Environment.GetEnvironmentVariable("APP_BASE_URL")
+                    ?? throw new Exception("APP_BASE_URL is not configured");
+            }
 
             builder.Services.Configure<AppSettings>(options =>
             {

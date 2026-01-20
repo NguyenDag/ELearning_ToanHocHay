@@ -15,6 +15,7 @@ namespace ELearning_ToanHocHay_Control.Data
 
         #region DbSet
         public DbSet<User> Users { get; set; }
+        public DbSet<EmailVerificationToken> EmailVerificationTokens { get; set; }
         public DbSet<Student> Students { get; set; }
         public DbSet<Parent> Parents { get; set; }
         public DbSet<StudentParent> StudentParents { get; set; }
@@ -61,6 +62,29 @@ namespace ELearning_ToanHocHay_Control.Data
                 entity.HasIndex(e => e.Email).IsUnique();
                 entity.Property(e => e.FullName).IsRequired().HasMaxLength(255);
                 entity.Property(e => e.UserType).HasConversion<string>();
+            });
+
+            modelBuilder.Entity<EmailVerificationToken>(entity =>
+            {
+                entity.ToTable("EmailVerificationToken");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Token).IsRequired().HasMaxLength(255);
+                entity.HasIndex(e => e.Token)
+                    .IsUnique();
+
+                entity.Property(e => e.ExpiredAt)
+                    .IsRequired();
+
+                entity.Property(e => e.IsUsed)
+                    .HasDefaultValue(false);
+
+                entity.Property(e => e.CreatedAt)
+                    .HasDefaultValueSql("NOW()");
+
+                entity.HasOne(e => e.User)
+                    .WithMany()
+                    .HasForeignKey(e => e.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<Student>(entity =>

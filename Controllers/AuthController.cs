@@ -1,9 +1,11 @@
-﻿using ELearning_ToanHocHay_Control.Models.DTOs;
+﻿using ELearning_ToanHocHay_Control.Data;
+using ELearning_ToanHocHay_Control.Models.DTOs;
 using ELearning_ToanHocHay_Control.Services.Implementations;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace ELearning_ToanHocHay_Control.Controllers
 {
@@ -11,11 +13,13 @@ namespace ELearning_ToanHocHay_Control.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
+        private readonly AppDbContext _context;
         private readonly IAuthService _authService;
         private readonly IJwtService _jwtService;
 
-        public AuthController(IAuthService authService, IJwtService jwtService)
+        public AuthController(AppDbContext context, IAuthService authService, IJwtService jwtService)
         {
+            _context = context;
             _authService = authService;
             _jwtService = jwtService;
         }
@@ -142,6 +146,28 @@ namespace ELearning_ToanHocHay_Control.Controllers
 
             var result = await _authService.ChangePasswordAsync(userId.Value, request);
             return result.Success ? Ok(result) : BadRequest(result);
+        }
+
+        /// <summary>
+        /// Xác nhận email đăng ký
+        /// </summary>
+        /// <param name="token">Token gửi qua email</param>
+        [HttpGet("confirm-email")]
+        public async Task<IActionResult> ConfirmEmail([FromQuery] string token)
+        {
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                return BadRequest(
+                    ApiResponse<bool>.ErrorResponse("Token không hợp lệ")
+                );
+            }
+
+            var result = await _authService.ConfirmEmailAsync(token);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
         }
 
     }

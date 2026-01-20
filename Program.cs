@@ -62,7 +62,8 @@ namespace ELearning_ToanHocHay_Control
             // ===== APP BASE URL =====
             var appBaseUrl =
                 Environment.GetEnvironmentVariable("APP_BASE_URL")
-                ?? throw new Exception("APP_BASE_URL chưa được cấu hình");
+                //?? throw new Exception("APP_BASE_URL chưa được cấu hình");
+                ?? "https://localhost:5001";
 
             builder.Services.Configure<AppSettings>(options =>
             {

@@ -274,6 +274,8 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
                 await _context.SaveChangesAsync();
 
+                await transaction.CommitAsync();
+
                 // 5. Send email confirm
                 var confirmLink =
                     $"{_appSettings.BaseUrl}/api/auth/confirm-email?token={tokenValue}";
@@ -283,9 +285,6 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     user.FullName,
                     confirmLink
                 );
-
-                // 6. Commit
-                await transaction.CommitAsync();
 
                 return ApiResponse<bool>.SuccessResponse(true, "Đăng ký thành công. Vui lòng kiểm tra email để xác nhận tài khoản");
             }

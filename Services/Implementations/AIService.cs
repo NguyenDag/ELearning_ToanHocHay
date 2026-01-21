@@ -59,7 +59,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 }
 
                 var responseContent = await response.Content.ReadAsStringAsync();
-                var hintResponse = JsonSerializer.Deserialize<HintResponse>(responseContent, 
+                var hintResponse = JsonSerializer.Deserialize<HintResponse>(responseContent,
                     new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
                 _logger.LogInformation($"Hint generated successfully: {hintResponse?.Status}");
@@ -180,7 +180,8 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         public string? QuestionImageUrl { get; set; }
 
         [JsonPropertyName("options")]
-        public List<OptionDto>? Options { get; set; }
+        // SỬA: Dùng AIOptionDto thay vì OptionDto để tránh trùng
+        public List<AIOptionDto>? Options { get; set; }
     }
 
     public class FeedbackRequest
@@ -213,10 +214,12 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         public string? QuestionImageUrl { get; set; }
 
         [JsonPropertyName("options")]
-        public List<OptionDto>? Options { get; set; }
+        // SỬA: Dùng AIOptionDto thay vì OptionDto để tránh trùng
+        public List<AIOptionDto>? Options { get; set; }
     }
 
-    public class OptionDto
+    // SỬA: Đổi tên class này thành AIOptionDto
+    public class AIOptionDto
     {
         [JsonPropertyName("option_id")]
         public int OptionId { get; set; }

@@ -1,5 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using ELearning_ToanHocHay_Control.Data.Entities;
+﻿using ELearning_ToanHocHay_Control.Data.Entities;
 
 namespace ELearning_ToanHocHay_Control.Models.DTOs
 {
@@ -19,5 +18,8 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs
         public ExerciseStatus Status { get; set; }
         public int CreatedBy { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        // --- THÊM DÒNG NÀY ---
+        public List<QuestionDto> Questions { get; set; } = new List<QuestionDto>();
     }
 }

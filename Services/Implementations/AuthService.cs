@@ -177,7 +177,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     PasswordHash = _passwordHasher.HashPassword(request.Password),
                     FullName = request.FullName,
                     Phone = request.Phone,
-                    Dob = request.Dob,
+                    Dob = request.Dob, // Đảm bảo DTO gửi lên kiểu DateTime
                     UserType = request.UserType,
                     CreatedAt = DateTime.UtcNow,
                     IsActive = true
@@ -192,9 +192,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     case UserType.Student:
                         if (!request.GradeLevel.HasValue)
                         {
-                            return ApiResponse<bool>.ErrorResponse(
-                                "Học sinh phải có khối lớp"
-                            );
+                            return ApiResponse<bool>.ErrorResponse("Học sinh phải có khối lớp");
                         }
 
                         var student = new Student
@@ -218,9 +216,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                         break;
 
                     default:
-                        return ApiResponse<bool>.ErrorResponse(
-                            "Không cho phép đăng ký role này"
-                        );
+                        return ApiResponse<bool>.ErrorResponse("Không cho phép đăng ký role này");
                 }
 
                 await _context.SaveChangesAsync();
@@ -231,10 +227,16 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
+
+                // --- ĐÂY LÀ PHẦN QUAN TRỌNG ĐÃ ĐƯỢC SỬA ---
+                // Kiểm tra xem lỗi gốc (InnerException) là gì
+                var errorDetail = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+
                 return ApiResponse<bool>.ErrorResponse(
                     "Đăng ký thất bại",
-                    new List<string> { ex.Message }
+                    new List<string> { errorDetail } // Trả về lỗi chi tiết nhất
                 );
+                // ------------------------------------------
             }
         }
 

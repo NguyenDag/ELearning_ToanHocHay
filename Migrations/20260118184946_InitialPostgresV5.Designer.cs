@@ -3,6 +3,7 @@ using System;
 using ELearning_ToanHocHay_Control.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ELearning_ToanHocHay_Control.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260118184946_InitialPostgresV5")]
+    partial class InitialPostgresV5
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -180,45 +183,6 @@ namespace ELearning_ToanHocHay_Control.Migrations
                     b.HasIndex("CreatedBy");
 
                     b.ToTable("Curriculum");
-                });
-
-            modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.EmailVerificationToken", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("NOW()");
-
-                    b.Property<DateTime>("ExpiredAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsUsed")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<string>("Token")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Token")
-                        .IsUnique();
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("EmailVerificationToken", (string)null);
                 });
 
             modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.Exercise", b =>
@@ -1151,18 +1115,12 @@ namespace ELearning_ToanHocHay_Control.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
-                    b.Property<DateTime?>("EmailConfirmedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsEmailConfirmed")
                         .HasColumnType("boolean");
 
                     b.Property<DateTime?>("LastLogin")
@@ -1241,17 +1199,6 @@ namespace ELearning_ToanHocHay_Control.Migrations
                         .IsRequired();
 
                     b.Navigation("Creator");
-                });
-
-            modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.EmailVerificationToken", b =>
-                {
-                    b.HasOne("ELearning_ToanHocHay_Control.Data.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.Exercise", b =>

@@ -10,5 +10,6 @@ namespace ELearning_ToanHocHay_Control.Services.Interfaces
         Task<ApiResponse<bool>> RegisterAsync(RegisterRequestDto request);
         Task<ApiResponse<string>> RefreshTokenAsync(string token);
         Task<ApiResponse<bool>> ChangePasswordAsync(int userId, ChangePasswordDto request);
+        Task<ApiResponse<bool>> ConfirmEmailAsync(string token);
     }
 }

@@ -14,6 +14,8 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs
         public bool IsFree { get; set; }
         public bool IsActive { get; set; }
         public LessonStatus Status { get; set; }
+
+        public List<LessonContentDto> Contents { get; set; } = new();
     }
     public class CreateLessonDto
     {
@@ -26,7 +28,6 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs
         public string? Description { get; set; }
         public int? DurationMinutes { get; set; }
         public int OrderIndex { get; set; }
-        public bool IsFree { get; set; }
     }
     public class UpdateLessonDto
     {

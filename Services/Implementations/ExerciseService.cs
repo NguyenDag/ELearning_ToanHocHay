@@ -150,22 +150,35 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 .SuccessResponse(_mapper.Map<IEnumerable<ExerciseDto>>(exercises));
         }
 
-        public async Task<ApiResponse<ExerciseDto>> GetByIdAsync(int exerciseId)
+        // Trong ExerciseService.cs của Backend
+        public async Task<ApiResponse<ExerciseDetailDto>> GetByIdAsync(int exerciseId)
         {
-            try
+            // 1. Lấy thực thể kèm theo Questions và Options
+            var exercise = await _exerciseRepository.GetExerciseWithQuestionsAsync(exerciseId);
+            if (exercise == null) return ApiResponse<ExerciseDetailDto>.ErrorResponse("Không tìm thấy");
+
+            // 2. Map các thông tin cơ bản (Id, Name, Duration)
+            var dto = _mapper.Map<ExerciseDetailDto>(exercise);
+
+            // 3. Đổ dữ liệu Questions
+            if (exercise.ExerciseQuestions != null)
             {
-                var _exercise = await _exerciseRepository.GetExerciseByIdAsync(exerciseId);
-                if (_exercise == null)
-                    return ApiResponse<ExerciseDto>.ErrorResponse("Exercise not found", new List<string> { $"No exercise found with ID: {exerciseId}" });
-                return ApiResponse<ExerciseDto>.SuccessResponse(_mapper.Map<ExerciseDto>(_exercise));
+                dto.Questions = exercise.ExerciseQuestions
+                    .Where(eq => eq.Question != null) // Đảm bảo Question không null
+                    .Select(eq => new QuestionDto
+                    {
+                        QuestionId = eq.QuestionId,
+                        Content = eq.Question.QuestionText, // Gán text từ Entity vào Content của DTO
+                        Options = eq.Question.QuestionOptions?.Select(opt => new OptionDto
+                        {
+                            OptionId = opt.OptionId,
+                            Content = opt.OptionText, // Gán text từ Entity vào Content của DTO
+                            IsCorrect = opt.IsCorrect
+                        }).ToList() ?? new List<OptionDto>()
+                    }).ToList();
             }
-            catch (Exception ex)
-            {
-                return ApiResponse<ExerciseDto>.ErrorResponse(
-                    "Error retrieving exercise",
-                    new List<string> { ex.Message }
-                );
-            }
+
+            return ApiResponse<ExerciseDetailDto>.SuccessResponse(dto);
         }
 
         public async Task<ApiResponse<IEnumerable<ExerciseDto>>> GetByLessonIdAsync(int lessonId)

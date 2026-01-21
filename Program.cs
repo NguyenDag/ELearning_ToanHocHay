@@ -20,9 +20,6 @@ namespace ELearning_ToanHocHay_Control
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            /*builder.Services.AddDbContext<AppDbContext>(options =>
-                options.UseNpgsql(builder.Configuration.GetConnectionString("MyCnn")));*/
-
             // ===== Database configuration (Railway + Local) =====
             var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 
@@ -104,6 +101,10 @@ namespace ELearning_ToanHocHay_Control
             builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
             builder.Services.AddHttpClient<IAIService, AIService>();
 
+
+            builder.Services.AddSingleton<IBackgroundEmailService, BackgroundEmailService>();
+            builder.Services.AddHostedService<BackgroundEmailService>(provider =>
+                (BackgroundEmailService)provider.GetRequiredService<IBackgroundEmailService>());
 
             //Register AutoMapper
             builder.Services.AddAutoMapper(typeof(UserProfile));

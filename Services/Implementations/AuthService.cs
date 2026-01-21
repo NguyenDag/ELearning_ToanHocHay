@@ -20,6 +20,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         private readonly IPasswordHasher _passwordHasher;
         private readonly IEmailService _emailService;
         private readonly AppSettings _appSettings;
+        private readonly IBackgroundEmailService _backgroundEmailService;
         private readonly IConfiguration _configuration;
 
         public AuthService(
@@ -31,6 +32,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             IPasswordHasher passwordHasher,
             IEmailService emailService,
             IOptions<AppSettings> appSettings,
+            IBackgroundEmailService backgroundEmailService,
             IConfiguration configuration)
         {
             _context = context;
@@ -41,6 +43,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             _passwordHasher = passwordHasher;
             _emailService = emailService;
             _appSettings = appSettings.Value;
+            _backgroundEmailService = backgroundEmailService;
             _configuration = configuration;
         }
 
@@ -280,11 +283,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 var confirmLink =
                     $"{_appSettings.BaseUrl}/api/auth/confirm-email?token={tokenValue}";
 
-                await _emailService.SendConfirmEmailAsync(
-                    user.Email,
-                    user.FullName,
-                    confirmLink
-                );
+                _backgroundEmailService.QueueConfirmationEmail(user.Email,user.FullName,confirmLink);
 
                 return ApiResponse<bool>.SuccessResponse(true, "Đăng ký thành công. Vui lòng kiểm tra email để xác nhận tài khoản");
             }

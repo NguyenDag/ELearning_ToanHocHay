@@ -100,6 +100,8 @@ namespace ELearning_ToanHocHay_Control
             builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
             builder.Services.AddHttpClient<IAIService, AIService>();
+            builder.Services.AddScoped<IQuestionRepository, QuestionRepository>();
+            builder.Services.AddScoped<IQuestionService, QuestionService>();
 
 
             builder.Services.AddSingleton<IBackgroundEmailService, BackgroundEmailService>();
@@ -186,51 +188,42 @@ namespace ELearning_ToanHocHay_Control
             // Configure CORS
             builder.Services.AddCors(options =>
             {
-                options.AddPolicy("AllowAll", policy =>
+                options.AddPolicy("AllowWebApp", policy =>
                 {
-                    policy.AllowAnyOrigin()
+                    policy.WithOrigins("https://localhost:7299") // Cổng WebApp của bạn
                           .AllowAnyMethod()
-                          .AllowAnyHeader();
+                          .AllowAnyHeader()
+                          .AllowCredentials();
                 });
             });
 
-            builder.Services.AddControllers();
+            builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // Giữ nguyên tên thuộc tính (Success, Data, Message) thay vì biến thành camelCase
+        options.JsonSerializerOptions.PropertyNamingPolicy = null;
+        // Xử lý lỗi vòng lặp nếu có
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    });
 
             var app = builder.Build();
 
-
-
-            // Configure the HTTP request pipeline.
-            /*if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }*/
-
+            // 2. Cấu hình Middleware theo đúng thứ tự
             app.UseSwagger();
             app.UseSwaggerUI();
 
+            // Kích hoạt CORS ngay sau Swagger và PHẢI TRƯỚC Authentication/Authorization
+            app.UseCors("AllowWebApp");
+
             app.UseHttpsRedirection();
 
+            // Thứ tự này rất quan trọng: Auth -> Auth
             app.UseAuthentication();
             app.UseAuthorization();
 
-
             app.MapControllers();
 
-            /*using (var scope = app.Services.CreateScope())
-            {
-                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                db.Database.Migrate();
-            }*/
-
-            /*app.MapGet("/", () => Results.Ok(new
-            {
-                status = "OK",
-                app = "ELearning ToanHocHay API",
-                env = app.Environment.EnvironmentName
-            }));*/
-
+            // Chuyển hướng trang chủ về Swagger cho tiện debug
             app.MapGet("/", () => Results.Redirect("/swagger"));
 
             app.Run();

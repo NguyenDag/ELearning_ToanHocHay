@@ -15,6 +15,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         }
         public void QueueConfirmationEmail(string toEmail, string fullName, string confirmLink)
         {
+            Console.WriteLine("📥 Email queued");
             _emailQueue.Enqueue(new EmailJob
             {
                 ToEmail = toEmail,
@@ -26,6 +27,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            Console.WriteLine("🔥 BackgroundEmailService started");
             while (!stoppingToken.IsCancellationRequested)
             {
                 await _signal.WaitAsync(stoppingToken);

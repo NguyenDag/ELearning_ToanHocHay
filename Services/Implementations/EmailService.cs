@@ -16,9 +16,10 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         }
         public async Task SendConfirmEmailAsync(string toEmail, string fullName, string confirmLink)
         {
-            var subject = "Xác nhận đăng ký tài khoản";
-
-            var body = $@"
+            try
+            {
+                var subject = "Xác nhận đăng ký tài khoản";
+                var body = $@"
             <p>Xin chào <strong>{fullName}</strong>,</p>
             <p>Bạn vừa đăng ký tài khoản trên hệ thống <b>E-Learning Toán Học Hay</b>.</p>
             <p>Vui lòng nhấn vào nút bên dưới để xác nhận email:</p>
@@ -39,32 +40,43 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             <p>Trân trọng,<br/>E-Learning Team</p>
         ";
 
-            var message = new MailMessage
+                var message = new MailMessage
+                {
+                    From = new MailAddress(
+                        _emailSettings.SenderEmail,
+                        _emailSettings.SenderName
+                    ),
+                    Subject = subject,
+                    Body = body,
+                    IsBodyHtml = true
+                };
+                message.To.Add(toEmail);
+
+                using var smtp = new SmtpClient(
+                    _emailSettings.SmtpServer,
+                    _emailSettings.Port
+                )
+                {
+                    Credentials = new NetworkCredential(
+                        _emailSettings.Username,
+                        _emailSettings.Password
+                    ),
+                    EnableSsl = _emailSettings.EnableSsl
+                };
+
+                await smtp.SendMailAsync(message);
+            }
+            catch (SmtpException smtpEx)
             {
-                From = new MailAddress(
-                    _emailSettings.SenderEmail,
-                    _emailSettings.SenderName
-                ),
-                Subject = subject,
-                Body = body,
-                IsBodyHtml = true
-            };
-
-            message.To.Add(toEmail);
-
-            using var smtp = new SmtpClient(
-                _emailSettings.SmtpServer,
-                _emailSettings.Port
-            )
+                // Log lỗi SMTP cụ thể
+                Console.WriteLine($"SMTP Error: {smtpEx.StatusCode} - {smtpEx.Message}");
+                throw new Exception($"Lỗi gửi email: {smtpEx.Message}", smtpEx);
+            }
+            catch (Exception ex)
             {
-                Credentials = new NetworkCredential(
-                    _emailSettings.Username,
-                    _emailSettings.Password
-                ),
-                EnableSsl = _emailSettings.EnableSsl
-            };
-
-            await smtp.SendMailAsync(message);
+                Console.WriteLine($"Email Error: {ex.Message}");
+                throw;
+            }
         }
     }
 }

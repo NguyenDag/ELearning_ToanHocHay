@@ -41,6 +41,10 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+        public bool IsEmailConfirmed { get; set; } = false;
+
+        public DateTime? EmailConfirmedAt { get; set; }
+
         public DateTime? UpdatedAt { get; set; }
 
         public DateTime? LastLogin { get; set; }

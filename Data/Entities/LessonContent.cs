@@ -4,12 +4,17 @@ using System.Net.Mime;
 
 namespace ELearning_ToanHocHay_Control.Data.Entities
 {
-    public enum ContentType
+    public enum LessonBlockType
     {
+        Heading,        // Tiêu đề
+        Text,           // Đoạn văn thường
+        Definition,     // Khung định nghĩa (màu xanh)
+        Example,        // Ví dụ (màu xanh lá)
+        Note,           // Ghi chú (màu vàng)
+        Formula,        // Công thức
+        Image,
         Video,
         Pdf,
-        Text,
-        Image,
         Audio
     }
 
@@ -21,12 +26,14 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
 
         public int LessonId { get; set; }
 
-        public ContentType ContentType { get; set; }
+        public LessonBlockType BlockType { get; set; }
 
+        // Nội dung text (Markdown / LaTeX)
+        public string? ContentText { get; set; }
+
+        // Cho video, image, pdf
         [MaxLength(500)]
         public string? ContentUrl { get; set; }
-
-        public string? ContentText { get; set; }
 
         public int OrderIndex { get; set; }
 

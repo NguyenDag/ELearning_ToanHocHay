@@ -25,16 +25,29 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             return lesson;
         }
 
+        public async Task<bool> DeleteAsync(int lessonId)
+        {
+            var lesson = await _context.Lessons.FindAsync(lessonId);
+            if (lesson == null)
+                return false;
+
+            _context.Lessons.Remove(lesson);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
         public async Task<Lesson?> GetByIdAsync(int lessonId)
         {
             return await _context.Lessons
-            .FirstOrDefaultAsync(l => l.LessonId == lessonId);
+                .Include(x => x.LessonContents)
+                .FirstOrDefaultAsync(l => l.LessonId == lessonId);
         }
 
         public async Task<IEnumerable<Lesson>> GetByTopicIdAsync(int topicId)
         {
             return await _context.Lessons
-            .Where(l => l.TopicId == topicId)
+            .Where(l => l.TopicId == topicId && l.Status == LessonStatus.Published)
+            .Include(x => x.LessonContents)
             .OrderBy(l => l.OrderIndex)
             .ToListAsync();
         }

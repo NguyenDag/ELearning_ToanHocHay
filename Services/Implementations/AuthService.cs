@@ -6,6 +6,7 @@ using ELearning_ToanHocHay_Control.Repositories.Implementations;
 using ELearning_ToanHocHay_Control.Repositories.Interfaces;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace ELearning_ToanHocHay_Control.Services.Implementations
 {
@@ -17,6 +18,9 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         private readonly IParentRepository _parentRepository;
         private readonly IJwtService _jwtService;
         private readonly IPasswordHasher _passwordHasher;
+        private readonly IEmailService _emailService;
+        private readonly AppSettings _appSettings;
+        private readonly IBackgroundEmailService _backgroundEmailService;
         private readonly IConfiguration _configuration;
 
         public AuthService(
@@ -26,6 +30,9 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             IParentRepository parentRepository,
             IJwtService jwtService,
             IPasswordHasher passwordHasher,
+            IEmailService emailService,
+            IOptions<AppSettings> appSettings,
+            IBackgroundEmailService backgroundEmailService,
             IConfiguration configuration)
         {
             _context = context;
@@ -34,6 +41,9 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             _parentRepository = parentRepository;
             _jwtService = jwtService;
             _passwordHasher = passwordHasher;
+            _emailService = emailService;
+            _appSettings = appSettings.Value;
+            _backgroundEmailService = backgroundEmailService;
             _configuration = configuration;
         }
 
@@ -54,6 +64,27 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             return ApiResponse<bool>.SuccessResponse(true, "Đổi mật khẩu thành công");
         }
 
+        public async Task<ApiResponse<bool>> ConfirmEmailAsync(string token)
+        {
+            var emailToken = await _context.EmailVerificationTokens
+                .Include(x => x.User)
+                .FirstOrDefaultAsync(x =>
+                x.Token == token &&
+                !x.IsUsed &&
+                x.ExpiredAt > DateTime.UtcNow);
+
+            if (emailToken == null)
+                return ApiResponse<bool>.ErrorResponse("Token không hợp lệ");
+
+            emailToken.User.IsEmailConfirmed = true;
+            emailToken.User.EmailConfirmedAt = DateTime.UtcNow;
+            emailToken.IsUsed = true;
+
+            await _context.SaveChangesAsync();
+
+            return ApiResponse<bool>.SuccessResponse(true, "Xác nhận email thành công");
+        }
+
         public async Task<ApiResponse<LoginResponseDto>> LoginAsync(LoginRequestDto request)
         {
             try
@@ -63,6 +94,13 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 if (user == null)
                 {
                     return ApiResponse<LoginResponseDto>.ErrorResponse("Email hoặc mật khẩu không đúng", new List<string> { "Thông tin đăng nhập không hợp lệ" });
+                }
+
+                if (!user.IsEmailConfirmed)
+                {
+                    return ApiResponse<LoginResponseDto>.ErrorResponse(
+                        "Vui lòng xác nhận email trước khi đăng nhập"
+                    );
                 }
 
                 // Check account active or not
@@ -219,10 +257,31 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                         return ApiResponse<bool>.ErrorResponse("Không cho phép đăng ký role này");
                 }
 
+
+                // 4. Create Email Verification Token
+                var tokenValue = Guid.NewGuid().ToString("N");
+
+                var emailToken = new EmailVerificationToken
+                {
+                    UserId = user.UserId,
+                    Token = tokenValue,
+                    ExpiredAt = DateTime.UtcNow.AddHours(24),
+                    IsUsed = false
+                };
+
+                await _context.EmailVerificationTokens.AddAsync(emailToken);
+
                 await _context.SaveChangesAsync();
+
                 await transaction.CommitAsync();
 
-                return ApiResponse<bool>.SuccessResponse(true, "Đăng ký thành công");
+                // 5. Send email confirm
+                var confirmLink =
+                    $"{_appSettings.BaseUrl}/api/auth/confirm-email?token={tokenValue}";
+
+                _backgroundEmailService.QueueConfirmationEmail(user.Email,user.FullName,confirmLink);
+
+                return ApiResponse<bool>.SuccessResponse(true, "Đăng ký thành công. Vui lòng kiểm tra email để xác nhận tài khoản");
             }
             catch (Exception ex)
             {

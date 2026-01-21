@@ -2,6 +2,7 @@
 using ELearning_ToanHocHay_Control.Data.Entities;
 using ELearning_ToanHocHay_Control.Models.DTOs;
 
+
 namespace ELearning_ToanHocHay_Control.Services.Helpers
 {
     public class UserProfile : Profile
@@ -11,7 +12,7 @@ namespace ELearning_ToanHocHay_Control.Services.Helpers
             // Entity -> DTO
             CreateMap<User, UserDto>();
             CreateMap<Exercise, ExerciseDto>();
-
+                
             // DTO -> Entity
             CreateMap<UserDto, User>()
                 .ForMember(dest => dest.PasswordHash, opt => opt.Ignore())
@@ -24,6 +25,20 @@ namespace ELearning_ToanHocHay_Control.Services.Helpers
 
             CreateMap<ExerciseDto, Exercise>();
             CreateMap<ExerciseAttemptDto, Exercise?>();
+
+            CreateMap<Exercise, ExerciseDetailDto>()
+        .ForMember(dest => dest.Questions, opt => opt.MapFrom(src =>
+            src.ExerciseQuestions.Select(eq => eq.Question)));
+
+            // Thêm Mapping cho nội dung câu hỏi
+            CreateMap<Question, QuestionDto>()
+                .ForMember(dest => dest.Content, opt => opt.MapFrom(src => src.QuestionText))
+                .ForMember(dest => dest.Options, opt => opt.MapFrom(src => src.QuestionOptions));
+
+            // Thêm Mapping cho các phương án trả lời
+            CreateMap<QuestionOption, OptionDto>()
+                .ForMember(dest => dest.OptionId, opt => opt.MapFrom(src => src.OptionId))
+                .ForMember(dest => dest.Content, opt => opt.MapFrom(src => src.OptionText));
         }
     }
 }

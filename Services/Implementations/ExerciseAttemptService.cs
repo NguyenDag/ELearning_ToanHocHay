@@ -241,37 +241,32 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 {
                     answerLookup.TryGetValue(eq.QuestionId, out var answer);
                     var question = eq.Question;
-
                     bool isCorrect = false;
 
-                    // Nếu có trả lời thì mới chấm
                     if (answer != null)
                     {
+                        // CHUẨN HÓA VIỆC SO SÁNH TẠI ĐÂY
                         switch (question.QuestionType)
                         {
                             case QuestionType.MultipleChoice:
                                 if (answer.SelectedOptionId.HasValue)
                                 {
-                                    var correctOption = question.QuestionOptions
-                                        ?.FirstOrDefault(o => o.IsCorrect);
-
-                                    isCorrect = correctOption?.OptionId == answer.SelectedOptionId;
+                                    var correctOption = question.QuestionOptions?.FirstOrDefault(o => o.IsCorrect);
+                                    isCorrect = (correctOption?.OptionId == answer.SelectedOptionId);
                                 }
                                 break;
 
                             case QuestionType.TrueFalse:
-                                isCorrect = answer.AnswerText?.Trim().ToLower() ==
-                                            question.CorrectAnswer?.Trim().ToLower();
-                                break;
-
                             case QuestionType.FillBlank:
-                                isCorrect = answer.AnswerText?.Trim().ToLower() ==
-                                            question.CorrectAnswer?.Trim().ToLower();
+                                // Sử dụng Trim() và ToLower() cho cả 2 vế để loại bỏ khoảng trắng và không phân biệt hoa thường
+                                string studentAns = (answer.AnswerText ?? "").Trim().ToLower();
+                                string correctAns = (question.CorrectAnswer ?? "").Trim().ToLower();
+                                isCorrect = (!string.IsNullOrEmpty(correctAns) && studentAns == correctAns);
                                 break;
                         }
                     }
-                    // else: không trả lời => sai
 
+                    // CẬP NHẬT ĐIỂM DỰA TRÊN KẾT QUẢ SO SÁNH MỚI
                     var maxScore = eq.Score;
                     var pointsEarned = isCorrect ? maxScore : 0;
 
@@ -285,7 +280,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                         wrongAnswers++;
                     }
 
-                    // Cập nhật Answer nếu có
+                    // Cập nhật vào DB để trang Result hiển thị đúng
                     if (answer != null)
                     {
                         answer.IsCorrect = isCorrect;
@@ -497,17 +492,20 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         {
             try
             {
-                // Kiểm tra xem đã có bài làm đang active chưa
-                var hasActive = await _attemptRepository.HasActiveAttemptAsync(
-                    dto.StudentId, dto.ExerciseId);
+#if !DEBUG
+        // Đoạn này chỉ chạy khi bạn đóng gói sản phẩm (Release)
+        // Khi đang chạy trên máy (Debug), nó sẽ bỏ qua bước check này
+        var hasActive = await _attemptRepository.HasActiveAttemptAsync(
+            dto.StudentId, dto.ExerciseId);
 
-                if (hasActive)
-                {
-                    return ApiResponse<ExerciseAttemptDto>.ErrorResponse(
-                        "Student already has an active attempt for this exercise",
-                        new List<string> { "Please complete or cancel the current attempt first" }
-                    );
-                }
+        if (hasActive)
+        {
+            return ApiResponse<ExerciseAttemptDto>.ErrorResponse(
+                "Student already has an active attempt for this exercise",
+                new List<string> { "Please complete or cancel the current attempt first" }
+            );
+        }
+#endif
 
                 // Lấy thông tin bài tập
                 var exercise = await _exerciseRepository.GetExerciseWithQuestionsAsync(dto.ExerciseId);

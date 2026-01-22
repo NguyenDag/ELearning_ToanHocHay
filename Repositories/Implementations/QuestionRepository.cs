@@ -16,13 +16,12 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
 
         public async Task<Question?> GetQuestionByIdAsync(int id)
         {
-            // Quan trọng: Include cả Options để lấy danh sách đáp án
             return await _context.Questions
                 .Include(q => q.QuestionOptions)
                 .FirstOrDefaultAsync(q => q.QuestionId == id);
         }
 
-        public async Task<Question> AddQuestionAsync(Question question)
+        public async Task<Question> CreateAsync(Question question)
         {
             _context.Questions.Add(question);
             await _context.SaveChangesAsync();

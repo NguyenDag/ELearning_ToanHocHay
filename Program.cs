@@ -97,7 +97,8 @@ namespace ELearning_ToanHocHay_Control
             builder.Services.AddScoped<ITopicService, TopicService>();
             builder.Services.AddScoped<ILessonSevice, LessonService>();
             builder.Services.AddScoped<ILessonContentService, LessonContentService>();
-            builder.Services.AddScoped<IEmailService, EmailService>();
+            //builder.Services.AddScoped<IEmailService, EmailService>();
+            builder.Services.AddScoped<IEmailService, SendGridEmailService>();
             builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
             builder.Services.AddHttpClient<IAIService, AIService>();
             builder.Services.AddScoped<IQuestionRepository, QuestionRepository>();

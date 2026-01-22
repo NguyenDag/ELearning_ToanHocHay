@@ -7,7 +7,6 @@ namespace ELearning_ToanHocHay_Control.Repositories.Interfaces
         // Hàm lấy 1 câu hỏi (kèm đáp án) theo ID
         Task<Question?> GetQuestionByIdAsync(int id);
 
-        // Hàm thêm mới câu hỏi
-        Task<Question> AddQuestionAsync(Question question);
+        Task<Question> CreateAsync(Question question);
     }
 }

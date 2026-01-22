@@ -1,4 +1,4 @@
-﻿using ELearning_ToanHocHay_Control.Data;
+﻿/*using ELearning_ToanHocHay_Control.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -125,4 +125,4 @@ namespace ELearning_ToanHocHay_Control.Controllers
             }
         }
     }
-}
+}*/

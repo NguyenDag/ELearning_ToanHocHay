@@ -32,13 +32,13 @@ namespace ELearning_ToanHocHay_Control.Services.Helpers
 
             // Thêm Mapping cho nội dung câu hỏi
             CreateMap<Question, QuestionDto>()
-                .ForMember(dest => dest.Content, opt => opt.MapFrom(src => src.QuestionText))
+                .ForMember(dest => dest.QuestionText, opt => opt.MapFrom(src => src.QuestionText))
                 .ForMember(dest => dest.Options, opt => opt.MapFrom(src => src.QuestionOptions));
 
             // Thêm Mapping cho các phương án trả lời
-            CreateMap<QuestionOption, OptionDto>()
+            CreateMap<QuestionOption, QuestionOptionDto>()
                 .ForMember(dest => dest.OptionId, opt => opt.MapFrom(src => src.OptionId))
-                .ForMember(dest => dest.Content, opt => opt.MapFrom(src => src.OptionText));
+                .ForMember(dest => dest.OptionText, opt => opt.MapFrom(src => src.OptionText));
         }
     }
 }

@@ -168,13 +168,15 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     .Select(eq => new QuestionDto
                     {
                         QuestionId = eq.QuestionId,
-                        Content = eq.Question.QuestionText, // Gán text từ Entity vào Content của DTO
-                        Options = eq.Question.QuestionOptions?.Select(opt => new OptionDto
+                        QuestionText = eq.Question.QuestionText,
+                        QuestionType = eq.Question.QuestionType,
+                        DifficultyLevel = eq.Question.DifficultyLevel,
+                        Options = eq.Question.QuestionOptions?.Select(opt => new QuestionOptionDto
                         {
                             OptionId = opt.OptionId,
-                            Content = opt.OptionText, // Gán text từ Entity vào Content của DTO
+                            OptionText = opt.OptionText,
                             IsCorrect = opt.IsCorrect
-                        }).ToList() ?? new List<OptionDto>()
+                        }).ToList() ?? new List<QuestionOptionDto>()
                     }).ToList();
             }
 

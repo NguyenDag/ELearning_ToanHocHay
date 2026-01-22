@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Net.Mail;
 using ELearning_ToanHocHay_Control.Models.DTOs;
+using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -105,6 +106,37 @@ namespace ELearning_ToanHocHay_Control.Controllers
                     innerError = ex.InnerException?.Message
                 });
             }
+        }
+
+        [HttpGet("check-sendgrid-config")]
+        public IActionResult CheckSendGridConfig(
+            [FromServices] IConfiguration config,
+            [FromServices] IEmailService emailService)
+        {
+            var apiKey = config["SendGrid:ApiKey"];
+            var senderEmail = config["SendGrid:SenderEmail"];
+            var senderName = config["SendGrid:SenderName"];
+
+            return Ok(new
+            {
+                hasApiKey = !string.IsNullOrEmpty(apiKey),
+                apiKeyPrefix = apiKey?.Substring(0, 10) + "...",
+                senderEmail = senderEmail,
+                senderName = senderName,
+                emailServiceType = emailService.GetType().Name
+            });
+        }
+
+        [HttpGet("current-config")]
+        public IActionResult GetCurrentConfig([FromServices] IConfiguration config)
+        {
+            return Ok(new
+            {
+                senderEmail = config["SendGrid:SenderEmail"],
+                senderName = config["SendGrid:SenderName"],
+                hasApiKey = !string.IsNullOrEmpty(config["SendGrid:ApiKey"]),
+                apiKeyLength = config["SendGrid:ApiKey"]?.Length ?? 0
+            });
         }
     }
 }

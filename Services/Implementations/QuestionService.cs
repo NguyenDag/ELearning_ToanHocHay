@@ -9,7 +9,6 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
     public class QuestionService : IQuestionService
     {
         private readonly IQuestionRepository _questionRepository;
-        // Nếu bạn dùng AutoMapper thì inject vào, ở đây mình map tay cho chắc ăn
 
         public QuestionService(IQuestionRepository questionRepository)
         {
@@ -20,41 +19,46 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         {
             try
             {
-                // 1. Chuyển từ DTO (CreateQuestionDto) sang Entity (Question)
-                var newQuestion = new Question
+                var question = new Question
                 {
-                    QuestionText = dto.Content, // Map Content -> QuestionText
-                    QuestionType = (QuestionType)dto.QuestionType, // Ép kiểu int sang enum (nếu cần)
-                    Level = dto.Level,
-                    IsActive = true,
+                    BankId = dto.BankId,
+                    QuestionText = dto.QuestionText,
+                    QuestionImageUrl = dto.QuestionImageUrl,
+                    QuestionType = dto.QuestionType,
+                    DifficultyLevel = dto.DifficultyLevel,
+                    CorrectAnswer = dto.CorrectAnswer,
+                    Explanation = dto.Explanation,
+                    Status = QuestionStatus.PendingReview,
+                    // ID mẫu, sẽ lấy Id từ token
+                    CreatedBy = 6,
                     CreatedAt = DateTime.UtcNow,
-                    CreatedBy = 1, // Tạm thời fix cứng Admin ID = 1
-
-                    // Map danh sách đáp án
-                    QuestionOptions = dto.Options.Select(o => new QuestionOption
+                    QuestionOptions = dto.Options?.Select(o => new QuestionOption
                     {
-                        OptionText = o.Content, // Map Content -> OptionText
-                        IsCorrect = o.IsCorrect
+                        OptionText = o.OptionText,
+                        IsCorrect = o.IsCorrect,
+                        OrderIndex = o.OrderIndex
                     }).ToList()
                 };
 
                 // 2. Gọi Repository lưu vào DB
-                var savedQuestion = await _questionRepository.AddQuestionAsync(newQuestion);
+                var result = await _questionRepository.CreateAsync(question);
 
                 // 3. Chuyển ngược lại từ Entity sang DTO (QuestionDto) để trả về
-                var resultDto = new QuestionDto
+                var responseDto = new QuestionDto
                 {
-                    QuestionId = savedQuestion.QuestionId,
-                    Content = savedQuestion.QuestionText,
-                    Options = savedQuestion.QuestionOptions.Select(o => new OptionDto
+                    QuestionId = result.QuestionId,
+                    QuestionText = result.QuestionText,
+                    QuestionType = result.QuestionType,
+                    DifficultyLevel = result.DifficultyLevel,
+                    Options = result.QuestionOptions?.Select(o => new QuestionOptionDto
                     {
                         OptionId = o.OptionId,
-                        Content = o.OptionText,
+                        OptionText = o.OptionText,
                         IsCorrect = o.IsCorrect
                     }).ToList()
                 };
 
-                return ApiResponse<QuestionDto>.SuccessResponse(resultDto, "Tạo câu hỏi thành công!");
+                return ApiResponse<QuestionDto>.SuccessResponse(responseDto, "Tạo câu hỏi thành công!");
             }
             catch (Exception ex)
             {

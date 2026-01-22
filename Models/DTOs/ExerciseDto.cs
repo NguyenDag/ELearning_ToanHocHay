@@ -19,7 +19,6 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs
         public int CreatedBy { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        // --- THÊM DÒNG NÀY ---
         public List<QuestionDto> Questions { get; set; } = new List<QuestionDto>();
     }
 }

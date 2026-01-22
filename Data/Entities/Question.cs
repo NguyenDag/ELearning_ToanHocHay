@@ -5,18 +5,18 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
 {
     public enum QuestionType
     {
-        MultipleChoice = 0,
-        TrueFalse = 1,
-        FillBlank = 2,
-        Essay = 3
+        MultipleChoice,
+        TrueFalse,
+        FillBlank,
+        Essay
     }
 
     // (Có thể giữ hoặc bỏ Enum DifficultyLevel nếu chuyển sang dùng int Level)
     public enum DifficultyLevel
     {
-        Easy = 1,
-        Medium = 2,
-        Hard = 3
+        Easy,
+        Medium,
+        Hard
     }
 
     public enum QuestionStatus
@@ -27,14 +27,13 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         Rejected
     }
 
-    [Table("Question")] // Đảm bảo tên bảng khớp với SQL đã chạy
+    [Table("Question")] 
     public class Question
     {
         [Key]
         public int QuestionId { get; set; }
 
-        // Nếu hệ thống của bạn chưa có bảng QuestionBank, có thể để nullable hoặc comment lại nếu lỗi
-        public int? BankId { get; set; }
+        public int BankId { get; set; }
 
         public required string QuestionText { get; set; }
 
@@ -43,22 +42,14 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
 
         public required QuestionType QuestionType { get; set; }
 
-        // --- SỬA ĐỔI QUAN TRỌNG ĐỂ HẾT LỖI ---
-
-        // 1. Đổi tên thành Level (kiểu int) để khớp với code Service & SQL
-        public int Level { get; set; } = 1;
-
-        // 2. Thêm TotalScores vì Service có dùng
-        public double TotalScores { get; set; } = 1;
-
-        // -------------------------------------
+        public DifficultyLevel DifficultyLevel { get; set; }
 
         // Đáp án đúng (dùng cho TrueFalse, FillInBlank)
         public string? CorrectAnswer { get; set; }
 
         public string? Explanation { get; set; }
 
-        public QuestionStatus Status { get; set; } = QuestionStatus.Approved;
+        public QuestionStatus Status { get; set; } = QuestionStatus.Draft;
         public bool IsActive { get; set; } = true;
 
         public int CreatedBy { get; set; }

@@ -58,7 +58,7 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
         public async Task<User?> GetByIdAsync(int userId)
         {
             return await _context.Users
-                .FindAsync(userId);
+                .FirstOrDefaultAsync(u => u.UserId == userId);
         }
 
         public async Task<User?> UpdateUserAsync(User user)

@@ -27,7 +27,6 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            Console.WriteLine("🔥 BackgroundEmailService started");
             while (!stoppingToken.IsCancellationRequested)
             {
                 await _signal.WaitAsync(stoppingToken);

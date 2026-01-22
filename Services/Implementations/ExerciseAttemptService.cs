@@ -33,167 +33,6 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             _mapper = mapper;
             _exerciseQuestionRepository = exerciseQuestionRepository;
         }
-        /*public async Task<ApiResponse<ExerciseResultDto>> CompleteExerciseAsync(CompleteExerciseDto dto)
-        {
-            try
-            {
-                // Get attempt detail (not scored)
-                var attempt = await _attemptRepository.GetAttemptWithDetailsAsync(dto.AttemptId);
-
-                // Check has attempt or not
-                if (attempt == null)
-                {
-                    return ApiResponse<ExerciseResultDto>.ErrorResponse(
-                        "Attempt not found",
-                        new List<string> { $"No attempt found with ID: {dto.AttemptId}" }
-                    );
-                }
-
-                // Check attempt finished or not
-                if (attempt.EndTime != null)
-                {
-                    return ApiResponse<ExerciseResultDto>.ErrorResponse(
-                        "Attempt already completed",
-                        new List<string> { "This attempt has already been completed" }
-                    );
-                }
-
-                // Lấy tất cả câu trả lời
-                var answers = await _answerRepository.GetAttemptAnswersAsync(dto.AttemptId);
-
-                // Lấy ExerciseQuestion để biết điểm từng câu
-                var exerciseQuestions = await _exerciseQuestionRepository
-                    .GetByExerciseIdAsync(attempt.ExerciseId);
-
-                var scoreLookup = exerciseQuestions.ToDictionary(
-                    eq => eq.QuestionId,
-                    eq => eq.Score
-                );
-
-                // Map Answer theo QuestionId
-                var answerLookup = answers.ToDictionary(a => a.QuestionId);
-
-                // Tính điểm
-                double totalScore = 0;
-                int correctAnswers = 0;
-                int wrongAnswers = 0;
-
-                var answerDetails = new List<AnswerDetailDto>();
-
-                foreach (var eq in exerciseQuestions)
-                {
-                    answerLookup.TryGetValue(eq.QuestionId, out var answer);
-                    bool isCorrect = false;
-
-                    var question = answer.Question;
-
-                    if (answer != null)
-                    {
-                        
-
-                        if (question.QuestionType == QuestionType.MultipleChoice &&
-                            answer.SelectedOptionId.HasValue)
-                        {
-                            var correctOption = question.QuestionOptions
-                                .FirstOrDefault(o => o.IsCorrect);
-
-                            isCorrect = correctOption?.OptionId == answer.SelectedOptionId;
-                        }
-                        else if (question.QuestionType == QuestionType.TrueFalse)
-                        {
-                            isCorrect = answer.AnswerText?.ToLower() ==
-                                        question.CorrectAnswer?.ToLower();
-                        }
-                        else if (question.QuestionType == QuestionType.FillBlank)
-                        {
-                            isCorrect = answer.AnswerText?.Trim().ToLower() ==
-                                        question.CorrectAnswer?.Trim().ToLower();
-                        }
-                    }
-
-                    // LẤY ĐIỂM TỪ ExerciseQuestion
-                    //var maxScore = scoreLookup.TryGetValue(question.QuestionId, out var s) ? s : 0;
-                    var maxScore = eq.Score;
-                    var pointsEarned = isCorrect ? maxScore : 0;
-
-                    if (isCorrect)
-                    {
-                        totalScore += pointsEarned;
-                        correctAnswers++;
-                    }
-                    else
-                    {
-                        wrongAnswers++;
-                    }
-
-                    // Nếu có answer thì update
-                    if (answer != null)
-                    {
-                        answer.IsCorrect = isCorrect;
-                        answer.PointsEarned = pointsEarned;
-                        await _answerRepository.UpdateAnswerAsync(answer);
-                    }
-
-                    answerDetails.Add(new AnswerDetailDto
-                    {
-                        QuestionId = question.QuestionId,
-                        QuestionText = question.QuestionText,
-                        StudentAnswer = answer.AnswerText ??
-                            question.QuestionOptions?.FirstOrDefault(o => o.OptionId == answer.SelectedOptionId)?.OptionText,
-                        CorrectAnswer = question.CorrectAnswer ??
-                            question.QuestionOptions?.FirstOrDefault(o => o.IsCorrect)?.OptionText,
-                        IsCorrect = isCorrect,
-                        PointsEarned = pointsEarned,
-                        MaxScores = maxScore,
-                        Explanation = question.Explanation
-                    });
-                }
-
-                // Cập nhật attempt
-                attempt.EndTime = DateTime.UtcNow;
-                attempt.TotalScore = totalScore;
-                attempt.CorrectAnswers = correctAnswers;
-                attempt.WrongAnswers = wrongAnswers;
-                attempt.CompletionPercentage = attempt.MaxScore > 0
-                    ? (decimal)(totalScore / attempt.MaxScore) * 100
-                    : 0;
-
-                await _attemptRepository.UpdateAttemptAsync(attempt);
-
-                // Tạo result DTO
-                var result = new ExerciseResultDto
-                {
-                    AttemptId = attempt.AttemptId,
-                    StudentId = attempt.StudentId,
-                    StudentName = attempt.Student?.User?.FullName,
-                    ExerciseName = attempt.Exercise?.ExerciseName,
-                    StartTime = attempt.StartTime,
-                    EndTime = attempt.EndTime.Value,
-                    Duration = attempt.EndTime.Value - attempt.StartTime,
-                    TotalScore = attempt.TotalScore,
-                    MaxScore = attempt.MaxScore,
-                    CompletionPercentage = attempt.CompletionPercentage,
-                    CorrectAnswers = attempt.CorrectAnswers,
-                    WrongAnswers = attempt.WrongAnswers,
-                    TotalQuestions = answers.Count,
-                    IsPassed = attempt.Exercise != null &&
-                               attempt.TotalScore >= attempt.Exercise.PassingScore,
-                    AnswerDetails = answerDetails
-                };
-
-                return ApiResponse<ExerciseResultDto>.SuccessResponse(
-                    result,
-                    "Exercise completed successfully"
-                );
-            }
-            catch (Exception ex)
-            {
-                return ApiResponse<ExerciseResultDto>.ErrorResponse(
-                    "Error completing exercise",
-                    new List<string> { ex.Message }
-                );
-            }
-        }*/
 
         public async Task<ApiResponse<ExerciseResultDto>> CompleteExerciseAsync(CompleteExerciseDto dto)
         {
@@ -749,6 +588,29 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 );
             }
         }
+
+        public async Task<ApiResponse<bool>> SubmitExamAsync(SubmitExamDto dto)
+        {
+            try
+            {
+                var answers = dto.Answers.Select(a => new StudentAnswer
+                {
+                    AttemptId = dto.AttemptId,
+                    QuestionId = a.QuestionId,
+                    SelectedOptionId = a.SelectedOptionId
+                }).ToList();
+
+                await _attemptRepository.SubmitExamAsync(dto.AttemptId, answers);
+
+                return ApiResponse<bool>.SuccessResponse(true, "Nộp bài thành công");
+            }
+            catch (Exception ex)
+            {
+                return ApiResponse<bool>.ErrorResponse("Lỗi khi nộp bài", new List<string> { ex.Message });
+            }
+        }
+
+
         // Helper method
         private async Task<ExerciseAttemptDto> MapToAttemptDto(ExerciseAttempt attempt, Exercise exercise)
         {

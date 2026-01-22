@@ -89,6 +89,9 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         {
             try
             {
+                int? studentId = null;
+                int? parentId = null;
+
                 var user = await _userRepository.GetByEmailAsync(request.Email);
                 // Check user exist or not
                 if (user == null)
@@ -121,8 +124,36 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     );
                 }
 
+                if (user.UserType == UserType.Student)
+                {
+                    var student = await _studentRepository.GetByUserIdAsync(user.UserId);
+                    if (student == null)
+                    {
+                        return ApiResponse<LoginResponseDto>.ErrorResponse(
+                            "Không tìm thấy thông tin học sinh",
+                            new List<string> { "Dữ liệu hệ thống không đồng bộ" }
+                        );
+                    }
+
+                    studentId = student.StudentId;
+                }
+
+                if (user.UserType == UserType.Parent)
+                {
+                    var parent = await _parentRepository.GetByUserIdAsync(user.UserId);
+                    if (parent == null)
+                    {
+                        return ApiResponse<LoginResponseDto>.ErrorResponse(
+                            "Không tìm thấy thông tin phụ huynh",
+                            new List<string> { "Dữ liệu hệ thống không đồng bộ" }
+                        );
+                    }
+
+                    parentId = parent.ParentId;
+                }
+
                 // Generate JWT token
-                var token = _jwtService.GenerateToken(user);
+                var token = _jwtService.GenerateToken(user, studentId, parentId);
                 var expirationMinutes = int.Parse(_configuration["JwtSettings:ExpirationMinutes"]);
 
                 // Update last login
@@ -132,9 +163,11 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 var response = new LoginResponseDto
                 {
                     UserId = user.UserId,
+                    StudentId = studentId,
+                    ParentId = parentId,
                     Email = user.Email,
                     FullName = user.FullName,
-                    UserType = user.UserType.ToString(),
+                    UserType = user.UserType,
                     Token = token,
                     TokenExpiration = DateTime.UtcNow.AddMinutes(expirationMinutes),
                     AvatarUrl = user.AvatarUrl
@@ -169,6 +202,8 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         {
             try
             {
+                int? studentId = null;
+                int? parentId = null;
                 var principal = _jwtService.ValidateToken(token);
                 if (principal == null)
                 {
@@ -187,7 +222,35 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     return ApiResponse<string>.ErrorResponse("User không tồn tại hoặc bị khóa");
                 }
 
-                var newToken = _jwtService.GenerateToken(user);
+                if (user.UserType == UserType.Student)
+                {
+                    var student = await _studentRepository.GetByUserIdAsync(user.UserId);
+                    if (student == null)
+                    {
+                        return ApiResponse<string>.ErrorResponse(
+                            "Không tìm thấy thông tin học sinh",
+                            new List<string> { "Dữ liệu hệ thống không đồng bộ" }
+                        );
+                    }
+
+                    studentId = student.StudentId;
+                }
+
+                if (user.UserType == UserType.Parent)
+                {
+                    var parent = await _parentRepository.GetByUserIdAsync(user.UserId);
+                    if (parent == null)
+                    {
+                        return ApiResponse<string>.ErrorResponse(
+                            "Không tìm thấy thông tin phụ huynh",
+                            new List<string> { "Dữ liệu hệ thống không đồng bộ" }
+                        );
+                    }
+
+                    parentId = parent.ParentId;
+                }
+
+                var newToken = _jwtService.GenerateToken(user, studentId, parentId);
                 return ApiResponse<string>.SuccessResponse(newToken, "Refresh token thành công");
             }
             catch (Exception ex)
@@ -279,7 +342,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 var confirmLink =
                     $"{_appSettings.BaseUrl}/api/auth/confirm-email?token={tokenValue}";
 
-                _backgroundEmailService.QueueConfirmationEmail(user.Email,user.FullName,confirmLink);
+                _backgroundEmailService.QueueConfirmationEmail(user.Email, user.FullName, confirmLink);
 
                 return ApiResponse<bool>.SuccessResponse(true, "Đăng ký thành công. Vui lòng kiểm tra email để xác nhận tài khoản");
             }

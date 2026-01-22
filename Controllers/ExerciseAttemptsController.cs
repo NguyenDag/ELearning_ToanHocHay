@@ -61,6 +61,27 @@ namespace ELearning_ToanHocHay_Control.Controllers
         }
 
         /// <summary>
+        /// Submit toàn bộ bài thi trong 1 request
+        /// </summary>
+        [HttpPost("submit")]
+        public async Task<ActionResult<ApiResponse<bool>>> SubmitExam(
+            [FromBody] SubmitExamDto dto)
+        {
+            if (dto == null || dto.AttemptId <= 0 || dto.Answers == null || !dto.Answers.Any())
+            {
+                return BadRequest(ApiResponse<bool>.ErrorResponse("Dữ liệu nộp bài không hợp lệ"));
+            }
+
+            var response = await _attemptService.SubmitExamAsync(dto);
+
+            if (!response.Success)
+                return BadRequest(response);
+
+            return Ok(response);
+        }
+
+
+        /// <summary>
         /// Hoàn thành bài tập và tính điểm
         /// </summary>
         [HttpPost("complete")]

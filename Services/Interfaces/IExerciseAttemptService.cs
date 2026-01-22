@@ -21,5 +21,8 @@ namespace ELearning_ToanHocHay_Control.Services.Interfaces
 
         // Lấy lịch sử làm bài của học sinh
         Task<ApiResponse<List<ExerciseResultDto>>> GetStudentHistoryAsync(int studentId);
+
+        // Nộp toàn bộ câu hỏi
+        Task<ApiResponse<bool>> SubmitExamAsync(SubmitExamDto dto);
     }
 }

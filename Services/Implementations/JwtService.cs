@@ -1,6 +1,7 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using ELearning_ToanHocHay_Control.Common;
 using ELearning_ToanHocHay_Control.Data.Entities;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.IdentityModel.Tokens;
@@ -24,21 +25,35 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             _expirationMinutes = int.Parse(_configuration["JwtSettings:ExpirationMinutes"]);
         }
 
-        public string GenerateToken(User user)
+        public string GenerateToken(User user, int? studentId = null, int? parentId = null)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secretKey));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
-            var claims = new[]
+            var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.UserId.ToString()),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email),
                 new Claim(ClaimTypes.Name, user.FullName),
                 new Claim(ClaimTypes.Role, user.UserType.ToString()),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim("UserId", user.UserId.ToString()),
-                new Claim("UserType", user.UserType.ToString())
+
+                // Custom claims
+                new Claim(CustomJwtClaims.UserId, user.UserId.ToString()),
+                new Claim(CustomJwtClaims.UserType, user.UserType.ToString())
             };
+
+            // StudentId (CHỈ THÊM KHI LÀ STUDENT)
+            if (studentId.HasValue)
+            {
+                claims.Add(new Claim(CustomJwtClaims.StudentId, studentId.Value.ToString()));
+            }
+
+            // ParentId (CHỈ THÊM KHI LÀ PARENT)
+            if (parentId.HasValue)
+            {
+                claims.Add(new Claim(CustomJwtClaims.ParentId, parentId.Value.ToString()));
+            }
 
             var token = new JwtSecurityToken(
                 issuer: _issuer,

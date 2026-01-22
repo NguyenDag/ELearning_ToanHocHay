@@ -64,6 +64,54 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
                     && a.EndTime == null);
         }
 
+        public async Task SubmitExamAsync(int attemptId, List<StudentAnswer> answers)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                var attempt = await _context.ExerciseAttempts
+                    .Include(a => a.StudentAnswers)
+                    .FirstOrDefaultAsync(a => a.AttemptId == attemptId);
+
+                if (attempt == null)
+                    throw new Exception("Attempt không tồn tại");
+
+                if (attempt.EndTime != null)
+                    throw new Exception("Bài thi đã được nộp");
+
+                foreach (var ans in answers)
+                {
+                    var existing = attempt.StudentAnswers
+                        .FirstOrDefault(a => a.QuestionId == ans.QuestionId);
+
+                    if (existing != null)
+                    {
+                        existing.SelectedOptionId = ans.SelectedOptionId;
+                        existing.AnsweredAt = DateTime.UtcNow;
+                    }
+                    else
+                    {
+                        attempt.StudentAnswers.Add(new StudentAnswer
+                        {
+                            AttemptId = attemptId,
+                            QuestionId = ans.QuestionId,
+                            SelectedOptionId = ans.SelectedOptionId,
+                            AnsweredAt = DateTime.UtcNow
+                        });
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+
         public async Task<ExerciseAttempt> UpdateAttemptAsync(ExerciseAttempt attempt)
         {
             _context.Entry(attempt).State = EntityState.Modified;

@@ -26,6 +26,11 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs
         public string? AnswerText { get; set; }
         public int? SelectedOptionId { get; set; }
     }
+    public class SubmitExamDto
+    {
+        public int AttemptId { get; set; }
+        public List<SubmitAnswerDto> Answers { get; set; } = new();
+    }
 
     public class CompleteExerciseDto
     {

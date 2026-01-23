@@ -24,7 +24,6 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             });
             _signal.Release();
         }
-
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             while (!stoppingToken.IsCancellationRequested)

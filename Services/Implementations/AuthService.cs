@@ -340,7 +340,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
                 // 5. Send email confirm
                 var confirmLink =
-                    $"{_appSettings.BaseUrl}/api/auth/confirm-email?token={tokenValue}";
+                    $"{_appSettings.BaseUrl}/confirm-email?token={tokenValue}";
 
                 _backgroundEmailService.QueueConfirmationEmail(user.Email, user.FullName, confirmLink);
 

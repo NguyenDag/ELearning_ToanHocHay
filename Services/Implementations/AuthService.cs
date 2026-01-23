@@ -382,5 +382,41 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 return false;
             }
         }
+        public async Task<ApiResponse<bool>> ResendConfirmationEmailAsync(string email)
+        {
+            // 1. Tìm user theo email
+            var user = await _userRepository.GetByEmailAsync(email);
+            if (user == null)
+                return ApiResponse<bool>.ErrorResponse("Email không tồn tại trong hệ thống");
+
+            // 2. Nếu đã xác nhận rồi thì không cần gửi lại
+            if (user.IsEmailConfirmed)
+                return ApiResponse<bool>.ErrorResponse("Tài khoản này đã được xác nhận trước đó");
+
+            // 3. Vô hiệu hóa các token cũ (nếu có) để tránh lãng phí
+            var oldTokens = await _context.EmailVerificationTokens
+                .Where(t => t.UserId == user.UserId && !t.IsUsed)
+                .ToListAsync();
+            foreach (var t in oldTokens) t.IsUsed = true;
+
+            // 4. Tạo Token mới (tương tự logic trong RegisterAsync)
+            var newTokenValue = Guid.NewGuid().ToString("N");
+            var emailToken = new EmailVerificationToken
+            {
+                UserId = user.UserId,
+                Token = newTokenValue,
+                ExpiredAt = DateTime.UtcNow.AddHours(24),
+                IsUsed = false
+            };
+
+            await _context.EmailVerificationTokens.AddAsync(emailToken);
+            await _context.SaveChangesAsync();
+
+            // 5. Gửi mail
+            var confirmLink = $"{_appSettings.BaseUrl}/Account/ConfirmEmail?token={newTokenValue}";
+            _backgroundEmailService.QueueConfirmationEmail(user.Email, user.FullName, confirmLink);
+
+            return ApiResponse<bool>.SuccessResponse(true, "Email xác nhận mới đã được gửi");
+        }
     }
 }

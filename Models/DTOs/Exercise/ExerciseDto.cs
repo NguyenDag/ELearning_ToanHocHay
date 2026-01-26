@@ -1,6 +1,6 @@
 ﻿using ELearning_ToanHocHay_Control.Data.Entities;
 
-namespace ELearning_ToanHocHay_Control.Models.DTOs
+namespace ELearning_ToanHocHay_Control.Models.DTOs.Exercise
 {
     public class ExerciseDto
     {

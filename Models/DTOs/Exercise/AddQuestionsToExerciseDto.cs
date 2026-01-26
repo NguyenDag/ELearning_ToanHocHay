@@ -1,4 +1,4 @@
-﻿namespace ELearning_ToanHocHay_Control.Models.DTOs
+﻿namespace ELearning_ToanHocHay_Control.Models.DTOs.Exercise
 {
     public class AddQuestionsToExerciseDto
     {

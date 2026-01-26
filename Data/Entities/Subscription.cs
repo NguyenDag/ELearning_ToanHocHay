@@ -24,7 +24,7 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
 
-        public SubscriptionStatus Status { get; set; }
+        public SubscriptionStatus Status { get; set; } = SubscriptionStatus.Pending;
 
         public decimal AmountPaid { get; set; }
 

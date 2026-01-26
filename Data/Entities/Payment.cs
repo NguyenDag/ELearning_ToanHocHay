@@ -24,16 +24,19 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
     public class Payment
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int PaymentId { get; set; }
 
         [Required]
         public int StudentId { get; set; }
 
+
+        [Column(TypeName = "decimal(18,2)")]
         public decimal Amount { get; set; }
 
         public PaymentMethod PaymentMethod { get; set; }
 
-        public PaymentStatus Status { get; set; }
+        public PaymentStatus Status { get; set; } = PaymentStatus.Pending;
 
         public DateTime PaymentDate { get; set; } = DateTime.UtcNow;
 
@@ -44,6 +47,6 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
 
         // Navigation
         public Student? Student { get; set; }
-        public Subscription Subscription { get; set; }
+        public Subscription? Subscription { get; set; }
     }
 }

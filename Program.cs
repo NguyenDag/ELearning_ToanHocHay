@@ -85,6 +85,9 @@ namespace ELearning_ToanHocHay_Control
             builder.Services.AddScoped<ITopicRepository, TopicRepository>();
             builder.Services.AddScoped<ILessonRepository, LessonRepository>();
             builder.Services.AddScoped<ILessonContentRepository, LessonContentRepository>();
+            builder.Services.AddScoped<IPackageRepository, PackageRepository>();
+            builder.Services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
+            builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 
             // Register Services
             builder.Services.AddScoped<IAuthService, AuthService>();
@@ -103,6 +106,9 @@ namespace ELearning_ToanHocHay_Control
             builder.Services.AddHttpClient<IAIService, AIService>();
             builder.Services.AddScoped<IQuestionRepository, QuestionRepository>();
             builder.Services.AddScoped<IQuestionService, QuestionService>();
+            builder.Services.AddScoped<IPackageService, PackageService>();
+            builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
+            builder.Services.AddScoped<IPaymentService, PaymentService>();
 
 
             builder.Services.AddSingleton<IBackgroundEmailService, BackgroundEmailService>();

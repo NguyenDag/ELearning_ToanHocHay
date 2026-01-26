@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
 using ELearning_ToanHocHay_Control.Data.Entities;
 using ELearning_ToanHocHay_Control.Models.DTOs;
+using ELearning_ToanHocHay_Control.Models.DTOs.Exercise;
+using ELearning_ToanHocHay_Control.Models.DTOs.Payment;
 
 
 namespace ELearning_ToanHocHay_Control.Services.Helpers
@@ -12,6 +14,7 @@ namespace ELearning_ToanHocHay_Control.Services.Helpers
             // Entity -> DTO
             CreateMap<User, UserDto>();
             CreateMap<Exercise, ExerciseDto>();
+            CreateMap<Payment, PaymentDto>();
                 
             // DTO -> Entity
             CreateMap<UserDto, User>()

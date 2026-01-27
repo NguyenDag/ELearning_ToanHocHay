@@ -185,16 +185,19 @@ def swagger_ui():
                 <p>Check if server is running</p>
                 <pre>Response: {"status": "healthy"}</pre>
             </div>
+
             <div class="endpoint">
                 <div><span class="method">GET</span><span class="path">/api/status</span></div>
                 <p>Get API status and available endpoints</p>
                 <pre>Response: {"service": "Gemini AI API", "status": "running"}</pre>
             </div>
+
             <div class="endpoint">
                 <div><span class="method">POST</span><span class="path">/api/hint</span></div>
                 <p>Generate AI hint for a question</p>
                 <pre>POST /api/hint
 Content-Type: application/json
+
 {
   "question_text": "What is 2 + 2?",
   "question_type": "MultipleChoice",
@@ -203,6 +206,7 @@ Content-Type: application/json
   "hint_level": 1
 }</pre>
             </div>
+
             <div class="endpoint">
                 <div><span class="method">POST</span><span class="path">/api/hint/batch</span></div>
                 <p>Generate multiple hints at once</p>
@@ -219,6 +223,7 @@ Content-Type: application/json
   ]
 }</pre>
             </div>
+
             <div class="endpoint">
                 <div><span class="method">POST</span><span class="path">/api/feedback</span></div>
                 <p>Generate feedback for a student answer</p>
@@ -232,6 +237,7 @@ Content-Type: application/json
   "is_correct": false
 }</pre>
             </div>
+
             <div class="endpoint">
                 <div><span class="method">POST</span><span class="path">/api/feedback/batch</span></div>
                 <p>Generate multiple feedbacks at once</p>
@@ -249,6 +255,7 @@ Content-Type: application/json
   ]
 }</pre>
             </div>
+
             <div class="links">
                 <a href="/api/health">→ Health Check</a> |
                 <a href="/api/status">→ Status</a>

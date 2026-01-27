@@ -624,9 +624,6 @@ namespace ELearning_ToanHocHay_Control.Migrations
                     b.Property<int>("StudentId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("SubscriptionId")
-                        .HasColumnType("integer");
-
                     b.Property<string>("TransactionId")
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
@@ -1685,7 +1682,8 @@ namespace ELearning_ToanHocHay_Control.Migrations
 
             modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.Payment", b =>
                 {
-                    b.Navigation("Subscription");
+                    b.Navigation("Subscription")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.Question", b =>

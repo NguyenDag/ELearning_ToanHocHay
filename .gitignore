@@ -416,9 +416,12 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+<<<<<<< HEAD
 
 
 #API Key AI
 
 .env
 appsettings.json
+=======
+>>>>>>> 56fe1a39de64db5bbfec159a7507f4121633d696

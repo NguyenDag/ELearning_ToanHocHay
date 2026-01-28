@@ -23,14 +23,6 @@ services:
       - "80:8080"
     env_file:
       - .env
-    environment:
-      ConnectionStrings__MyCnn: "Host=postgres;Port=5432;Database=MathELearning;Username=elearning_user;Password=123"
-      
-      JwtSettings__SecretKey: "FnKmfgu94hp4XxOMCWXOKm4jtFc8K79v"
-      JwtSettings__Issuer: "ELearning_ToanHocHay"
-      JwtSettings__Audience: "ELearning_ToanHocHay_Users"
-      JwtSettings__ExpirationMinutes: "30"
-      
     restart: always
 
 volumes:

@@ -9,8 +9,8 @@ services:
       POSTGRES_DB: MathELearning
       POSTGRES_USER: elearning_user
       POSTGRES_PASSWORD: 123
-    ports:
-      - "5432:5432"
+    # ports:
+      # - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
 
@@ -21,6 +21,8 @@ services:
       - postgres
     ports:
       - "80:8080"
+    env_file:
+      - .env
     environment:
       ConnectionStrings__MyCnn: "Host=postgres;Port=5432;Database=MathELearning;Username=elearning_user;Password=123"
       

@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template_string
 from flask_cors import CORS
 import logging
 import sys
@@ -485,6 +485,148 @@ def internal_error(error):
         "error": "Internal server error",
         "status": "error"
     }), 500
+
+
+# ==================== DOCUMENTATION ENDPOINTS ====================
+@app.route('/docs', methods=['GET'])
+def swagger_ui():
+    """Swagger UI Documentation"""
+    swagger_html = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Gemini AI API Documentation</title>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700,400italic|Material+Icons">
+        <style>
+            body {
+                margin: 0;
+                padding: 0;
+                font-family: 'Roboto', sans-serif;
+                background-color: #f5f5f5;
+            }
+            .header {
+                background-color: #1976d2;
+                color: white;
+                padding: 20px;
+                text-align: center;
+            }
+            .container {
+                max-width: 1200px;
+                margin: 20px auto;
+                background-color: white;
+                padding: 20px;
+                border-radius: 4px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .endpoint {
+                margin-bottom: 30px;
+                padding: 15px;
+                border-left: 4px solid #1976d2;
+                background-color: #f9f9f9;
+            }
+            .method {
+                font-weight: bold;
+                color: #1976d2;
+                margin-right: 10px;
+            }
+            .path {
+                font-family: monospace;
+                background-color: #e3f2fd;
+                padding: 2px 6px;
+                border-radius: 3px;
+            }
+            code {
+                background-color: #f5f5f5;
+                padding: 2px 6px;
+                border-radius: 3px;
+                font-family: monospace;
+            }
+            pre {
+                background-color: #f5f5f5;
+                padding: 10px;
+                border-radius: 3px;
+                overflow-x: auto;
+            }
+            h1, h2 { color: #1976d2; }
+            .links {
+                text-align: center;
+                margin-top: 20px;
+            }
+            .links a {
+                margin: 0 10px;
+                color: #1976d2;
+                text-decoration: none;
+            }
+            .links a:hover { text-decoration: underline; }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>🤖 Gemini AI Educational API</h1>
+            <p>Version 1.0 - Flask + Gemini AI</p>
+        </div>
+        
+        <div class="container">
+            <h2>📚 API Documentation</h2>
+            
+            <div class="endpoint">
+                <div><span class="method">GET</span> <span class="path">/api/health</span></div>
+                <p>Health check endpoint to verify server is running</p>
+                <strong>Response:</strong>
+                <pre>{"status": "healthy", "message": "..."}</pre>
+            </div>
+
+            <div class="endpoint">
+                <div><span class="method">GET</span> <span class="path">/api/status</span></div>
+                <p>Get API status and available endpoints</p>
+            </div>
+
+            <div class="endpoint">
+                <div><span class="method">POST</span> <span class="path">/api/hint</span></div>
+                <p>Generate AI hint for a question</p>
+                <strong>Required fields:</strong> question_text, question_type, difficulty_level, student_answer
+                <pre>POST http://127.0.0.1:5000/api/hint
+Content-Type: application/json
+
+{
+  "question_text": "What is 2 + 2?",
+  "question_type": "MultipleChoice",
+  "difficulty_level": "Easy",
+  "student_answer": "5",
+  "hint_level": 1
+}</pre>
+            </div>
+
+            <div class="endpoint">
+                <div><span class="method">POST</span> <span class="path">/api/hint/batch</span></div>
+                <p>Generate multiple hints at once</p>
+                <strong>Request body:</strong> Object with "hints" array
+            </div>
+
+            <div class="endpoint">
+                <div><span class="method">POST</span> <span class="path">/api/feedback</span></div>
+                <p>Generate AI feedback for a question</p>
+                <strong>Required fields:</strong> question_text, question_type, student_answer, correct_answer, is_correct
+            </div>
+
+            <div class="endpoint">
+                <div><span class="method">POST</span> <span class="path">/api/feedback/batch</span></div>
+                <p>Generate multiple feedbacks at once</p>
+                <strong>Request body:</strong> Object with "feedbacks" array
+            </div>
+
+            <div class="links">
+                <a href="/api/health">→ Health Check</a>
+                <a href="/api/status">→ Status</a>
+                <a href="https://ai.google.dev/">→ Gemini API Docs</a>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    return render_template_string(swagger_html)
 
 
 # ==================== MAIN ====================

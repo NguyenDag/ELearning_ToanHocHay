@@ -395,4 +395,4 @@ if __name__ == '__main__':
     print(f"📚 Docs: http://localhost:{port}/api/chatbot/docs")
     print(f"❤️  Health: http://localhost:{port}/api/chatbot/health")
     print(f"{'='*60}\n")
-    app.run(host='0.0.0.0', port=port, debug=True)
+    app.run(host='0.0.0.0', port=port, debug=False)

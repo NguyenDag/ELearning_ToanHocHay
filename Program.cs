@@ -222,7 +222,10 @@ namespace ELearning_ToanHocHay_Control
             // Kích hoạt CORS ngay sau Swagger và PHẢI TRƯỚC Authentication/Authorization
             app.UseCors("AllowWebApp");
 
-            app.UseHttpsRedirection();
+            if (!app.Environment.IsProduction())
+            {
+                app.UseHttpsRedirection();
+            }
 
             // Thứ tự này rất quan trọng: Auth -> Auth
             app.UseAuthentication();

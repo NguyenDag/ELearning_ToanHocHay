@@ -25,5 +25,27 @@ services:
       - .env
     restart: always
 
+  # AI chính (Gemini / xử lý core)
+  ai_core:
+    build: ./AI
+    container_name: ai_core
+    restart: always
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+
+  # Chatbot API
+  ai_chatbot:
+    build:
+      context: ./AI
+      dockerfile: Dockerfile.chatbot
+    container_name: ai_chatbot
+    restart: always
+    ports:
+      - "5001:5001"
+    env_file:
+      - .env
+
 volumes:
   pgdata:

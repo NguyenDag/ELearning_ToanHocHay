@@ -264,11 +264,19 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                // 1. Check email
+                
                 var existingUser = await _userRepository.GetByEmailAsync(request.Email);
-                if (existingUser != null)
+
+                // Check emial if it not confirm
+                if (existingUser != null && !existingUser.IsEmailConfirmed)
                 {
-                    return ApiResponse<bool>.ErrorResponse("Email đã tồn tại");
+                    return ApiResponse<bool>.ErrorResponse("Email đã được đăng ký và chờ xác nhận");
+                }
+
+                // 1. Check email if email existed
+                if (existingUser != null && existingUser.IsEmailConfirmed)
+                {
+                    return ApiResponse<bool>.ErrorResponse("Email đã được đăng ký");
                 }
 
                 // 2. Create User

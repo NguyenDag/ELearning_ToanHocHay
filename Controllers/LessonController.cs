@@ -55,7 +55,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
 
             // TODO: lấy từ JWT
             //int creatorId = User.GetUserId();
-            int creatorId = 6;
+            int creatorId = 6; // ID của User đã tồn tại trong DB của bạn
 
             var response = await _lessonService.CreateAsync(dto, creatorId);
             if (!response.Success)
@@ -109,7 +109,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
 
             // TODO: lấy reviewerId từ JWT
             //int reviewerId = User.GetUserId();
-            int reviewerId = 5;
+            int reviewerId = 5; // ID của Admin đã tồn tại trong DB của bạn
 
             var response = await _lessonService.ReviewAsync(lessonId, dto, reviewerId);
             if (!response.Success)

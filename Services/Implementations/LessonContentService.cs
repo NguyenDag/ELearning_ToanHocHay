@@ -19,7 +19,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         {
             try
             {
-                var existingLesson =  await _lessonRepository.GetByIdAsync(lessonId);
+                var existingLesson = await _lessonRepository.GetByIdAsync(lessonId);
                 if (existingLesson == null)
                 {
                     return ApiResponse<LessonContentDto>.ErrorResponse(

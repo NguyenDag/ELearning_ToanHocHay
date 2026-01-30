@@ -74,7 +74,12 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
 
         public async Task<IEnumerable<Exercise>> GetAllAsync()
         {
-            return await _context.Exercises.ToListAsync();
+            // Thêm Include để nạp các liên kết câu hỏi, giúp thuộc tính TotalQuestions có dữ liệu (nếu là computed property)
+            // Hoặc đơn giản là đảm bảo lấy dữ liệu mới nhất
+            return await _context.Exercises
+                .Include(e => e.ExerciseQuestions)
+                .AsNoTracking()
+                .ToListAsync();
         }
 
         public async Task<IEnumerable<Exercise>> GetByChapterIdAsync(int chapterId)

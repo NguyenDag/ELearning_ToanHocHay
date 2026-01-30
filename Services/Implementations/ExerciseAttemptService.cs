@@ -200,56 +200,45 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         {
             try
             {
-                // Lấy attempt + exercise + student
+                // 1. Lấy thông tin lượt làm bài
                 var attempt = await _attemptRepository.GetAttemptWithDetailsAsync(attemptId);
+                if (attempt == null) return ApiResponse<ExerciseResultDto>.ErrorResponse("Không tìm thấy lượt làm bài");
 
-                if (attempt == null)
+                // 2. Lấy TOÀN BỘ câu hỏi của bài tập (đã include nội dung câu hỏi từ Repository)
+                var exerciseQuestions = await _exerciseQuestionRepository.GetByExerciseIdAsync(attempt.ExerciseId);
+
+                // 3. Lấy các câu trả lời học sinh ĐÃ LÀM
+                var studentAnswers = await _answerRepository.GetAttemptAnswersAsync(attemptId);
+                var answerLookup = studentAnswers.ToDictionary(a => a.QuestionId);
+
+                var answerDetails = new List<AnswerDetailDto>();
+
+                // 4. DUYỆT THEO DANH SÁCH CÂU HỎI GỐC CỦA ĐỀ THI
+                foreach (var eq in exerciseQuestions)
                 {
-                    return ApiResponse<ExerciseResultDto>.ErrorResponse(
-                        "Attempt not found",
-                        new List<string> { $"No attempt found with ID: {attemptId}" }
-                    );
-                }
+                    var question = eq.Question;
+                    // Kiểm tra xem câu này học sinh có làm không bằng cách tra cứu trong Dictionary
+                    answerLookup.TryGetValue(question.QuestionId, out var answer);
 
-                if (attempt.EndTime == null)
-                {
-                    return ApiResponse<ExerciseResultDto>.ErrorResponse(
-                        "Attempt not completed",
-                        new List<string> { "Cannot get result for incomplete attempt" }
-                    );
-                }
-
-                // Lấy answers
-                var answers = await _answerRepository.GetAttemptAnswersAsync(attemptId);
-
-                // Lấy ExerciseQuestion để biết điểm từng câu
-                var exerciseQuestions = await _exerciseQuestionRepository
-                    .GetByExerciseIdAsync(attempt.ExerciseId);
-
-                var scoreLookup = exerciseQuestions.ToDictionary(
-                    eq => eq.QuestionId,
-                    eq => eq.Score
-                );
-
-                // Map AnswerDetails (LẤY SCORE TỪ ExerciseQuestion)
-                var answerDetails = answers.Select(a =>
-                {
-                    var maxScore = scoreLookup.TryGetValue(a.QuestionId, out var s) ? s : 0;
-
-                    return new AnswerDetailDto
+                    answerDetails.Add(new AnswerDetailDto
                     {
-                        QuestionId = a.QuestionId,
-                        QuestionText = a.Question.QuestionText,
-                        StudentAnswer = a.AnswerText ??
-                        a.Question.QuestionOptions?.FirstOrDefault(o => o.OptionId == a.SelectedOptionId)?.OptionText,
-                        CorrectAnswer = a.Question.CorrectAnswer ??
-                        a.Question.QuestionOptions?.FirstOrDefault(o => o.IsCorrect)?.OptionText,
-                        IsCorrect = a.IsCorrect,
-                        PointsEarned = a.PointsEarned,
-                        MaxScores = maxScore,
-                        Explanation = a.Question.Explanation
-                    };
-                }).ToList();
+                        QuestionId = question.QuestionId,
+                        QuestionText = question.QuestionText,
+
+                        // Nếu answer == null nghĩa là học sinh đã bỏ qua câu này
+                        StudentAnswer = answer == null
+                            ? "Bạn chưa trả lời câu hỏi này"
+                            : (answer.AnswerText ?? question.QuestionOptions?.FirstOrDefault(o => o.OptionId == answer.SelectedOptionId)?.OptionText),
+
+                        CorrectAnswer = question.CorrectAnswer ??
+                                        question.QuestionOptions?.FirstOrDefault(o => o.IsCorrect)?.OptionText,
+
+                        IsCorrect = answer?.IsCorrect ?? false,
+                        PointsEarned = answer?.PointsEarned ?? 0,
+                        MaxScores = eq.Score,
+                        Explanation = question.Explanation
+                    });
+                }
 
                 var result = new ExerciseResultDto
                 {
@@ -258,30 +247,22 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     StudentName = attempt.Student?.User?.FullName,
                     ExerciseName = attempt.Exercise?.ExerciseName,
                     StartTime = attempt.StartTime,
-                    EndTime = attempt.EndTime.Value,
-                    Duration = attempt.EndTime.Value - attempt.StartTime,
-                    TotalScore = answerDetails.Sum(a => a.PointsEarned),
-                    MaxScore = scoreLookup.Values.Sum(),
+                    EndTime = attempt.EndTime ?? DateTime.UtcNow,
+                    Duration = (attempt.EndTime ?? DateTime.UtcNow) - attempt.StartTime,
+                    TotalScore = attempt.TotalScore,
+                    MaxScore = attempt.MaxScore,
+                    CorrectAnswers = attempt.CorrectAnswers,
+                    WrongAnswers = attempt.WrongAnswers,
+                    TotalQuestions = exerciseQuestions.Count,
                     CompletionPercentage = attempt.CompletionPercentage,
-                    CorrectAnswers = answerDetails.Count(a => a.IsCorrect),
-                    WrongAnswers = answerDetails.Count(a => !a.IsCorrect),
-                    TotalQuestions = answerDetails.Count,
-                    IsPassed = attempt.Exercise != null &&
-                       answerDetails.Sum(a => a.PointsEarned) >= attempt.Exercise.PassingScore,
                     AnswerDetails = answerDetails
                 };
 
-                return ApiResponse<ExerciseResultDto>.SuccessResponse(
-                    result,
-                    "Result retrieved successfully"
-                );
+                return ApiResponse<ExerciseResultDto>.SuccessResponse(result, "Lấy kết quả thành công");
             }
             catch (Exception ex)
             {
-                return ApiResponse<ExerciseResultDto>.ErrorResponse(
-                    "Error retrieving result",
-                    new List<string> { ex.Message }
-                );
+                return ApiResponse<ExerciseResultDto>.ErrorResponse("Lỗi hệ thống khi tính điểm", new List<string> { ex.Message });
             }
         }
 

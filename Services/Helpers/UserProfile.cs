@@ -13,7 +13,9 @@ namespace ELearning_ToanHocHay_Control.Services.Helpers
         {
             // Entity -> DTO
             CreateMap<User, UserDto>();
-            CreateMap<Exercise, ExerciseDto>();
+            CreateMap<Exercise, ExerciseDto>()
+    .ForMember(dest => dest.TotalQuestions, opt => opt.MapFrom(src =>
+        src.ExerciseQuestions != null ? src.ExerciseQuestions.Count : src.TotalQuestions));
             CreateMap<Payment, PaymentDto>();
                 
             // DTO -> Entity

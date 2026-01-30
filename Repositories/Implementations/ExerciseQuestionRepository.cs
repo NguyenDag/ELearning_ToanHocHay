@@ -44,7 +44,11 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
 
         public async Task<List<ExerciseQuestion>> GetByExerciseIdAsync(int exerciseId)
         {
+            // QUAN TRỌNG: Phải có .Include(eq => eq.Question) để lấy được nội dung câu hỏi
+            // Và .ThenInclude để lấy được các phương án (A, B, C, D) để đối chiếu đáp án đúng
             return await _context.ExerciseQuestions
+                .Include(eq => eq.Question)
+                    .ThenInclude(q => q.QuestionOptions)
                 .Where(eq => eq.ExerciseId == exerciseId)
                 .OrderBy(eq => eq.OrderIndex)
                 .ToListAsync();

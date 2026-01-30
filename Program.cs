@@ -2,6 +2,7 @@
 using System.Text;
 using ELearning_ToanHocHay_Control.Data;
 using ELearning_ToanHocHay_Control.Models.DTOs;
+using ELearning_ToanHocHay_Control.Models.DTOs.Sepay;
 using ELearning_ToanHocHay_Control.Repositories.Implementations;
 using ELearning_ToanHocHay_Control.Repositories.Interfaces;
 using ELearning_ToanHocHay_Control.Services.Helpers;
@@ -117,6 +118,12 @@ namespace ELearning_ToanHocHay_Control
 
             //Register AutoMapper
             builder.Services.AddAutoMapper(typeof(UserProfile));
+
+            // Register SePay
+            builder.Services.Configure<SePayOptions>(
+                builder.Configuration.GetSection("SePay")
+            );
+
             // Configure JWT Authentication
             var jwtSettings = builder.Configuration.GetSection("JwtSettings");
             var secretKey = jwtSettings["SecretKey"];
@@ -205,13 +212,13 @@ namespace ELearning_ToanHocHay_Control
             });
 
             builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        // Giữ nguyên tên thuộc tính (Success, Data, Message) thay vì biến thành camelCase
-        options.JsonSerializerOptions.PropertyNamingPolicy = null;
-        // Xử lý lỗi vòng lặp nếu có
-        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
-    });
+                .AddJsonOptions(options =>
+                {
+                    // Giữ nguyên tên thuộc tính (Success, Data, Message) thay vì biến thành camelCase
+                    options.JsonSerializerOptions.PropertyNamingPolicy = null;
+                    // Xử lý lỗi vòng lặp nếu có
+                    options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+                });
 
             var app = builder.Build();
 

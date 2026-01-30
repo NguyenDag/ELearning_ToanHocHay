@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 
 namespace ELearning_ToanHocHay_Control.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]/[action]")]
     [ApiController]
     public class SepayController : ControllerBase
     {

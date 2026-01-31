@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using ELearning_ToanHocHay_Control.Data;
 using ELearning_ToanHocHay_Control.Models.DTOs;
+using ELearning_ToanHocHay_Control.Models.DTOs.Sepay;
 using ELearning_ToanHocHay_Control.Repositories.Implementations;
 using ELearning_ToanHocHay_Control.Repositories.Interfaces;
 using ELearning_ToanHocHay_Control.Services.Helpers;
@@ -56,6 +57,17 @@ namespace ELearning_ToanHocHay_Control
                             ?? jwtSettings["SecretKey"]
                             ?? builder.Configuration["JwtSettings:SecretKey"];
 
+            //Register AutoMapper
+            builder.Services.AddAutoMapper(typeof(UserProfile));
+
+            // Register SePay
+            builder.Services.Configure<SePayOptions>(
+                builder.Configuration.GetSection("SePay")
+            );
+
+            // Configure JWT Authentication
+            var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+            var secretKey = jwtSettings["SecretKey"];
             // Kiểm tra an toàn: Nếu không tìm thấy SecretKey ở cả 2 nơi thì báo lỗi rõ ràng thay vì ArgumentNullException
             if (string.IsNullOrEmpty(secretKey))
             {

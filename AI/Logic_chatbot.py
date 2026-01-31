@@ -110,48 +110,44 @@ class ChatbotLogicBackend:
         user = self.get_user(user_id)
         user.has_interacted = True
 
-        # Normalize reply
-        if reply:
-            reply = reply.strip()
-
-        # flow_map đã được hiệu chỉnh để khớp 100% với các nút bấm trên giao diện
-        flow_map = {
-            # --- Các nút từ Fallback ---
-            "Tư vấn cho con lớp 6": self._flow_tu_van,
-            "Học thử miễn phí": self._flow_hoc_thu_student, # Sửa cho khớp nút Fallback
-            "Báo cáo tiến độ mẫu": self._flow_bao_cao,       # Sửa cho khớp nút Fallback
-
-            # --- Các nút từ Flow Tư Vấn ---
-            "Con hay làm sai, không hiểu vì sao": self._flow_con_hay_lam_sai,
-            "Con học chậm, dễ quên bài": self._flow_con_hoc_cham,
-            "Con ngại học Toán": self._flow_con_ngai_hoc,
-            "Tôi muốn theo sát việc học của con": self._flow_theo_sat,
-
-            # --- Các nút phản hồi lựa chọn ---
-            "Có, cho con học thử": self._flow_hoc_thu_parent,
-            "Tìm hiểu thêm": self._flow_tu_van_more,
-            "Học thử": self._flow_hoc_thu_student,
-            "Nhờ bố/mẹ xem giúp": self._flow_hoc_thu_parent_help,
-            "Nhận báo cáo mẫu": self._flow_bao_cao,
-            
-            # --- Các nút về học phí & liên hệ ---
-            "Học phí & lộ trình": self._flow_hoc_phi,
-            "Xem lộ trình học": self._flow_hoc_phi,
-            "Được tư vấn chi tiết": self._flow_hoc_phi,
-            "Cho con học thử trước": self._flow_hoc_phi,
-            "Tư vấn thêm": self._flow_handover,
-            "Liên hệ": self._flow_handover,
-            "Gọi điện": self._flow_handover,
-            "Nhân viên": self._flow_handover,
-        }
-        logger.info(f"Quick reply '{reply}' from user {user_id}")
-        
-        if reply in flow_map:
-            logger.info(f"✓ Match found: {flow_map[reply].__name__}")
-            return flow_map[reply](user)
-        else:
-            logger.warning(f"✗ No match for reply: '{reply}' - Fallback triggered")
+        if not reply:
             return self._flow_fallback(user)
+            
+        # Chuyển về chữ thường và xóa khoảng trắng để so sánh cho dễ
+        r = reply.lower().strip()
+        logger.info(f"Processing Quick Reply: '{r}'")
+
+        # Dùng 'in' để so sánh từ khóa, tránh lỗi Encoding hoặc sai lệch 1-2 chữ
+        if "tư vấn" in r and "lớp 6" in r:
+            return self._flow_tu_van(user)
+        
+        elif "học thử" in r:
+            return self._flow_hoc_thu_student(user)
+            
+        elif "báo cáo" in r and "mẫu" in r:
+            return self._flow_bao_cao(user)
+            
+        elif "hay làm sai" in r or "không hiểu" in r:
+            return self._flow_con_hay_lam_sai(user)
+            
+        elif "học chậm" in r or "dễ quên" in r:
+            return self._flow_con_hoc_cham(user)
+            
+        elif "ngại học" in r:
+            return self._flow_con_ngai_hoc(user)
+            
+        elif "theo sát" in r:
+            return self._flow_theo_sat(user)
+            
+        elif "học phí" in r or "lộ trình" in r:
+            return self._flow_hoc_phi(user)
+            
+        elif "liên hệ" in r or "nhân viên" in r or "gọi điện" in r:
+            return self._flow_handover(user)
+            
+        # Nếu không khớp cái nào bên trên thì mới fallback
+        logger.warning(f"✗ Vẫn không khớp: '{r}'")
+        return self._flow_fallback(user)
 
     # ---------- Handle Free Text ----------
     def handle_free_text(self, user_id: str, text: str) -> Dict:

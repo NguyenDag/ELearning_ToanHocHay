@@ -144,7 +144,6 @@ class ChatbotLogicBackend:
             "Gọi điện": self._flow_handover,
             "Nhân viên": self._flow_handover,
         }
-
         logger.info(f"Quick reply '{reply}' from user {user_id}")
         
         if reply in flow_map:

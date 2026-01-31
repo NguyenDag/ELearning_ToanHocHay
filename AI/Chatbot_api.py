@@ -283,11 +283,4 @@ def handle_trigger():
 
 if __name__ == '__main__':
     port = 5001
-    logger.info("\n" + "="*60)
-    logger.info("🚀 Starting Chatbot API Server")
-    logger.info("="*60)
-    logger.info(f"📍 Running on: http://0.0.0.0:{port}")
-    logger.info(f"📚 Docs: http://localhost:{port}/api/chatbot/docs")
-    logger.info(f"❤️  Health: http://localhost:{port}/api/chatbot/health")
-    logger.info("="*60 + "\n")
     app.run(host='0.0.0.0', port=port, debug=True)

@@ -118,16 +118,18 @@ class ChatbotLogicBackend:
         logger.info(f"Processing Quick Reply: '{r}'")
 
         # Dùng 'in' để so sánh từ khóa, tránh lỗi Encoding hoặc sai lệch 1-2 chữ
+        
+        # ===== Main flows =====
         if "tư vấn" in r and "lớp 6" in r:
             return self._flow_tu_van(user)
         
-        elif "học thử" in r:
+        elif "học thử" in r and ("miễn phí" in r or "cho con" in r):
             return self._flow_hoc_thu_student(user)
             
         elif "báo cáo" in r and "mẫu" in r:
             return self._flow_bao_cao(user)
             
-        elif "hay làm sai" in r or "không hiểu" in r:
+        elif "hay làm sai" in r or ("không hiểu" in r and "sai" in r):
             return self._flow_con_hay_lam_sai(user)
             
         elif "học chậm" in r or "dễ quên" in r:
@@ -141,6 +143,38 @@ class ChatbotLogicBackend:
             
         elif "học phí" in r or "lộ trình" in r:
             return self._flow_hoc_phi(user)
+        
+        # ===== Sub-option flows =====
+        # Từ _flow_con_hay_lam_sai options
+        elif "có" in r and "cho con học thử" in r:
+            return self._flow_hoc_thu_parent(user)
+        
+        elif "tìm hiểu thêm" in r:
+            return self._flow_tu_van_more(user)
+        
+        # Từ _flow_hoc_thu_student options
+        elif "nhờ" in r and "bố" in r and "mẹ" in r:
+            return self._flow_hoc_thu_parent_help(user)
+        
+        elif "học thử" in r and "nhờ" not in r:
+            return self._flow_hoc_thu_parent(user)
+        
+        # Từ _flow_bao_cao options
+        elif "nhận" in r and "báo cáo" in r:
+            return self._flow_bao_cao(user)
+        
+        elif "tư vấn thêm" in r and "báo" not in r:
+            return self._flow_handover(user)
+        
+        # Từ _flow_hoc_phi options
+        elif "xem" in r and "lộ trình" in r:
+            return self._flow_tu_van_more(user)
+        
+        elif "được tư vấn chi tiết" in r:
+            return self._flow_handover(user)
+        
+        elif "cho con học thử trước" in r:
+            return self._flow_hoc_thu_parent(user)
             
         elif "liên hệ" in r or "nhân viên" in r or "gọi điện" in r:
             return self._flow_handover(user)
@@ -310,7 +344,7 @@ class ChatbotLogicBackend:
         }
 
     def _flow_hoc_thu_parent(self, user: User) -> Dict:
-        user.state = UserState.IN_FLOW_TRIAL_PARENT
+        user.state = UserState.IN_FLOW_TRIAL_PARENT 
         return {
             "type": "form",
             "message": (
@@ -344,7 +378,7 @@ class ChatbotLogicBackend:
     def _flow_hoc_thu_parent_help(self, user: User) -> Dict:
         return {
             "type": "message",
-            "message": "Anh/chị có thể nhờ bố/mẹ hoặc người thân điền form để nhận hướng dẫn học thử."
+            "message": "Em có thể nhờ bố/mẹ hoặc người thân điền form để nhận hướng dẫn học thử."
         }
 
     def _flow_bao_cao(self, user: User) -> Dict:

@@ -333,16 +333,11 @@ class ChatbotLogicBackend:
     def _flow_hoc_thu_student(self, user: User) -> Dict:
         user.state = UserState.IN_FLOW_TRIAL_STUDENT
         return {
-            "type": "form",
+            "type": "quick_reply", # Đổi từ form thành quick_reply
             "message": (
                 "Chào em, ToánHọcHay giúp học sinh lớp 6 học Toán từng bước, dễ hiểu hơn.\n"
                 "Em muốn làm gì tiếp?"
             ),
-            "form_fields": [
-                "Họ tên (bắt buộc)",
-                "Lớp (bắt buộc)",
-                "Email (không bắt buộc)"
-            ],
             "options": ["Học thử", "Hỏi bài", "Nhờ bố/mẹ xem giúp"]
         }
 
@@ -354,15 +349,14 @@ class ChatbotLogicBackend:
 
     def _flow_bao_cao(self, user: User) -> Dict:
         return {
-            "type": "form",
+            "type": "quick_reply", # Đổi từ form thành quick_reply
             "message": (
                 "Báo cáo giúp phụ huynh nắm được:\n"
                 "- Con đang học đến đâu\n"
                 "- Những phần con còn yếu\n"
                 "- Gợi ý nội dung cần ôn lại\n"
-                "Anh/chị có muốn nhận bản báo cáo mẫu qua email không?"
+                "Anh/chị muốn thực hiện thao tác nào?"
             ),
-            "form_fields": ["Email (bắt buộc)"],
             "options": ["Nhận báo cáo mẫu", "Tư vấn thêm"]
         }
 

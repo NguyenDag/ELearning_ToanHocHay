@@ -111,7 +111,7 @@ class ChatbotLogicBackend:
         user.has_interacted = True
 
         if not reply:
-            return self._flow_fallback(user)
+            return self._flow_handover(user)
             
         # Chuyển về chữ thường và xóa khoảng trắng để so sánh cho dễ
         r = reply.lower().strip()
@@ -147,7 +147,7 @@ class ChatbotLogicBackend:
             
         # Nếu không khớp cái nào bên trên thì mới fallback
         logger.warning(f"✗ Vẫn không khớp: '{r}'")
-        return self._flow_fallback(user)
+        return self._flow_handover(user)
 
     # ---------- Handle Free Text ----------
     def handle_free_text(self, user_id: str, text: str) -> Dict:
@@ -338,7 +338,7 @@ class ChatbotLogicBackend:
                 "Chào em, ToánHọcHay giúp học sinh lớp 6 học Toán từng bước, dễ hiểu hơn.\n"
                 "Em muốn làm gì tiếp?"
             ),
-            "options": ["Học thử", "Hỏi bài", "Nhờ bố/mẹ xem giúp"]
+            "options": ["Học thử", "Nhờ bố/mẹ xem giúp"]
         }
 
     def _flow_hoc_thu_parent_help(self, user: User) -> Dict:

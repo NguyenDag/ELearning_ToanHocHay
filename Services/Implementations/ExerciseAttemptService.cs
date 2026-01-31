@@ -1,8 +1,14 @@
 ﻿using AutoMapper;
+using ELearning_ToanHocHay_Control.Data;
 using ELearning_ToanHocHay_Control.Data.Entities;
 using ELearning_ToanHocHay_Control.Models.DTOs;
 using ELearning_ToanHocHay_Control.Repositories.Interfaces;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq; // Bổ sung để hỗ trợ LINQ Queryable
+using System.Threading.Tasks;
 
 namespace ELearning_ToanHocHay_Control.Services.Implementations
 {
@@ -15,6 +21,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         private readonly IQuestionBankRepository _questionBankRepository;
         private readonly IMapper _mapper;
         private readonly IExerciseQuestionRepository _exerciseQuestionRepository;
+        private readonly AppDbContext _context;
 
         public ExerciseAttemptService(
             IExerciseAttemptRepository attemptRepository,
@@ -23,15 +30,17 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             IUserRepository userRepository,
             IQuestionBankRepository questionBankRepository,
             IExerciseQuestionRepository exerciseQuestionRepository,
-            IMapper mapper)
+            IMapper mapper,
+            AppDbContext context) // FIX: Thêm context vào đây
         {
             _attemptRepository = attemptRepository;
             _exerciseRepository = exerciseRepository;
             _answerRepository = answerRepository;
             _userRepository = userRepository;
             _questionBankRepository = questionBankRepository;
-            _mapper = mapper;
             _exerciseQuestionRepository = exerciseQuestionRepository;
+            _mapper = mapper;
+            _context = context; // FIX: Gán giá trị để không bị Null
         }
 
         public async Task<ApiResponse<ExerciseResultDto>> CompleteExerciseAsync(CompleteExerciseDto dto)
@@ -204,7 +213,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 var attempt = await _attemptRepository.GetAttemptWithDetailsAsync(attemptId);
                 if (attempt == null) return ApiResponse<ExerciseResultDto>.ErrorResponse("Không tìm thấy lượt làm bài");
 
-                // 2. Lấy TOÀN BỘ câu hỏi của bài tập (đã include nội dung câu hỏi từ Repository)
+                // 2. Lấy TOÀN BỘ câu hỏi của bài tập
                 var exerciseQuestions = await _exerciseQuestionRepository.GetByExerciseIdAsync(attempt.ExerciseId);
 
                 // 3. Lấy các câu trả lời học sinh ĐÃ LÀM
@@ -217,22 +226,17 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 foreach (var eq in exerciseQuestions)
                 {
                     var question = eq.Question;
-                    // Kiểm tra xem câu này học sinh có làm không bằng cách tra cứu trong Dictionary
                     answerLookup.TryGetValue(question.QuestionId, out var answer);
 
                     answerDetails.Add(new AnswerDetailDto
                     {
                         QuestionId = question.QuestionId,
                         QuestionText = question.QuestionText,
-
-                        // Nếu answer == null nghĩa là học sinh đã bỏ qua câu này
                         StudentAnswer = answer == null
                             ? "Bạn chưa trả lời câu hỏi này"
                             : (answer.AnswerText ?? question.QuestionOptions?.FirstOrDefault(o => o.OptionId == answer.SelectedOptionId)?.OptionText),
-
                         CorrectAnswer = question.CorrectAnswer ??
                                         question.QuestionOptions?.FirstOrDefault(o => o.IsCorrect)?.OptionText,
-
                         IsCorrect = answer?.IsCorrect ?? false,
                         PointsEarned = answer?.PointsEarned ?? 0,
                         MaxScores = eq.Score,
@@ -308,45 +312,39 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             }
         }
 
+
+
         public async Task<ApiResponse<ExerciseAttemptDto>> StartExerciseAsync(StartExerciseDto dto)
         {
             try
             {
-#if !DEBUG
-        // Đoạn này chỉ chạy khi bạn đóng gói sản phẩm (Release)
-        // Khi đang chạy trên máy (Debug), nó sẽ bỏ qua bước check này
-        var hasActive = await _attemptRepository.HasActiveAttemptAsync(
-            dto.StudentId, dto.ExerciseId);
+                // 1. LOGIC RESUME: Tìm lượt cũ chưa nộp (EndTime == null)
+                // Nếu tìm thấy, trả về ngay lập tức để học sinh làm tiếp
+                var existingAttempt = await _context.ExerciseAttempts
+                    .AsNoTracking()
+                    .Where(a => a.StudentId == dto.StudentId && a.ExerciseId == dto.ExerciseId && a.EndTime == null)
+                    .OrderByDescending(a => a.StartTime)
+                    .FirstOrDefaultAsync();
 
-        if (hasActive)
-        {
-            return ApiResponse<ExerciseAttemptDto>.ErrorResponse(
-                "Student already has an active attempt for this exercise",
-                new List<string> { "Please complete or cancel the current attempt first" }
-            );
-        }
-#endif
+                if (existingAttempt != null)
+                {
+                    var exerciseInfo = await _exerciseRepository.GetExerciseWithQuestionsAsync(dto.ExerciseId);
+                    if (exerciseInfo != null)
+                    {
+                        var resumeDto = await MapToAttemptDto(existingAttempt, exerciseInfo);
+                        return ApiResponse<ExerciseAttemptDto>.SuccessResponse(resumeDto, "Đang tiếp tục lượt làm bài cũ");
+                    }
+                }
 
-                // Lấy thông tin bài tập
+                // 2. TẠO MỚI (Chỉ chạy khi không có bài cũ dang dở)
                 var exercise = await _exerciseRepository.GetExerciseWithQuestionsAsync(dto.ExerciseId);
+                if (exercise == null) return ApiResponse<ExerciseAttemptDto>.ErrorResponse("Không tìm thấy đề thi");
 
-                if (exercise == null)
+                if (!exercise.IsActive || exercise.Status != ExerciseStatus.Published)
                 {
-                    return ApiResponse<ExerciseAttemptDto>.ErrorResponse(
-                        "Exercise not found",
-                        new List<string> { $"No exercise found with ID: {dto.ExerciseId}" }
-                    );
+                    return ApiResponse<ExerciseAttemptDto>.ErrorResponse("Bài thi hiện không khả dụng.");
                 }
 
-                if (!exercise.IsActive || exercise.Status != ExerciseStatus.Published || !exercise.IsFree)
-                {
-                    return ApiResponse<ExerciseAttemptDto>.ErrorResponse(
-                        "Exercise is not available",
-                        new List<string> { "This exercise is not currently available" }
-                    );
-                }
-
-                // Tạo attempt mới
                 var attempt = new ExerciseAttempt
                 {
                     StudentId = dto.StudentId,
@@ -356,22 +354,14 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 };
 
                 var createdAttempt = await _attemptRepository.CreateAttemptAsync(attempt);
-
-                // Map sang DTO
-                //var attemptDto = _mapper.Map<ExerciseAttemptDto>(createdAttempt);
                 var attemptDto = await MapToAttemptDto(createdAttempt, exercise);
 
-                return ApiResponse<ExerciseAttemptDto>.SuccessResponse(
-                    attemptDto,
-                    "Exercise started successfully"
-                );
+                return ApiResponse<ExerciseAttemptDto>.SuccessResponse(attemptDto, "Bắt đầu bài thi mới");
             }
             catch (Exception ex)
             {
-                return ApiResponse<ExerciseAttemptDto>.ErrorResponse(
-                    "Error starting exercise",
-                    new List<string> { ex.Message }
-                );
+                Console.WriteLine($"[FATAL ERROR] StartExercise: {ex.Message}");
+                return ApiResponse<ExerciseAttemptDto>.ErrorResponse("Lỗi khởi tạo: " + ex.Message);
             }
         }
 
@@ -592,36 +582,48 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         }
 
 
-        // Helper method
         private async Task<ExerciseAttemptDto> MapToAttemptDto(ExerciseAttempt attempt, Exercise exercise)
         {
+            var questionsDto = new List<QuestionInAttemptDto>();
+
+            if (exercise.ExerciseQuestions != null)
+            {
+                foreach (var eq in exercise.ExerciseQuestions)
+                {
+                    if (eq.Question != null)
+                    {
+                        questionsDto.Add(new QuestionInAttemptDto
+                        {
+                            QuestionId = eq.Question.QuestionId,
+                            QuestionText = eq.Question.QuestionText,
+                            QuestionType = eq.Question.QuestionType.ToString(),
+                            Score = eq.Score,
+                            ImageUrl = eq.Question.QuestionImageUrl,
+                            Options = eq.Question.QuestionOptions?.Select(o => new AnswerOptionDto
+                            {
+                                OptionId = o.OptionId,
+                                OptionText = o.OptionText,
+                                ImageUrl = o.ImageUrl,
+                                // Không gửi IsCorrect về máy khách để tránh gian lận
+                            }).ToList() ?? new List<AnswerOptionDto>()
+                        });
+                    }
+                }
+            }
+
             return new ExerciseAttemptDto
             {
                 AttemptId = attempt.AttemptId,
                 StudentId = attempt.StudentId,
                 ExerciseId = attempt.ExerciseId,
-                ExerciseName = exercise.ExerciseName,
+                ExerciseName = exercise.ExerciseName ?? "Không tên",
                 ExerciseType = exercise.ExerciseType,
                 StartTime = attempt.StartTime,
                 EndTime = attempt.EndTime,
                 DurationMinutes = exercise.DurationMinutes,
-                TotalQuestions = exercise.TotalQuestions,
+                TotalQuestions = questionsDto.Count,
                 IsCompleted = attempt.EndTime != null,
-                Questions = exercise.ExerciseQuestions?.Select(eq => new QuestionInAttemptDto
-                {
-                    QuestionId = eq.Question.QuestionId,
-                    QuestionText = eq.Question.QuestionText,
-                    QuestionType = eq.Question.QuestionType.ToString(),
-                    Score = eq.Score,
-                    ImageUrl = eq.Question.QuestionImageUrl,
-                    Options = eq.Question.QuestionOptions?.Select(o => new AnswerOptionDto
-                    {
-                        OptionId = o.OptionId,
-                        OptionText = o.OptionText,
-                        ImageUrl = o.ImageUrl,
-                        IsCorrect = o.IsCorrect,
-                    }).ToList() ?? new List<AnswerOptionDto>()
-                }).ToList() ?? new List<QuestionInAttemptDto>()
+                Questions = questionsDto
             };
         }
     }

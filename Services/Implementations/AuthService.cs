@@ -93,12 +93,14 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 int? parentId = null;
 
                 var user = await _userRepository.GetByEmailAsync(request.Email);
+
                 // Check user exist or not
                 if (user == null)
                 {
                     return ApiResponse<LoginResponseDto>.ErrorResponse("Email hoặc mật khẩu không đúng", new List<string> { "Thông tin đăng nhập không hợp lệ" });
                 }
 
+                // Kiểm tra xác nhận Email
                 if (!user.IsEmailConfirmed)
                 {
                     return ApiResponse<LoginResponseDto>.ErrorResponse(
@@ -124,6 +126,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     );
                 }
 
+                // Xử lý thông tin theo loại người dùng
                 if (user.UserType == UserType.Student)
                 {
                     var student = await _studentRepository.GetByUserIdAsync(user.UserId);
@@ -137,8 +140,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
                     studentId = student.StudentId;
                 }
-
-                if (user.UserType == UserType.Parent)
+                else if (user.UserType == UserType.Parent)
                 {
                     var parent = await _parentRepository.GetByUserIdAsync(user.UserId);
                     if (parent == null)
@@ -154,7 +156,10 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
                 // Generate JWT token
                 var token = _jwtService.GenerateToken(user, studentId, parentId);
-                var expirationMinutes = int.Parse(_configuration["JwtSettings:ExpirationMinutes"]);
+
+                // Lấy thời gian hết hạn từ cấu hình
+                var expirationStr = _configuration["JwtSettings:ExpirationMinutes"] ?? "30";
+                int expirationMinutes = int.Parse(expirationStr);
 
                 // Update last login
                 await _userRepository.UpdateLastLoginAsync(user.UserId);

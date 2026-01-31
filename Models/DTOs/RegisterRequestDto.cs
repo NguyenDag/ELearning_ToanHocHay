@@ -34,5 +34,6 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs
         // ===== Parent =====
         [MaxLength(50)]
         public string? Job { get; set; }
+        public int? StudentId { get; set; }
     }
 }

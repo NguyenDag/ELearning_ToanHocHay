@@ -23,7 +23,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__)))
 from Logic_chatbot import ChatbotLogicBackend, UserState
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/api/*": {"origins": "*"}})
+
 
 # Force UTF-8
 app.config['JSON_AS_ASCII'] = False

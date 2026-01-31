@@ -114,18 +114,27 @@ class ChatbotLogicBackend:
         if reply:
             reply = reply.strip()
 
+        # flow_map đã được hiệu chỉnh để khớp 100% với các nút bấm trên giao diện
         flow_map = {
+            # --- Các nút từ Fallback ---
             "Tư vấn cho con lớp 6": self._flow_tu_van,
+            "Học thử miễn phí": self._flow_hoc_thu_student, # Sửa cho khớp nút Fallback
+            "Báo cáo tiến độ mẫu": self._flow_bao_cao,       # Sửa cho khớp nút Fallback
+
+            # --- Các nút từ Flow Tư Vấn ---
             "Con hay làm sai, không hiểu vì sao": self._flow_con_hay_lam_sai,
             "Con học chậm, dễ quên bài": self._flow_con_hoc_cham,
             "Con ngại học Toán": self._flow_con_ngai_hoc,
             "Tôi muốn theo sát việc học của con": self._flow_theo_sat,
+
+            # --- Các nút phản hồi lựa chọn ---
             "Có, cho con học thử": self._flow_hoc_thu_parent,
             "Tìm hiểu thêm": self._flow_tu_van_more,
             "Học thử": self._flow_hoc_thu_student,
             "Nhờ bố/mẹ xem giúp": self._flow_hoc_thu_parent_help,
-            "Xem báo cáo tiến độ mẫu": self._flow_bao_cao,
             "Nhận báo cáo mẫu": self._flow_bao_cao,
+            
+            # --- Các nút về học phí & liên hệ ---
             "Học phí & lộ trình": self._flow_hoc_phi,
             "Xem lộ trình học": self._flow_hoc_phi,
             "Được tư vấn chi tiết": self._flow_hoc_phi,

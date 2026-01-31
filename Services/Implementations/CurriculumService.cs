@@ -130,6 +130,8 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         }
         private static CurriculumDto MapToDto(Curriculum curriculum)
         {
+            if (curriculum == null) return null!;
+
             return new CurriculumDto
             {
                 CurriculumId = curriculum.CurriculumId,
@@ -140,7 +142,27 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 Status = curriculum.Status,
                 Version = curriculum.Version,
                 CreatedAt = curriculum.CreatedAt,
-                UpdatedAt = curriculum.UpdatedAt
+                UpdatedAt = curriculum.UpdatedAt,
+
+                // Map Chapters
+                Chapters = curriculum.Chapters?.Select(ch => new ChapterDto
+                {
+                    ChapterId = ch.ChapterId,
+                    ChapterName = ch.ChapterName,
+                    OrderIndex = ch.OrderIndex,
+                    Topics = ch.Topics?.Select(t => new TopicDto
+                    {
+                        TopicId = t.TopicId,
+                        TopicName = t.TopicName,
+                        Lessons = t.Lessons?.Select(l => new LessonDto
+                        {
+                            LessonId = l.LessonId,
+                            LessonName = l.LessonName,
+                            DurationMinutes = l.DurationMinutes,
+                            OrderIndex = l.OrderIndex
+                        }).ToList() ?? new List<LessonDto>()
+                    }).ToList() ?? new List<TopicDto>()
+                }).ToList() ?? new List<ChapterDto>()
             };
         }
 

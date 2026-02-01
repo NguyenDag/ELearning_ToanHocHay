@@ -51,6 +51,7 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs
         public int TotalQuestions { get; set; }
         public List<QuestionInAttemptDto> Questions { get; set; }
         public bool IsCompleted { get; set; }
+        public double Score { get; set; }
     }
 
     public class QuestionInAttemptDto

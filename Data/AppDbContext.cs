@@ -37,6 +37,7 @@ namespace ELearning_ToanHocHay_Control.Data
         public DbSet<ExerciseAttempt> ExerciseAttempts { get; set; }
         public DbSet<StudentAnswer> StudentAnswers { get; set; }
         public DbSet<AIFeedback> AIFeedbacks { get; set; }
+        public DbSet<AIHint> AIHints { get; set; }
         public DbSet<LearningPath> LearningPaths { get; set; }
         public DbSet<StudentProgress> StudentProgresses { get; set; }
         public DbSet<Notification> Notifications { get; set; }
@@ -327,6 +328,19 @@ namespace ELearning_ToanHocHay_Control.Data
 
                 entity.HasOne(af => af.Question)
                       .WithMany(q => q.AIFeedbacks)
+                      .HasForeignKey(af => af.QuestionId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<AIHint>(entity =>
+            {
+                entity.HasOne(af => af.Attempt)
+                      .WithMany(a => a.AIHints)
+                      .HasForeignKey(af => af.AttemptId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(af => af.Question)
+                      .WithMany(q => q.AIHints)
                       .HasForeignKey(af => af.QuestionId)
                       .OnDelete(DeleteBehavior.Restrict);
             });

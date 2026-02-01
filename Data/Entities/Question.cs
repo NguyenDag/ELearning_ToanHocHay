@@ -76,5 +76,6 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         public ICollection<ExerciseQuestion> ExerciseQuestions { get; set; }
         public ICollection<StudentAnswer> StudentAnswers { get; set; }
         public ICollection<AIFeedback> AIFeedbacks { get; set; }
+        public ICollection<AIHint> AIHints { get; set; }
     }
 }

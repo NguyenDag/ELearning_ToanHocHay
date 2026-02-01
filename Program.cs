@@ -120,7 +120,7 @@ namespace ELearning_ToanHocHay_Control
             {
                 options.AddPolicy("AllowWebApp", policy =>
                 {
-                    policy.WithOrigins("https://localhost:7299") // Cổng dự án WebApp
+                    policy.SetIsOriginAllowed(origin => true) // Cho phép gọi từ bất kỳ đâu (hoặc liệt kê IP/Domain thật)
                           .AllowAnyMethod()
                           .AllowAnyHeader()
                           .AllowCredentials();
@@ -138,7 +138,8 @@ namespace ELearning_ToanHocHay_Control
 
             if (!app.Environment.IsProduction())
             {
-                app.UseHttpsRedirection();
+                //app.UseHttpsRedirection();
+                app.UseCors("AllowWebApp");
             }
 
             app.UseAuthentication();

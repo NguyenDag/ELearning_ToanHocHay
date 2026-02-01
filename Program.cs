@@ -106,13 +106,13 @@ namespace ELearning_ToanHocHay_Control
             builder.Services.AddAuthorization();
 
             // 6. Cấu hình Controllers & JSON Options (Giữ nguyên PascalCase cho WebApp dễ đọc)
-            builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.PropertyNamingPolicy = null;
-        // Dùng Preserve để WebApp nhận diện được các Object lồng nhau mà không bị mất dữ liệu
-        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
-    });
+            // Chỉnh lại trong API
+            builder.Services.AddControllers().AddJsonOptions(options =>
+            {
+                // Thay Preserve bằng IgnoreCycles
+                options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+                options.JsonSerializerOptions.PropertyNamingPolicy = null;
+            });
 
             // 7. Cấu hình Swagger & CORS
             builder.Services.AddEndpointsApiExplorer();

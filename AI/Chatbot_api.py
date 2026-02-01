@@ -189,36 +189,96 @@ def status():
 # ==================== DOCUMENTATION ====================
 @app.route('/api/chatbot/docs', methods=['GET'])
 def swagger_ui():
-    # Phần HTML này mình đã cập nhật hiển thị "UserId" để bạn dễ test
     swagger_html = """
     <!DOCTYPE html>
     <html>
-    <head><title>Chatbot API Docs</title><meta charset="utf-8"/><style>
-        body { font-family: sans-serif; padding: 20px; background: #f0f2f5; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        code { background: #eee; padding: 2px 5px; }
-        .post { color: green; font-weight: bold; }
-        pre { background: #272822; color: #f8f8f2; padding: 15px; border-radius: 5px; }
-    </style></head>
+    <head>
+        <title>Chatbot API Docs</title>
+        <meta charset="utf-8"/>
+        <style>
+            body { font-family: sans-serif; padding: 20px; background: #f0f2f5; }
+            .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
+            code { background: #eee; padding: 2px 5px; }
+            .post { color: green; font-weight: bold; }
+            pre { background: #272822; color: #f8f8f2; padding: 15px; border-radius: 5px; overflow-x: auto; }
+            button { margin-top: 10px; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+        </style>
+    </head>
     <body>
-        <h1>🤖 Chatbot API (Chuẩn UserId)</h1>
+        <h1>🤖 Chatbot API Documentation</h1>
+
         <div class="card">
             <p><span class="post">POST</span> /api/chatbot/message</p>
             <pre>{
   "UserId": "12345",
   "text": "Chào bạn"
 }</pre>
+            <button onclick="testAPI('/api/chatbot/message', {UserId:'12345', text:'Chào bạn'})">Test API</button>
         </div>
+
         <div class="card">
             <p><span class="post">POST</span> /api/chatbot/quick-reply</p>
             <pre>{
   "UserId": "12345",
   "reply": "Tư vấn lớp 6"
 }</pre>
+            <button onclick="testAPI('/api/chatbot/quick-reply', {UserId:'12345', reply:'Tư vấn lớp 6'})">Test API</button>
         </div>
-    </body></html>
+
+        <div class="card">
+            <p><span class="post">POST</span> /api/chatbot/trigger</p>
+            <pre>{
+  "UserId": "12345",
+  "trigger": "page_load | wait_15s | scroll_70"
+}</pre>
+            <button onclick="testAPI('/api/chatbot/trigger', {UserId:'12345', trigger:'page_load'})">Test API</button>
+        </div>
+
+        <div class="card">
+            <p><span class="post">GET</span> /api/chatbot/user/&lt;UserId&gt;</p>
+            <pre>Example: /api/chatbot/user/12345</pre>
+            <button onclick="window.open('/api/chatbot/user/12345','_blank')">Test API</button>
+        </div>
+
+        <div class="card">
+            <p><span class="post">POST</span> /api/chatbot/user/&lt;UserId&gt;/reset</p>
+            <pre>Example: /api/chatbot/user/12345/reset</pre>
+            <button onclick="testAPI('/api/chatbot/user/12345/reset', {})">Test API</button>
+        </div>
+
+        <div class="card">
+            <p><span class="post">GET</span> /api/chatbot/health</p>
+            <button onclick="window.open('/api/chatbot/health','_blank')">Test API</button>
+        </div>
+
+        <div class="card">
+            <p><span class="post">GET</span> /api/chatbot/status</p>
+            <button onclick="window.open('/api/chatbot/status','_blank')">Test API</button>
+        </div>
+
+        <script>
+            async function testAPI(url, data) {
+                console.log('Sending request to', url, 'with data', data);
+                try {
+                    const res = await fetch(url, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(data)
+                    });
+                    const result = await res.json();
+                    console.log('Response:', result);
+                    alert(JSON.stringify(result, null, 2));
+                } catch(err) {
+                    console.error('API Error:', err);
+                    alert('Error: ' + err);
+                }
+            }
+        </script>
+    </body>
+    </html>
     """
     return render_template_string(swagger_html)
+
 
 @app.route('/', methods=['GET'])
 def root():

@@ -118,11 +118,15 @@ namespace ELearning_ToanHocHay_Control
             builder.Services.AddEndpointsApiExplorer();
             ConfigureSwagger(builder.Services);
 
+            // 7. Cấu hình Swagger & CORS
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowWebApp", policy =>
                 {
-                    policy.WithOrigins("https://localhost:7299") // Cổng dự án WebApp
+                    policy.WithOrigins(
+                            "https://localhost:7299",  
+                            "http://103.98.152.182"    
+                          )
                           .AllowAnyMethod()
                           .AllowAnyHeader()
                           .AllowCredentials();

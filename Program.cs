@@ -107,11 +107,12 @@ namespace ELearning_ToanHocHay_Control
 
             // 6. Cấu hình Controllers & JSON Options (Giữ nguyên PascalCase cho WebApp dễ đọc)
             builder.Services.AddControllers()
-                .AddJsonOptions(options =>
-                {
-                    options.JsonSerializerOptions.PropertyNamingPolicy = null;
-                    options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
-                });
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = null;
+        // Dùng Preserve để WebApp nhận diện được các Object lồng nhau mà không bị mất dữ liệu
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
+    });
 
             // 7. Cấu hình Swagger & CORS
             builder.Services.AddEndpointsApiExplorer();
@@ -136,6 +137,11 @@ namespace ELearning_ToanHocHay_Control
 
             // CORS phải đặt TRƯỚC Authentication/Authorization
             app.UseCors("AllowWebApp");
+            app.UseForwardedHeaders(new ForwardedHeadersOptions
+            {
+                ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor |
+                       Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto
+            });
 
             if (!app.Environment.IsProduction())
             {

@@ -1,4 +1,5 @@
 ﻿using ELearning_ToanHocHay_Control.Models.DTOs.Subscription;
+using ELearning_ToanHocHay_Control.Services.Implementations;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -10,10 +11,14 @@ namespace ELearning_ToanHocHay_Control.Controllers
     public class SubscriptionController : ControllerBase
     {
         private readonly ISubscriptionService _service;
+        private readonly ISubscriptionPaymentService _subscriptionPaymentService;
+        private readonly ISePayService _sePayService;
 
-        public SubscriptionController(ISubscriptionService service)
+        public SubscriptionController(ISubscriptionService service, ISubscriptionPaymentService subscriptionPaymentService, ISePayService sePayService)
         {
             _service = service;
+            _subscriptionPaymentService = subscriptionPaymentService;
+            _sePayService = sePayService;
         }
 
         // GET: api/subscription
@@ -38,16 +43,23 @@ namespace ELearning_ToanHocHay_Control.Controllers
             return Ok(response);
         }
 
-        // POST: api/subscription
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreateSubscriptionDto dto)
+        public async Task<IActionResult> CreateSubscriptionAndQr(CreateSubscriptionDto dto)
         {
-            var response = await _service.CreateAsync(dto);
-            if (!response.Success)
-                return BadRequest(response);
+            var result = await _subscriptionPaymentService.CreatePendingAsync(dto);
 
-            return Ok(response);
+            if (!result.Success)
+                return BadRequest(result);
+
+            var qrUrl = _sePayService.GenerateQrUrl(result.Data, dto.AmountPaid);
+
+            return Ok(new
+            {
+                subscriptionId = result.Data,
+                qrUrl
+            });
         }
+
 
         // PUT: api/subscription/cancel/5
         [HttpPut("cancel/{id:int}")]

@@ -7,7 +7,7 @@ namespace ELearning_ToanHocHay_Control.Services.Interfaces
     {
         Task<ApiResponse<IEnumerable<SubscriptionDto>>> GetAllAsync();
         Task<ApiResponse<SubscriptionDto>> GetByIdAsync(int id);
-        Task<ApiResponse<SubscriptionDto>> CreateAsync(CreateSubscriptionDto dto);
+        //Task<ApiResponse<SubscriptionDto>> CreateAsync(CreateSubscriptionDto dto);
         Task<ApiResponse<bool>> CancelAsync(int id);
         Task<ApiResponse<bool>> CheckPremiumAsync(int studentId);
     }

@@ -1,6 +1,12 @@
 ﻿using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Web;
+using ELearning_ToanHocHay_Control.Data;
+using ELearning_ToanHocHay_Control.Data.Entities;
 using ELearning_ToanHocHay_Control.Models.DTOs.Sepay;
+using ELearning_ToanHocHay_Control.Repositories.Interfaces;
+using ELearning_ToanHocHay_Control.Services.Implementations;
+using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -12,61 +18,67 @@ namespace ELearning_ToanHocHay_Control.Controllers
     public class SepayController : ControllerBase
     {
         private readonly SePayOptions _options;
+        private readonly ISePayService _sePayService;
+        private readonly ISubscriptionRepository _subscriptionRepository;
+        private readonly AppDbContext _context;
 
-        public SepayController(IOptions<SePayOptions> options)
+        public SepayController(IOptions<SePayOptions> options, ISePayService sePayService, ISubscriptionRepository subscriptionRepository, AppDbContext context)
         {
             _options = options.Value;
-        }
-
-        [HttpGet]
-        public string CreateQr(int subscriptionId, decimal totalAmount)
-        {
-            var description = $"SUBSCRIPTION_{subscriptionId}";
-
-            var qrUrl =
-                $"{_options.BaseUrl}/img" +
-                $"?acc={_options.VA}" +
-                $"&bank={_options.BankName}" +
-                $"&amount={(long)totalAmount}" +
-                $"&des={HttpUtility.UrlDecode(description)}";
-
-            return qrUrl;
+            _sePayService = sePayService;
+            _subscriptionRepository = subscriptionRepository;
+            _context = context;
         }
 
         [HttpPost]
-        public IActionResult IPN(SePayIpnRequest request)
+        public async Task<IActionResult> IPN(
+            [FromBody] SePayIpnRequest request,
+            [FromHeader(Name = "X-Api-Key")] string apiKey
+        )
         {
-            // subscriptionId
-            // action phai in
+            // 1. Verify ApiKey
+            if (!_sePayService.ValidateApiKey(apiKey))
+                return Unauthorized();
+
+            // 2. Chỉ xử lý tiền vào
             if (request.transferType != "in")
-            {
-                return Ok("request.transferType != \"in\"");
-            }
+                return Ok("Ignore out transaction");
 
-            var subscriptionId = ExtractSubscriptionId(request.content);
-
+            // 3. Parse subscriptionId
+            var subscriptionId = _sePayService.ExtractSubscriptionId(request.content);
             if (subscriptionId == null)
+                return Ok("Invalid content");
+
+            var subscription = await _subscriptionRepository.GetByIdAsync((int)subscriptionId);
+
+            if (subscription == null)
+                return Ok("Subscription not found");
+
+            // 4. Chống IPN trùng
+            if (subscription.Status == SubscriptionStatus.Active)
+                return Ok("Already processed");
+
+            // 5. Check amount
+            if (!_sePayService.IsValidAmount(
+                request.transferAmount,
+                subscription.AmountPaid))
             {
-                return Ok("Cannot find subscriptionId in content");
+                return Ok("Amount mismatch");
             }
 
-            // lay subscriptionId ...
-            return Ok("Sucess");
-        }
+            // 6. Update Payment
+            subscription.Payment.Status = PaymentStatus.Completed;
+            subscription.Payment.TransactionId = request.referenceCode;
+            subscription.Payment.PaymentDate = DateTime.UtcNow;
 
-        private int? ExtractSubscriptionId(string? text)
-        {
-            if (string.IsNullOrEmpty(text)) return null;
+            // 7. Active Subscription
+            subscription.Status = SubscriptionStatus.Active;
+            subscription.StartDate = DateTime.UtcNow;
+            subscription.EndDate = DateTime.UtcNow.AddMonths(1);
 
-            var match = Regex.Match(
-                text,
-                @"SUBSCRIPTION[\-_]?(\d+)",
-                RegexOptions.IgnoreCase
-            );
+            _context.SaveChanges();
 
-            if (!match.Success) return null;
-
-            return int.Parse(match.Groups[1].Value);
+            return Ok("Success");
         }
     }
 }

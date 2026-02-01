@@ -36,11 +36,12 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             return true;
         }
 
-        public async Task<Lesson?> GetByIdAsync(int lessonId)
+        // Trong LessonRepository.cs (Backend)
+        public async Task<Lesson> GetByIdAsync(int id)
         {
             return await _context.Lessons
-                .Include(x => x.LessonContents)
-                .FirstOrDefaultAsync(l => l.LessonId == lessonId);
+                .Include(l => l.LessonContents.OrderBy(c => c.OrderIndex)) // Lấy nội dung và sắp xếp theo thứ tự
+                .FirstOrDefaultAsync(l => l.LessonId == id);
         }
 
         public async Task<IEnumerable<Lesson>> GetByTopicIdAsync(int topicId)

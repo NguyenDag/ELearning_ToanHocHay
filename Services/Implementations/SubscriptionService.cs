@@ -60,25 +60,6 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 .SuccessResponse(dto);
         }
 
-        public async Task<ApiResponse<SubscriptionDto>> CreateAsync(CreateSubscriptionDto dto)
-        {
-            var subscription = new Subscription
-            {
-                StudentId = dto.StudentId,
-                PackageId = dto.PackageId,
-                PaymentId = dto.PaymentId,
-                StartDate = dto.StartDate,
-                EndDate = dto.EndDate,
-                AmountPaid = dto.AmountPaid,
-                Status = SubscriptionStatus.Active
-            };
-
-            await _repository.AddAsync(subscription);
-
-            return ApiResponse<SubscriptionDto>
-                .SuccessResponse(null, "Đăng ký gói thành công");
-        }
-
         public async Task<ApiResponse<bool>> CancelAsync(int id)
         {
             var sub = await _repository.GetByIdAsync(id);

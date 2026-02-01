@@ -29,7 +29,6 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
         public async Task<Payment> AddAsync(Payment payment)
         {
             _context.Payments.Add(payment);
-            await _context.SaveChangesAsync();
             return payment;
         }
 

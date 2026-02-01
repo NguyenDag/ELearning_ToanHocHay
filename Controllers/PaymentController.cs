@@ -38,17 +38,6 @@ namespace ELearning_ToanHocHay_Control.Controllers
             return Ok(response);
         }
 
-        // POST: api/payment
-        [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreatePaymentDto dto)
-        {
-            var response = await _service.CreateAsync(dto);
-            if (!response.Success)
-                return BadRequest(response);
-
-            return Ok(response);
-        }
-
         // PUT: api/payment/update-status/5
         [HttpPut("update-status/{id:int}")]
         public async Task<IActionResult> UpdateStatus(int id, UpdatePaymentStatusDto dto)

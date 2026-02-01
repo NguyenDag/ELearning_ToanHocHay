@@ -4,6 +4,12 @@ using ELearning_ToanHocHay_Control.Data.Entities;
 namespace ELearning_ToanHocHay_Control.Models.DTOs
 {
     // 1. DTO chính để trả về Web
+    public enum CurriculumStatus
+    {
+        Draft = 0,      // Bản nháp
+        Published = 1,  // Đã xuất bản
+        Archived = 2    // Đã lưu trữ
+    }
     public class CurriculumDto
     {
         public int CurriculumId { get; set; }

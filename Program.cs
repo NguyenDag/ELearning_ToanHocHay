@@ -46,6 +46,7 @@ namespace ELearning_ToanHocHay_Control
             // 3. Đăng ký toàn bộ Repositories và Services
             RegisterAppServices(builder.Services);
 
+
             // 4. Cấu hình AutoMapper
             builder.Services.AddAutoMapper(typeof(UserProfile));
 
@@ -106,21 +107,23 @@ namespace ELearning_ToanHocHay_Control
 
             // 6. Cấu hình Controllers & JSON Options (Giữ nguyên PascalCase cho WebApp dễ đọc)
             builder.Services.AddControllers()
-                .AddJsonOptions(options =>
-                {
-                    options.JsonSerializerOptions.PropertyNamingPolicy = null;
-                    options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
-                });
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = null;
+        // Dùng Preserve để WebApp nhận diện được các Object lồng nhau mà không bị mất dữ liệu
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
+    });
 
             // 7. Cấu hình Swagger & CORS
             builder.Services.AddEndpointsApiExplorer();
             ConfigureSwagger(builder.Services);
 
+            // 7. Cấu hình Swagger & CORS
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowWebApp", policy =>
                 {
-                    policy.WithOrigins("https://localhost:7299") // Cổng dự án WebApp
+                    policy.SetIsOriginAllowed(origin => true) // Cho phép tất cả mọi nơi, kể cả local của An
                           .AllowAnyMethod()
                           .AllowAnyHeader()
                           .AllowCredentials();
@@ -135,6 +138,11 @@ namespace ELearning_ToanHocHay_Control
 
             // CORS phải đặt TRƯỚC Authentication/Authorization
             app.UseCors("AllowWebApp");
+            app.UseForwardedHeaders(new ForwardedHeadersOptions
+            {
+                ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor |
+                       Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto
+            });
 
             if (!app.Environment.IsProduction())
             {
@@ -175,6 +183,8 @@ namespace ELearning_ToanHocHay_Control
             services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
             services.AddScoped<IPaymentRepository, PaymentRepository>();
             services.AddScoped<IQuestionRepository, QuestionRepository>();
+            services.AddScoped<IAIHintRepository, AIHintRepository>();
+            services.AddScoped<IAIFeedbackRepository, AIFeedbackRepository>();
 
             // Services
             services.AddScoped<IAuthService, AuthService>();
@@ -194,6 +204,11 @@ namespace ELearning_ToanHocHay_Control
             services.AddScoped<IPackageService, PackageService>();
             services.AddScoped<ISubscriptionService, SubscriptionService>();
             services.AddScoped<IPaymentService, PaymentService>();
+            services.AddScoped<ISubscriptionPaymentService, SubscriptionPaymentService>();
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddScoped<ISePayService, SePayService>();
+            services.AddScoped<IAIHintService, AIHintService>();
+            services.AddScoped<IAIFeedbackService, AIFeedbackService>();
 
             // Background Services
             services.AddSingleton<IBackgroundEmailService, BackgroundEmailService>();

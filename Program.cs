@@ -176,6 +176,8 @@ namespace ELearning_ToanHocHay_Control
             services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
             services.AddScoped<IPaymentRepository, PaymentRepository>();
             services.AddScoped<IQuestionRepository, QuestionRepository>();
+            services.AddScoped<IAIHintRepository, AIHintRepository>();
+            services.AddScoped<IAIFeedbackRepository, AIFeedbackRepository>();
 
             // Services
             services.AddScoped<IAuthService, AuthService>();
@@ -198,6 +200,8 @@ namespace ELearning_ToanHocHay_Control
             services.AddScoped<ISubscriptionPaymentService, SubscriptionPaymentService>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<ISePayService, SePayService>();
+            services.AddScoped<IAIHintService, AIHintService>();
+            services.AddScoped<IAIFeedbackService, AIFeedbackService>();
 
             // Background Services
             services.AddSingleton<IBackgroundEmailService, BackgroundEmailService>();

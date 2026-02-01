@@ -1,5 +1,4 @@
-﻿
-using System.Text;
+﻿using System.Text;
 using ELearning_ToanHocHay_Control.Data;
 using ELearning_ToanHocHay_Control.Models.DTOs;
 using ELearning_ToanHocHay_Control.Models.DTOs.Sepay;
@@ -21,114 +20,56 @@ namespace ELearning_ToanHocHay_Control
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // ===== Database configuration (Railway + Local) =====
+            // 1. Cấu hình Database (Hỗ trợ cả Railway URL và Local Connection String)
             var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
-
-            /*builder.Services.Configure<AppSettings>(options =>
-            {
-                options.BaseUrl = baseUrl;
-            });*/
-
             string connectionString;
 
             if (!string.IsNullOrEmpty(databaseUrl))
             {
-                // Railway (Production)
-                var uri = new Uri(databaseUrl);
-                var userInfo = uri.UserInfo.Split(':');
-
-                if (userInfo.Length != 2)
-                    throw new Exception("DATABASE_URL không hợp lệ");
-
-                connectionString =
-                    $"Host={uri.Host};" +
-                    $"Port={uri.Port};" +
-                    $"Database={uri.AbsolutePath.TrimStart('/')};" +
-                    $"Username={userInfo[0]};" +
-                    $"Password={userInfo[1]};" +
-                    $"Ssl Mode=Require;Trust Server Certificate=true;";
+                // Logic cho môi trường Production (Railway)
+                connectionString = ConvertRailwayUrlToConnectionString(databaseUrl);
             }
             else
             {
-                // Local
+                // Logic cho môi trường Local
                 connectionString = builder.Configuration.GetConnectionString("MyCnn")!;
             }
 
             builder.Services.AddDbContext<AppDbContext>(options =>
                 options.UseNpgsql(connectionString));
 
-            // ===== APP BASE URL =====
-            var appBaseUrl =
-                Environment.GetEnvironmentVariable("APP_BASE_URL")
-                //?? throw new Exception("APP_BASE_URL chưa được cấu hình");
-                ?? "https://localhost:5001";
+            // 2. Cấu hình App Base URL & Email
+            var appBaseUrl = Environment.GetEnvironmentVariable("APP_BASE_URL") ?? "https://localhost:5001";
+            builder.Services.Configure<AppSettings>(options => options.BaseUrl = appBaseUrl);
+            builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 
-            builder.Services.Configure<AppSettings>(options =>
-            {
-                options.BaseUrl = appBaseUrl;
-            });
+            // 3. Đăng ký toàn bộ Repositories và Services
+            RegisterAppServices(builder.Services);
 
-            builder.Services.Configure<EmailSettings>(
-                builder.Configuration.GetSection("EmailSettings")
-                );
 
-            // Register Repositories
-            builder.Services.AddScoped<IUserRepository, UserRepository>();
-            builder.Services.AddScoped<IStudentRepository, StudentRepository>();
-            builder.Services.AddScoped<IParentRepository, ParentRepository>();
-            builder.Services.AddScoped<IExerciseRepository, ExerciseRepository>();
-            builder.Services.AddScoped<IExerciseAttemptRepository, ExerciseAttemptRepository>();
-            builder.Services.AddScoped<IStudentAnswerRepository, StudentAnswerRepository>();
-            builder.Services.AddScoped<IQuestionBankRepository, QuestionBankRepository>();
-            builder.Services.AddScoped<IExerciseQuestionRepository, ExerciseQuestionRepository>();
-            builder.Services.AddScoped<ICurriculumRepository, CurriculumRepository>();
-            builder.Services.AddScoped<IChapterRepository, ChapterRepository>();
-            builder.Services.AddScoped<ITopicRepository, TopicRepository>();
-            builder.Services.AddScoped<ILessonRepository, LessonRepository>();
-            builder.Services.AddScoped<ILessonContentRepository, LessonContentRepository>();
-            builder.Services.AddScoped<IPackageRepository, PackageRepository>();
-            builder.Services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
-            builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
-
-            // Register Services
-            builder.Services.AddScoped<IAuthService, AuthService>();
-            builder.Services.AddScoped<IUserService, UserService>();
-            builder.Services.AddScoped<IJwtService, JwtService>();
-            builder.Services.AddScoped<IExerciseService, ExerciseService>();
-            builder.Services.AddScoped<IExerciseAttemptService, ExerciseAttemptService>();
-            builder.Services.AddScoped<ICurriculumService, CurriculumService>();
-            builder.Services.AddScoped<IChapterService, ChapterService>();
-            builder.Services.AddScoped<ITopicService, TopicService>();
-            builder.Services.AddScoped<ILessonSevice, LessonService>();
-            builder.Services.AddScoped<ILessonContentService, LessonContentService>();
-            //builder.Services.AddScoped<IEmailService, EmailService>();
-            builder.Services.AddScoped<IEmailService, SendGridEmailService>();
-            builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
-            builder.Services.AddHttpClient<IAIService, AIService>();
-            builder.Services.AddScoped<IQuestionRepository, QuestionRepository>();
-            builder.Services.AddScoped<IQuestionService, QuestionService>();
-            builder.Services.AddScoped<IPackageService, PackageService>();
-            builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
-            builder.Services.AddScoped<IPaymentService, PaymentService>();
-            builder.Services.AddScoped<ISubscriptionPaymentService, SubscriptionPaymentService>();
-            builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-            builder.Services.AddScoped<ISePayService, SePayService>();
-
-            builder.Services.AddSingleton<IBackgroundEmailService, BackgroundEmailService>();
-            builder.Services.AddHostedService<BackgroundEmailService>(provider =>
-                (BackgroundEmailService)provider.GetRequiredService<IBackgroundEmailService>());
-
-            //Register AutoMapper
+            // 4. Cấu hình AutoMapper
             builder.Services.AddAutoMapper(typeof(UserProfile));
+
+            // 5. CẤU HÌNH JWT (Tích hợp logic kiểm tra SecretKey linh hoạt)
+            var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+
+            // Ưu tiên lấy từ biến môi trường (Server), nếu không có mới lấy từ appsettings (Local)
+            var secretKey = Environment.GetEnvironmentVariable("JwtSettings__SecretKey")
+                            ?? jwtSettings["SecretKey"]
+                            ?? builder.Configuration["JwtSettings:SecretKey"];
+
 
             // Register SePay
             builder.Services.Configure<SePayOptions>(
                 builder.Configuration.GetSection("SePay")
             );
 
-            // Configure JWT Authentication
-            var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-            var secretKey = jwtSettings["SecretKey"];
+            
+            // Kiểm tra an toàn: Nếu không tìm thấy SecretKey ở cả 2 nơi thì báo lỗi rõ ràng thay vì ArgumentNullException
+            if (string.IsNullOrEmpty(secretKey))
+            {
+                throw new Exception("CRITICAL ERROR: Không tìm thấy 'SecretKey' trong cấu hình! Hãy kiểm tra appsettings.json hoặc Environment Variables.");
+            }
 
             builder.Services.AddAuthentication(options =>
             {
@@ -164,9 +105,109 @@ namespace ELearning_ToanHocHay_Control
 
             builder.Services.AddAuthorization();
 
-            // Configure Swagger
+            // 6. Cấu hình Controllers & JSON Options (Giữ nguyên PascalCase cho WebApp dễ đọc)
+            builder.Services.AddControllers()
+                .AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.PropertyNamingPolicy = null;
+                    options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+                });
+
+            // 7. Cấu hình Swagger & CORS
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen(c =>
+            ConfigureSwagger(builder.Services);
+
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowWebApp", policy =>
+                {
+                    policy.WithOrigins("https://localhost:7299") // Cổng dự án WebApp
+                          .AllowAnyMethod()
+                          .AllowAnyHeader()
+                          .AllowCredentials();
+                });
+            });
+
+            var app = builder.Build();
+
+            // 8. Cấu hình Middleware Pipeline theo thứ tự chuẩn
+            app.UseSwagger();
+            app.UseSwaggerUI();
+
+            // CORS phải đặt TRƯỚC Authentication/Authorization
+            app.UseCors("AllowWebApp");
+
+            if (!app.Environment.IsProduction())
+            {
+                app.UseHttpsRedirection();
+            }
+
+            app.UseAuthentication();
+            app.UseAuthorization();
+
+            app.MapControllers();
+
+            // Chuyển hướng mặc định về Swagger
+            app.MapGet("/", () => Results.Redirect("/swagger"));
+
+            app.Run();
+        }
+
+        /// <summary>
+        /// Phương thức đăng ký toàn bộ Repositories và Services
+        /// </summary>
+        private static void RegisterAppServices(IServiceCollection services)
+        {
+            // Repositories
+            services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IStudentRepository, StudentRepository>();
+            services.AddScoped<IParentRepository, ParentRepository>();
+            services.AddScoped<IExerciseRepository, ExerciseRepository>();
+            services.AddScoped<IExerciseAttemptRepository, ExerciseAttemptRepository>();
+            services.AddScoped<IStudentAnswerRepository, StudentAnswerRepository>();
+            services.AddScoped<IQuestionBankRepository, QuestionBankRepository>();
+            services.AddScoped<IExerciseQuestionRepository, ExerciseQuestionRepository>();
+            services.AddScoped<ICurriculumRepository, CurriculumRepository>();
+            services.AddScoped<IChapterRepository, ChapterRepository>();
+            services.AddScoped<ITopicRepository, TopicRepository>();
+            services.AddScoped<ILessonRepository, LessonRepository>();
+            services.AddScoped<ILessonContentRepository, LessonContentRepository>();
+            services.AddScoped<IPackageRepository, PackageRepository>();
+            services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
+            services.AddScoped<IPaymentRepository, PaymentRepository>();
+            services.AddScoped<IQuestionRepository, QuestionRepository>();
+
+            // Services
+            services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IJwtService, JwtService>();
+            services.AddScoped<IExerciseService, ExerciseService>();
+            services.AddScoped<IExerciseAttemptService, ExerciseAttemptService>();
+            services.AddScoped<ICurriculumService, CurriculumService>();
+            services.AddScoped<IChapterService, ChapterService>();
+            services.AddScoped<ITopicService, TopicService>();
+            services.AddScoped<ILessonSevice, LessonService>(); // Đã sửa chính tả
+            services.AddScoped<ILessonContentService, LessonContentService>();
+            services.AddScoped<IEmailService, SendGridEmailService>();
+            services.AddSingleton<IPasswordHasher, PasswordHasher>();
+            services.AddHttpClient<IAIService, AIService>();
+            services.AddScoped<IQuestionService, QuestionService>();
+            services.AddScoped<IPackageService, PackageService>();
+            services.AddScoped<ISubscriptionService, SubscriptionService>();
+            services.AddScoped<IPaymentService, PaymentService>();
+            services.AddScoped<ISubscriptionPaymentService, SubscriptionPaymentService>();
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddScoped<ISePayService, SePayService>();
+
+            // Background Services
+            services.AddSingleton<IBackgroundEmailService, BackgroundEmailService>();
+            services.AddHostedService<BackgroundEmailService>(provider =>
+                (BackgroundEmailService)provider.GetRequiredService<IBackgroundEmailService>());
+        }
+
+        private static void ConfigureSwagger(IServiceCollection services)
+        {
+            services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo
                 {
@@ -175,7 +216,6 @@ namespace ELearning_ToanHocHay_Control
                     Description = "API cho hệ thống E-Learning ToanHocHay"
                 });
 
-                // Configure JWT trong Swagger
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
                     Description = "JWT Authorization header sử dụng Bearer scheme. Nhập 'Bearer' [space] và token của bạn",
@@ -190,62 +230,26 @@ namespace ELearning_ToanHocHay_Control
                     {
                         new OpenApiSecurityScheme
                         {
-                            Reference = new OpenApiReference
-                            {
-                                Type = ReferenceType.SecurityScheme,
-                                Id = "Bearer"
-                            }
+                            Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
                         },
                         new string[] {}
                     }
                 });
             });
+        }
 
-            // Configure CORS
-            builder.Services.AddCors(options =>
-            {
-                options.AddPolicy("AllowWebApp", policy =>
-                {
-                    policy.WithOrigins("https://localhost:7299") // Cổng WebApp của bạn
-                          .AllowAnyMethod()
-                          .AllowAnyHeader()
-                          .AllowCredentials();
-                });
-            });
+        private static string ConvertRailwayUrlToConnectionString(string databaseUrl)
+        {
+            var uri = new Uri(databaseUrl);
+            var userInfo = uri.UserInfo.Split(':');
+            if (userInfo.Length != 2) throw new Exception("DATABASE_URL không hợp lệ");
 
-            builder.Services.AddControllers()
-                .AddJsonOptions(options =>
-                {
-                    // Giữ nguyên tên thuộc tính (Success, Data, Message) thay vì biến thành camelCase
-                    options.JsonSerializerOptions.PropertyNamingPolicy = null;
-                    // Xử lý lỗi vòng lặp nếu có
-                    options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
-                });
-
-            var app = builder.Build();
-
-            // 2. Cấu hình Middleware theo đúng thứ tự
-            app.UseSwagger();
-            app.UseSwaggerUI();
-
-            // Kích hoạt CORS ngay sau Swagger và PHẢI TRƯỚC Authentication/Authorization
-            app.UseCors("AllowWebApp");
-
-            if (!app.Environment.IsProduction())
-            {
-                app.UseHttpsRedirection();
-            }
-
-            // Thứ tự này rất quan trọng: Auth -> Auth
-            app.UseAuthentication();
-            app.UseAuthorization();
-
-            app.MapControllers();
-
-            // Chuyển hướng trang chủ về Swagger cho tiện debug
-            app.MapGet("/", () => Results.Redirect("/swagger"));
-
-            app.Run();
+            return $"Host={uri.Host};" +
+                   $"Port={uri.Port};" +
+                   $"Database={uri.AbsolutePath.TrimStart('/')};" +
+                   $"Username={userInfo[0]};" +
+                   $"Password={userInfo[1]};" +
+                   $"Ssl Mode=Require;Trust Server Certificate=true;";
         }
     }
 }

@@ -40,7 +40,11 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
 
         public async Task<Curriculum?> GetCurriculumByIdAsync(int curriculumId)
         {
-            return await _context.Curriculums.FirstOrDefaultAsync(c => c.CurriculumId == curriculumId);
+            return await _context.Curriculums
+                .Include(c => c.Chapters)          // Lôi chương lên
+                    .ThenInclude(ch => ch.Topics)  // Lôi chủ đề trong chương lên
+                        .ThenInclude(t => t.Lessons) // Lôi bài học trong chủ đề lên
+                .FirstOrDefaultAsync(c => c.CurriculumId == curriculumId);
         }
 
         public async Task<Curriculum?> UpdateCurriculumAsync(Curriculum curriculum)

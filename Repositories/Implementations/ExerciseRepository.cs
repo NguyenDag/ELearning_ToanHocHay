@@ -74,10 +74,8 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
 
         public async Task<IEnumerable<Exercise>> GetAllAsync()
         {
-            // Thêm Include để nạp các liên kết câu hỏi, giúp thuộc tính TotalQuestions có dữ liệu (nếu là computed property)
-            // Hoặc đơn giản là đảm bảo lấy dữ liệu mới nhất
             return await _context.Exercises
-                .Include(e => e.ExerciseQuestions)
+                .Include(e => e.ExerciseQuestions) // Nạp để có thể tính TotalQuestions
                 .AsNoTracking()
                 .ToListAsync();
         }
@@ -105,6 +103,7 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
         public async Task<Exercise?> GetExerciseByIdAsync(int exerciseId)
         {
             return await _context.Exercises
+                .AsNoTracking()
                 .FirstOrDefaultAsync(e => e.ExerciseId == exerciseId);
         }
 
@@ -118,14 +117,16 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
                 .ToListAsync();
         }
 
-        public async Task<Exercise> GetExerciseWithQuestionsAsync(int exerciseId)
+        public async Task<Exercise?> GetExerciseWithQuestionsAsync(int exerciseId)
         {
             return await _context.Exercises
                 .Include(e => e.ExerciseQuestions)
                     .ThenInclude(eq => eq.Question)
-                        .ThenInclude(qb => qb.QuestionOptions)
+                        .ThenInclude(q => q.QuestionOptions) // Bắt buộc nạp Options để không bị NullReference ở Service
+                .AsNoTracking() // Tăng tốc độ đọc dữ liệu
                 .FirstOrDefaultAsync(e => e.ExerciseId == exerciseId);
         }
+
 
         public async Task<List<Question>> GetRandomQuestionsAsync(int? questionBankId, int count)
         {

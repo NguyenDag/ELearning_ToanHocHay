@@ -1,11 +1,20 @@
 import logging
+import os
+import json
 from enum import Enum
 from typing import Dict
+from dotenv import load_dotenv
+import google.generativeai as genai
+
+# Load environment variables
+load_dotenv()
 
 # Disable logging
-logging.basicConfig(level=logging.CRITICAL)
+# Bật logging để debug
+logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
 logger = logging.getLogger(__name__)
 logger.disabled = True
+
 
 # ==================== USER STATE ====================
 class UserState(Enum):
@@ -26,14 +35,70 @@ class User:
         self.lead_submitted = False
 
 # ==================== CHATBOT LOGIC BACKEND ====================
+# ==================== API KEY MANAGER ====================
+class GeminiAPIKeyManager:
+    """Manage multiple Gemini API keys with rotation on failure"""
+    
+    def __init__(self):
+        self.api_keys = []
+        self.current_index = 0
+        
+        # Try to get multiple API keys
+        i = 1
+        while True:
+            key = os.getenv(f"GEMINI_API_KEY_{i}")
+            if not key:
+                break
+            self.api_keys.append(key)
+            i += 1
+        
+        # If no numbered keys, try single key
+        if not self.api_keys:
+            key = os.getenv("GEMINI_API_KEY")
+            if key:
+                self.api_keys.append(key)
+        
+        if not self.api_keys:
+            logger.warning("No Gemini API keys found in environment variables")
+        else:
+            logger.info(f"Loaded {len(self.api_keys)} Gemini API key(s)")
+    
+    def get_current_key(self) -> str:
+        """Get current API key"""
+        if self.api_keys:
+            return self.api_keys[self.current_index]
+        return None
+    
+    def rotate_key(self) -> str:
+        """Rotate to next API key on failure"""
+        if not self.api_keys:
+            return None
+        self.current_index = (self.current_index + 1) % len(self.api_keys)
+        logger.warning(f"Rotating to API key #{self.current_index + 1}")
+        return self.get_current_key()
+    
+    def configure(self):
+        """Configure genai with current API key"""
+        if self.get_current_key():
+            genai.configure(api_key=self.get_current_key())
+
+# ==================== CHATBOT LOGIC BACKEND ====================
 class ChatbotLogicBackend:
     """
-    Backend chatbot rule-based, không dùng LLM.
+    Backend chatbot với LLM integration.
     Quick Reply → rule-based mapping
-    Free Text → fallback
+    Free Text → Gemini LLM (with API key rotation)
     """
     def __init__(self):
         self.users: Dict[str, User] = {}
+        self.api_manager = GeminiAPIKeyManager()
+        self.api_manager.configure()
+        self.model_name = "gemini-2.5-flash"
+        self._init_model()
+    
+    def _init_model(self):
+        """Initialize Gemini model"""
+        self.model = genai.GenerativeModel(self.model_name)
 
     def get_user(self, user_id: str) -> User:
         if user_id not in self.users:
@@ -45,46 +110,189 @@ class ChatbotLogicBackend:
         user = self.get_user(user_id)
         user.has_interacted = True
 
-        # Normalize reply
-        if reply:
-            reply = reply.strip()
+        if not reply:
+            return self._flow_handover(user)
+            
+        # Chuyển về chữ thường và xóa khoảng trắng để so sánh cho dễ
+        r = reply.lower().strip()
+        logger.info(f"Processing Quick Reply: '{r}'")
 
-        flow_map = {
-            "Tư vấn cho con lớp 6": self._flow_tu_van,
-            "Con hay làm sai, không hiểu vì sao": self._flow_con_hay_lam_sai,
-            "Con học chậm, dễ quên bài": self._flow_con_hoc_cham,
-            "Con ngại học Toán": self._flow_con_ngai_hoc,
-            "Tôi muốn theo sát việc học của con": self._flow_theo_sat,
-            "Có, cho con học thử": self._flow_hoc_thu_parent,
-            "Tìm hiểu thêm": self._flow_tu_van_more,
-            "Học thử": self._flow_hoc_thu_student,
-            "Nhờ bố/mẹ xem giúp": self._flow_hoc_thu_parent_help,
-            "Xem báo cáo tiến độ mẫu": self._flow_bao_cao,
-            "Nhận báo cáo mẫu": self._flow_bao_cao,
-            "Học phí & lộ trình": self._flow_hoc_phi,
-            "Xem lộ trình học": self._flow_hoc_phi,
-            "Được tư vấn chi tiết": self._flow_hoc_phi,
-            "Cho con học thử trước": self._flow_hoc_phi,
-            "Tư vấn thêm": self._flow_handover,
-            "Liên hệ": self._flow_handover,
-            "Gọi điện": self._flow_handover,
-            "Nhân viên": self._flow_handover,
-        }
-
-        logger.info(f"Quick reply '{reply}' from user {user_id}")
+        # Dùng 'in' để so sánh từ khóa, tránh lỗi Encoding hoặc sai lệch 1-2 chữ
         
-        if reply in flow_map:
-            logger.info(f"✓ Match found: {flow_map[reply].__name__}")
-            return flow_map[reply](user)
-        else:
-            logger.warning(f"✗ No match for reply: '{reply}' - Fallback triggered")
-            return self._flow_fallback(user)
+        # ===== Main flows =====
+        if "tư vấn" in r and "lớp 6" in r:
+            return self._flow_tu_van(user)
+        
+        elif "học thử" in r and ("miễn phí" in r or "cho con" in r):
+            return self._flow_hoc_thu_student(user)
+            
+        elif "báo cáo" in r and "mẫu" in r:
+            return self._flow_bao_cao(user)
+            
+        elif "hay làm sai" in r or ("không hiểu" in r and "sai" in r):
+            return self._flow_con_hay_lam_sai(user)
+            
+        elif "học chậm" in r or "dễ quên" in r:
+            return self._flow_con_hoc_cham(user)
+            
+        elif "ngại học" in r:
+            return self._flow_con_ngai_hoc(user)
+            
+        elif "theo sát" in r:
+            return self._flow_theo_sat(user)
+            
+        elif "học phí" in r or "lộ trình" in r:
+            return self._flow_hoc_phi(user)
+        
+        # ===== Sub-option flows =====
+        # Từ _flow_con_hay_lam_sai options
+        elif "có" in r and "cho con học thử" in r:
+            return self._flow_hoc_thu_parent(user)
+        
+        elif "tìm hiểu thêm" in r:
+            return self._flow_tu_van_more(user)
+        
+        # Từ _flow_hoc_thu_student options
+        elif "nhờ" in r and "bố" in r and "mẹ" in r:
+            return self._flow_hoc_thu_parent_help(user)
+        
+        elif "học thử" in r and "nhờ" not in r:
+            return self._flow_hoc_thu_parent(user)
+        
+        # Từ _flow_bao_cao options
+        elif "nhận" in r and "báo cáo" in r:
+            return self._flow_bao_cao(user)
+        
+        elif "tư vấn thêm" in r and "báo" not in r:
+            return self._flow_handover(user)
+        
+        # Từ _flow_hoc_phi options
+        elif "xem" in r and "lộ trình" in r:
+            return self._flow_tu_van_more(user)
+        
+        elif "được tư vấn chi tiết" in r:
+            return self._flow_handover(user)
+        
+        elif "cho con học thử trước" in r:
+            return self._flow_hoc_thu_parent(user)
+            
+        elif "liên hệ" in r or "nhân viên" in r or "gọi điện" in r:
+            return self._flow_handover(user)
+            
+        # Nếu không khớp cái nào bên trên thì mới fallback
+        logger.warning(f"✗ Vẫn không khớp: '{r}'")
+        return self._flow_handover(user)
 
     # ---------- Handle Free Text ----------
     def handle_free_text(self, user_id: str, text: str) -> Dict:
-        # Nếu người dùng gõ text tự do, backend **không phân tích**, dùng fallback
+        """
+        Xử lý text tự do từ người dùng bằng Gemini LLM.
+        LLM sẽ:
+        1. Chào lại nếu là lời chào
+        2. Xác định flow phù hợp
+        3. Gọi flow đó hoặc fallback nếu không match
+        """
         user = self.get_user(user_id)
         user.has_interacted = True
+        
+        # Nếu không có API key, dùng fallback
+        if not self.api_manager.api_keys:
+            logger.warning("No API keys available, using fallback")
+            return self._flow_fallback(user)
+        
+        return self._call_llm_with_retry(user, text)
+    
+    def _call_llm_with_retry(self, user: User, text: str) -> Dict:
+        """Call LLM with retry logic on key rotation"""
+        max_retries = len(self.api_manager.api_keys)
+        
+        for attempt in range(max_retries):
+            try:
+                # Prompt cho LLM
+                system_prompt = (
+                    "Bạn là trợ lý ảo thông minh của web toán học hay, khi người dùng hỏi hãy trả lời lịch sự. "
+                    "Mục tiêu của bạn là khi người dùng chào bạn bạn hãy chào lại, với câu hỏi người dùng thì quyết định xem nó thuộc flow nào và gọi tới flow đó. "
+                    "Khi cảm thấy không thuộc flow nào thì hãy điều hướng tới flow fall back."
+                    "\n\nCác flow có sẵn:\n"
+                    "- tu_van: Tư vấn cho con lớp 6\n"
+                    "- con_hay_lam_sai: Con hay làm sai, không hiểu vì sao\n"
+                    "- con_hoc_cham: Con học chậm, dễ quên bài\n"
+                    "- con_ngai_hoc: Con ngại học Toán\n"
+                    "- theo_sat: Tôi muốn theo sát việc học của con\n"
+                    "- hoc_thu: Học thử miễn phí\n"
+                    "- bao_cao: Xem báo cáo tiến độ\n"
+                    "- hoc_phi: Học phí & lộ trình\n"
+                    "- handover: Cần tư vấn chi tiết / liên hệ nhân viên\n"
+                    "- fallback: Không rõ / không thuộc flow nào\n"
+                    "- greeting: Chào hỏi (trả lời lịch sự)\n"
+                    "\n"
+                    "Hãy trả lời với format JSON: {\"flow\": \"<flow_name>\", \"message\": \"<your_response>\"}"
+                )
+                
+                prompt = f"{system_prompt}\n\nUser message: {text}"
+                
+                # Gọi Gemini API
+                response = self.model.generate_content(prompt)
+                response_text = response.text.strip()
+                logger.info(f"LLM response: {response_text}")
+                
+                # Thử parse JSON response (remove markdown backticks nếu có)
+                try:
+                    # Remove markdown code block markers
+                    if response_text.startswith("```"):
+                        response_text = response_text.split("```")[1]
+                        if response_text.startswith("json"):
+                            response_text = response_text[4:]
+                        response_text = response_text.strip()
+                    
+                    result = json.loads(response_text)
+                    flow_name = result.get("flow", "fallback")
+                    message = result.get("message", "")
+                except json.JSONDecodeError as e:
+                    logger.warning(f"Failed to parse LLM response: {response_text}, error: {str(e)}")
+                    return self._flow_fallback(user)
+                
+                # Mapping flow name to flow handler
+                flow_handlers = {
+                    "tu_van": self._flow_tu_van,
+                    "con_hay_lam_sai": self._flow_con_hay_lam_sai,
+                    "con_hoc_cham": self._flow_con_hoc_cham,
+                    "con_ngai_hoc": self._flow_con_ngai_hoc,
+                    "theo_sat": self._flow_theo_sat,
+                    "hoc_thu": self._flow_hoc_thu_student,
+                    "bao_cao": self._flow_bao_cao,
+                    "hoc_phi": self._flow_hoc_phi,
+                    "handover": self._flow_handover,
+                    "greeting": self._flow_greeting,
+                    "fallback": self._flow_fallback,
+                }
+                
+                handler = flow_handlers.get(flow_name, self._flow_fallback)
+                result = handler(user)
+                
+                # Thêm LLM message vào response nếu có (chỉ khi không phải fallback)
+                if message and flow_name != "fallback":
+                    if result.get("type") == "quick_reply":
+                        result["message"] = message + "\n" + result.get("message", "")
+                    else:
+                        result["message"] = message
+                
+                return result
+                
+            except Exception as e:
+                logger.error(f"API call attempt {attempt + 1} failed: {str(e)}")
+                
+                if attempt < max_retries - 1:
+                    # Rotate API key and reconfigure
+                    new_key = self.api_manager.rotate_key()
+                    self.api_manager.configure()
+                    # Recreate model with new API key
+                    self._init_model()
+                    logger.info(f"Retrying with next API key...")
+                else:
+                    logger.error(f"Max retries ({max_retries}) exceeded")
+                    return self._flow_fallback(user)
+        
         return self._flow_fallback(user)
 
     # ---------- Flow handlers với message đầy đủ ----------
@@ -136,7 +344,7 @@ class ChatbotLogicBackend:
         }
 
     def _flow_hoc_thu_parent(self, user: User) -> Dict:
-        user.state = UserState.IN_FLOW_TRIAL_PARENT
+        user.state = UserState.IN_FLOW_TRIAL_PARENT 
         return {
             "type": "form",
             "message": (
@@ -159,36 +367,30 @@ class ChatbotLogicBackend:
     def _flow_hoc_thu_student(self, user: User) -> Dict:
         user.state = UserState.IN_FLOW_TRIAL_STUDENT
         return {
-            "type": "form",
+            "type": "quick_reply", # Đổi từ form thành quick_reply
             "message": (
                 "Chào em, ToánHọcHay giúp học sinh lớp 6 học Toán từng bước, dễ hiểu hơn.\n"
                 "Em muốn làm gì tiếp?"
             ),
-            "form_fields": [
-                "Họ tên (bắt buộc)",
-                "Lớp (bắt buộc)",
-                "Email (không bắt buộc)"
-            ],
-            "options": ["Học thử", "Hỏi bài", "Nhờ bố/mẹ xem giúp"]
+            "options": ["Học thử", "Nhờ bố/mẹ xem giúp"]
         }
 
     def _flow_hoc_thu_parent_help(self, user: User) -> Dict:
         return {
             "type": "message",
-            "message": "Anh/chị có thể nhờ bố/mẹ hoặc người thân điền form để nhận hướng dẫn học thử."
+            "message": "Em có thể nhờ bố/mẹ hoặc người thân điền form để nhận hướng dẫn học thử."
         }
 
     def _flow_bao_cao(self, user: User) -> Dict:
         return {
-            "type": "form",
+            "type": "quick_reply", # Đổi từ form thành quick_reply
             "message": (
                 "Báo cáo giúp phụ huynh nắm được:\n"
                 "- Con đang học đến đâu\n"
                 "- Những phần con còn yếu\n"
                 "- Gợi ý nội dung cần ôn lại\n"
-                "Anh/chị có muốn nhận bản báo cáo mẫu qua email không?"
+                "Anh/chị muốn thực hiện thao tác nào?"
             ),
-            "form_fields": ["Email (bắt buộc)"],
             "options": ["Nhận báo cáo mẫu", "Tư vấn thêm"]
         }
 
@@ -211,6 +413,13 @@ class ChatbotLogicBackend:
             "message": "Mình đã ghi nhận yêu cầu. Đội ngũ ToánHọcHay sẽ liên hệ lại để tư vấn cụ thể hơn."
         }
 
+    def _flow_greeting(self, user: User) -> Dict:
+        """Xử lý lời chào hỏi - chỉ trả lời message từ LLM"""
+        return {
+            "type": "message",
+            "message": ""  # Message sẽ được thêm từ LLM
+        }
+
     def _flow_fallback(self, user: User) -> Dict:
         return {
             "type": "quick_reply",
@@ -225,10 +434,10 @@ if __name__ == "__main__":
     user_id = "user_1"
 
     # 1. User click Quick Reply
-    response = chatbot.handle_quick_reply(user_id, "Tư vấn cho con lớp 6")
+    response = chatbot.handle_quick_reply(user_id, "Xem báo cáo tiến độ mẫu")
     print("Quick Reply response:", response)
 
     # 2. User gõ text tự do
-    free_text = "Tôi muốn cho con học thử vài buổi đầu"
+    free_text = "Bạn sinh năm bao nhiêu?"
     response2 = chatbot.handle_free_text(user_id, free_text)
     print("Free Text response (fallback):", response2)

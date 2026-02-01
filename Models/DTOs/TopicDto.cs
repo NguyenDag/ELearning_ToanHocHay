@@ -11,6 +11,7 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs
         public string? Description { get; set; }
         public bool IsFree { get; set; }
         public bool IsActive { get; set; }
+        public List<LessonDto> Lessons { get; set; } = new();
     }
 
     public class CreateTopicDto

@@ -7,7 +7,6 @@ namespace ELearning_ToanHocHay_Control.Services.Interfaces
     {
         Task<ApiResponse<IEnumerable<PaymentDto>>> GetAllAsync();
         Task<ApiResponse<PaymentDto>> GetByIdAsync(int id);
-        Task<ApiResponse<PaymentDto>> CreateAsync(CreatePaymentDto dto);
         Task<ApiResponse<bool>> UpdateStatusAsync(int id, UpdatePaymentStatusDto dto);
     }
 }

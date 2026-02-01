@@ -110,7 +110,9 @@ namespace ELearning_ToanHocHay_Control
             builder.Services.AddScoped<IPackageService, PackageService>();
             builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
             builder.Services.AddScoped<IPaymentService, PaymentService>();
-
+            builder.Services.AddScoped<ISubscriptionPaymentService, SubscriptionPaymentService>();
+            builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+            builder.Services.AddScoped<ISePayService, SePayService>();
 
             builder.Services.AddSingleton<IBackgroundEmailService, BackgroundEmailService>();
             builder.Services.AddHostedService<BackgroundEmailService>(provider =>

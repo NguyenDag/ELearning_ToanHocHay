@@ -57,23 +57,6 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             return ApiResponse<PaymentDto>.SuccessResponse(dto);
         }
 
-        public async Task<ApiResponse<PaymentDto>> CreateAsync(CreatePaymentDto dto)
-        {
-            var payment = new Payment
-            {
-                StudentId = dto.StudentId,
-                Amount = dto.Amount,
-                PaymentMethod = dto.PaymentMethod,
-                Status = PaymentStatus.Pending,
-                Notes = dto.Notes
-            };
-
-            var createdPayment = await _repository.AddAsync(payment);
-
-            return ApiResponse<PaymentDto>
-                .SuccessResponse(_mapper.Map<PaymentDto>(createdPayment), "Tạo payment thành công");
-        }
-
         public async Task<ApiResponse<bool>> UpdateStatusAsync(int id, UpdatePaymentStatusDto dto)
         {
             var payment = await _repository.GetByIdAsync(id);

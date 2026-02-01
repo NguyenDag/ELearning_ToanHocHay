@@ -38,7 +38,6 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
         public async Task AddAsync(Subscription subscription)
         {
             _context.Subscriptions.Add(subscription);
-            await _context.SaveChangesAsync();
         }
 
         public async Task UpdateAsync(Subscription subscription)

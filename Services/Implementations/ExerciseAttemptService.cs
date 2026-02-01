@@ -632,56 +632,78 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         {
             try
             {
-                // 1. Tìm StudentId dựa vào UserId (được lấy từ Token khi đăng nhập)
-                var student = await _context.Students
-                    .FirstOrDefaultAsync(s => s.UserId == userId);
+                var student = await _context.Students.FirstOrDefaultAsync(s => s.UserId == userId);
+                if (student == null) return ApiResponse<StudentDashboardDto>.ErrorResponse("Không tìm thấy học sinh.");
 
-                if (student == null)
-                    return ApiResponse<StudentDashboardDto>.ErrorResponse("Không tìm thấy thông tin học sinh.");
+                // 1. Lấy tất cả chương và bài tập trong chương đó
+                var allChapters = await _context.Chapters
+                    .Include(c => c.Exercises)
+                    .ToListAsync();
 
-                // 2. Lấy toàn bộ lịch sử làm bài của học sinh này (chỉ lấy bài đã kết thúc)
+                // 2. Lấy lịch sử làm bài của học sinh
                 var attempts = await _context.ExerciseAttempts
                     .Include(a => a.Exercise)
                     .Where(a => a.StudentId == student.StudentId && a.EndTime != null)
-                    .OrderByDescending(a => a.StartTime)
                     .ToListAsync();
 
-                // 3. Đổ dữ liệu vào DTO để gửi về WebApp
-                var stats = new StudentDashboardDto
+                var stats = new StudentDashboardDto();
+
+                // --- Giữ nguyên logic cũ ---
+                stats.TotalAttempts = attempts.Count;
+                stats.AverageScore = attempts.Any() ? Math.Round(attempts.Average(a => a.TotalScore), 1) : 0;
+
+                // --- LOGIC MỚI: Đổ dữ liệu vào danh sách Chapters ---
+                foreach (var ch in allChapters)
                 {
-                    // Tính tổng số lần làm bài
-                    TotalAttempts = attempts.Count,
+                    int totalExercisesInChapter = ch.Exercises.Count;
 
-                    // Tính điểm trung bình (làm tròn 1 chữ số thập phân)
-                    AverageScore = attempts.Any() ? Math.Round(attempts.Average(a => a.TotalScore), 1) : 0,
+                    // Đếm số bài tập khác nhau trong chương này mà học sinh đã làm
+                    int completedInChapter = attempts
+                        .Where(a => a.Exercise.ChapterId == ch.ChapterId)
+                        .Select(a => a.ExerciseId)
+                        .Distinct()
+                        .Count();
 
-                    // Tạm thời đếm số chương đã học (dựa trên các bài tập đã làm)
-                    CompletedChapters = attempts.Select(a => a.Exercise.ChapterId).Distinct().Count(),
-
-                    // Dữ liệu cho biểu đồ cột
-                    ChartData = attempts.GroupBy(a => a.Exercise.ChapterId)
-                        .Select(g => new ScoreChartItemDto
-                        {
-                            ChapterName = "Chương " + g.Key,
-                            AvgScore = Math.Round(g.Average(a => a.TotalScore), 1)
-                        }).ToList(),
-
-                    // 5 bài kiểm tra gần nhất cho bảng lịch sử
-                    RecentAttempts = attempts.Take(5).Select(a => new ExerciseAttemptDto
+                    // Tính % tiến độ
+                    int progress = 0;
+                    if (totalExercisesInChapter > 0)
                     {
-                        AttemptId = a.AttemptId,
-                        ExerciseName = a.Exercise?.ExerciseName ?? "Bài tập",
-                        Score = a.TotalScore,
-                        StartTime = a.StartTime,
-                        EndTime = a.EndTime
-                    }).ToList()
-                };
+                        progress = (int)((double)completedInChapter / totalExercisesInChapter * 100);
+                    }
 
-                return ApiResponse<StudentDashboardDto>.SuccessResponse(stats, "Lấy dữ liệu thành công");
+                    stats.Chapters.Add(new ChapterProgressDto
+                    {
+                        ChapterId = ch.ChapterId,
+                        ChapterName = ch.ChapterName,
+                        TotalLessons = totalExercisesInChapter,
+                        ProgressPercentage = progress > 100 ? 100 : progress // Đảm bảo không quá 100%
+                    });
+                }
+
+                // Đếm số chương đã hoàn thành (tiến độ = 100%)
+                stats.CompletedChapters = stats.Chapters.Count(x => x.ProgressPercentage == 100);
+
+                // Biểu đồ và Lịch sử (Giữ nguyên như cũ)
+                stats.ChartData = attempts.GroupBy(a => a.Exercise.ChapterId)
+                    .Select(g => new ScoreChartItemDto
+                    {
+                        ChapterName = stats.Chapters.FirstOrDefault(c => c.ChapterId == g.Key)?.ChapterName ?? "Chương " + g.Key,
+                        AvgScore = Math.Round(g.Average(a => a.TotalScore), 1)
+                    }).ToList();
+
+                stats.RecentAttempts = attempts.OrderByDescending(a => a.StartTime).Take(5).Select(a => new ExerciseAttemptDto
+                {
+                    AttemptId = a.AttemptId,
+                    ExerciseName = a.Exercise?.ExerciseName ?? "Bài tập",
+                    Score = a.TotalScore,
+                    StartTime = a.StartTime
+                }).ToList();
+
+                return ApiResponse<StudentDashboardDto>.SuccessResponse(stats, "Thành công");
             }
             catch (Exception ex)
             {
-                return ApiResponse<StudentDashboardDto>.ErrorResponse("Lỗi: " + ex.Message);
+                return ApiResponse<StudentDashboardDto>.ErrorResponse(ex.Message);
             }
         }
     }

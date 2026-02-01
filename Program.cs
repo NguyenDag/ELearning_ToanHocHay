@@ -123,10 +123,7 @@ namespace ELearning_ToanHocHay_Control
             {
                 options.AddPolicy("AllowWebApp", policy =>
                 {
-                    policy.WithOrigins(
-                            "https://localhost:7299",  
-                            "http://103.98.152.182"    
-                          )
+                    policy.SetIsOriginAllowed(origin => true) // Cho phép tất cả mọi nơi, kể cả local của An
                           .AllowAnyMethod()
                           .AllowAnyHeader()
                           .AllowCredentials();

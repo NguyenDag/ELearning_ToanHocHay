@@ -44,6 +44,19 @@ namespace ELearning_ToanHocHay_Control.Services.Helpers
             CreateMap<QuestionOption, QuestionOptionDto>()
                 .ForMember(dest => dest.OptionId, opt => opt.MapFrom(src => src.OptionId))
                 .ForMember(dest => dest.OptionText, opt => opt.MapFrom(src => src.OptionText));
+            CreateMap<Curriculum, CurriculumDto>();
+
+            // Mapping cho Chapter (Chương)
+            CreateMap<Chapter, ChapterDto>();
+
+            // Mapping cho Topic (Chủ đề)
+            CreateMap<Topic, TopicDto>();
+
+            // Mapping cho Lesson (Bài học)
+            CreateMap<Lesson, LessonDto>();
+
+            // Nếu bạn có DTO cho nội dung bài học chi tiết
+            CreateMap<LessonContent, LessonContentDto>();
         }
     }
 }

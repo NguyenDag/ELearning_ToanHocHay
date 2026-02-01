@@ -154,6 +154,63 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 return "AI không thể tạo gợi ý.";
             }
         }
+
+        // ==================== CHATBOT METHODS ====================
+        public async Task<ChatbotResponse?> SendChatbotMessageAsync(ChatbotMessageRequest request)
+        {
+            try
+            {
+                var jsonContent = JsonSerializer.Serialize(request);
+                var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+                _logger.LogInformation($"[Chatbot] Sending message: {request.Text}, User: {request.UserId}");
+                var response = await _httpClient.PostAsync("/api/chatbot/message", content);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorMsg = await response.Content.ReadAsStringAsync();
+                    _logger.LogError($"[Chatbot] API error: {response.StatusCode} - {errorMsg}");
+                    return new ChatbotResponse { Success = false, Error = $"AI Server Error: {response.StatusCode}" };
+                }
+
+                var responseString = await response.Content.ReadAsStringAsync();
+                return JsonSerializer.Deserialize<ChatbotResponse>(responseString, 
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"[Chatbot] Error sending message: {ex.Message}");
+                return new ChatbotResponse { Success = false, Error = ex.Message };
+            }
+        }
+
+        public async Task<ChatbotResponse?> SendChatbotQuickReplyAsync(ChatbotQuickReplyRequest request)
+        {
+            try
+            {
+                var jsonContent = JsonSerializer.Serialize(request);
+                var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+                _logger.LogInformation($"[Chatbot] Sending quick reply: {request.Reply}, User: {request.UserId}");
+                var response = await _httpClient.PostAsync("/api/chatbot/quick-reply", content);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorMsg = await response.Content.ReadAsStringAsync();
+                    _logger.LogError($"[Chatbot] API error: {response.StatusCode} - {errorMsg}");
+                    return new ChatbotResponse { Success = false, Error = $"AI Server Error: {response.StatusCode}" };
+                }
+
+                var responseString = await response.Content.ReadAsStringAsync();
+                return JsonSerializer.Deserialize<ChatbotResponse>(responseString,
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"[Chatbot] Error sending quick reply: {ex.Message}");
+                return new ChatbotResponse { Success = false, Error = ex.Message };
+            }
+        }
     }
 
     // ==================== REQUEST DTOs ====================

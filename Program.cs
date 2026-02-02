@@ -139,6 +139,12 @@ namespace ELearning_ToanHocHay_Control
 
             var app = builder.Build();
 
+            using (var scope = app.Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                db.Database.Migrate();
+            }
+                
             // 8. Cấu hình Middleware Pipeline theo thứ tự chuẩn
             app.UseSwagger();
             app.UseSwaggerUI();

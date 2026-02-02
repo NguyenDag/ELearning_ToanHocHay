@@ -121,11 +121,43 @@ class GeminiAIService:
             response = self._call_api_with_retry(content)
             
             if response.get("Status") == "error":
-                return response
+                error_type = response.get("ErrorType", "unknown")
+                
+                if error_type == "quota":
+                    # Quota exhausted - specific message
+                    return {
+                        "hint_text": "🚫 Hệ thống AI đã hết quota. Vui lòng liên hệ quản trị viên để nạp thêm quota.",
+                        "hint_level": hint_level,
+                        "question_id": question_id,
+                        "status": "error",
+                        "error": "QUOTA_EXHAUSTED",
+                        "error_type": "quota"
+                    }
+                else:
+                    # Other API errors
+                    return {
+                        "hint_text": "AI đang gặp sự cố khi tạo gợi ý. Vui lòng thử lại.",
+                        "hint_level": hint_level,
+                        "question_id": question_id,
+                        "status": "error",
+                        "error": response.get("Error", "Unknown error"),
+                        "error_type": error_type
+                    }
             
             # Parse JSON response
             response_text = response.get("text", "")
             logger.info(f"Raw AI Hint Response: {response_text}") # Log raw response
+            
+            # Check if response is empty
+            if not response_text or not response_text.strip():
+                logger.error("Empty response from Gemini API")
+                return {
+                    "hint_text": "AI trả về phản hồi rỗng. Vui lòng thử lại.",
+                    "hint_level": hint_level,
+                    "question_id": question_id,
+                    "status": "error",
+                    "error": "Empty response from API"
+                }
             
             cleaned_text = self._clean_json_text(response_text)
             hint_data = json.loads(cleaned_text)
@@ -138,13 +170,14 @@ class GeminiAIService:
             }
         
         except json.JSONDecodeError as e:
-            logger.error(f"JSON decode error: {str(e)} - Raw text: {response_text}")
+            # response_text is already defined in the try block above
+            logger.error(f"JSON decode error: {str(e)} - Raw text: {response_text if 'response_text' in locals() else 'N/A'}")
             return {
-                "HintText": "AI đang gặp sự cố khi tạo gợi ý. Vui lòng thử lại.",
-                "HintLevel": hint_level,
-                "QuestionId": question_id,
-                "Status": "error",
-                "Error": str(e)
+                "hint_text": "AI đang gặp sự cố khi tạo gợi ý. Vui lòng thử lại.",
+                "hint_level": hint_level,
+                "question_id": question_id,
+                "status": "error",
+                "error": str(e)
             }
         
         except Exception as e:
@@ -205,18 +238,46 @@ class GeminiAIService:
             response = self._call_api_with_retry(content)
             
             if response.get("Status") == "error":
-                return {
-                    "FullSolution": response.get("text", "Lỗi tạo feedback"),
-                    "MistakeAnalysis": "",
-                    "ImprovementAdvice": "",
-                    "AttemptId": attempt_id,
-                    "Status": "error",
-                    "Error": response.get("Error")
-                }
+                error_type = response.get("ErrorType", "unknown")
+                
+                if error_type == "quota":
+                    # Quota exhausted - specific message
+                    return {
+                        "full_solution": "🚫 Hệ thống AI đã hết quota. Vui lòng liên hệ quản trị viên để nạp thêm quota.",
+                        "mistake_analysis": "",
+                        "improvement_advice": "",
+                        "attempt_id": attempt_id,
+                        "status": "error",
+                        "error": "QUOTA_EXHAUSTED",
+                        "error_type": "quota"
+                    }
+                else:
+                    # Other API errors
+                    return {
+                        "full_solution": "AI đang gặp sự cố khi tạo phản hồi. Vui lòng thử lại.",
+                        "mistake_analysis": "",
+                        "improvement_advice": "",
+                        "attempt_id": attempt_id,
+                        "status": "error",
+                        "error": response.get("Error", "Unknown error"),
+                        "error_type": error_type
+                    }
             
             # Parse JSON response
             response_text = response.get("text", "")
             logger.info(f"Raw AI Feedback Response: {response_text}") # Log raw response
+            
+            # Check if response is empty
+            if not response_text or not response_text.strip():
+                logger.error("Empty response from Gemini API")
+                return {
+                    "full_solution": "AI trả về phản hồi rỗng. Vui lòng thử lại.",
+                    "mistake_analysis": "",
+                    "improvement_advice": "",
+                    "attempt_id": attempt_id,
+                    "status": "error",
+                    "error": "Empty response from API"
+                }
             
             cleaned_text = self._clean_json_text(response_text)
             feedback_data = json.loads(cleaned_text)
@@ -230,25 +291,25 @@ class GeminiAIService:
             }
         
         except json.JSONDecodeError as e:
-            logger.error(f"JSON decode error: {str(e)} - Raw text: {response_text}")
+            logger.error(f"JSON decode error: {str(e)} - Raw text: {response_text if 'response_text' in locals() else 'N/A'}")
             return {
-                "FullSolution": "AI đang gặp sự cố khi tạo phản hồi. Vui lòng thử lại.",
-                "MistakeAnalysis": "",
-                "ImprovementAdvice": "",
-                "AttemptId": attempt_id,
-                "Status": "error",
-                "Error": str(e)
+                "full_solution": "AI đang gặp sự cố khi tạo phản hồi. Vui lòng thử lại.",
+                "mistake_analysis": "",
+                "improvement_advice": "",
+                "attempt_id": attempt_id,
+                "status": "error",
+                "error": str(e)
             }
         
         except Exception as e:
             logger.error(f"Error generating feedback: {str(e)}")
             return {
-                "FullSolution": f"Lỗi tạo feedback: {str(e)}",
-                "MistakeAnalysis": "",
-                "ImprovementAdvice": "",
-                "AttemptId": attempt_id,
-                "Status": "error",
-                "Error": str(e)
+                "full_solution": f"Lỗi tạo feedback: {str(e)}",
+                "mistake_analysis": "",
+                "improvement_advice": "",
+                "attempt_id": attempt_id,
+                "status": "error",
+                "error": str(e)
             }
 
     
@@ -310,6 +371,8 @@ class GeminiAIService:
     def _call_api_with_retry(self, content) -> Dict:
         """Call Gemini API with retry logic on key rotation"""
         max_retries = len(api_key_manager.api_keys)
+        last_error = None
+        quota_errors = 0
         
         for attempt in range(max_retries):
             try:
@@ -320,7 +383,20 @@ class GeminiAIService:
                 }
             
             except Exception as e:
-                logger.error(f"API call attempt {attempt + 1} failed: {str(e)}")
+                error_str = str(e).lower()
+                last_error = str(e)
+                
+                # Check if this is a quota/rate limit error
+                is_quota_error = any(keyword in error_str for keyword in [
+                    'quota', 'resource_exhausted', 'resourceexhausted', 
+                    '429', 'rate limit', 'ratelimit'
+                ])
+                
+                if is_quota_error:
+                    quota_errors += 1
+                    logger.error(f"⚠️ API key #{attempt + 1} HẾT QUOTA: {str(e)}")
+                else:
+                    logger.error(f"API call attempt {attempt + 1} failed: {str(e)}")
                 
                 if attempt < max_retries - 1:
                     # Rotate API key and reconfigure
@@ -334,16 +410,30 @@ class GeminiAIService:
                         )
                     )
                 else:
-                    return {
-                        "text": f"API Error after {max_retries} attempts: {str(e)}",
-                        "Status": "error",
-                        "Error": str(e)
-                    }
+                    # All retries exhausted
+                    if quota_errors == max_retries:
+                        # All keys hit quota limit
+                        return {
+                            "text": f"🚫 TẤT CẢ {max_retries} API KEY ĐỀU ĐÃ HẾT QUOTA",
+                            "Status": "error",
+                            "Error": "QUOTA_EXHAUSTED",
+                            "ErrorType": "quota",
+                            "Details": last_error
+                        }
+                    else:
+                        # Other errors
+                        return {
+                            "text": f"API Error after {max_retries} attempts: {last_error}",
+                            "Status": "error",
+                            "Error": last_error,
+                            "ErrorType": "api_error"
+                        }
         
         return {
             "text": "Unknown error",
             "Status": "error",
-            "Error": "Max retries exceeded"
+            "Error": "Max retries exceeded",
+            "ErrorType": "unknown"
         }
     
     def _format_options(

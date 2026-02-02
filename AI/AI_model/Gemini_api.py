@@ -96,19 +96,6 @@ class GeminiAIService:
     ) -> Dict[str, str]:
         """
         Generate a hint for a specific question without revealing the answer.
-        
-        Args:
-            question_text: The question text
-            question_type: Type of question (MultipleChoice, TrueFalse, FillBlank, Essay)
-            difficulty_level: Difficulty level (Easy, Medium, Hard)
-            student_answer: Student's current answer or "Chưa trả lời"
-            hint_level: Hint level 1-3 (1=general, 2=specific, 3=step-by-step)
-            options: List of options for multiple choice (without IsCorrect field)
-            question_id: Question ID for tracking
-            question_image_url: URL to question image (optional)
-        
-        Returns:
-            Dictionary with HintText and HintLevel
         """
         try:
             # Format options text
@@ -138,7 +125,10 @@ class GeminiAIService:
             
             # Parse JSON response
             response_text = response.get("text", "")
-            hint_data = json.loads(response_text)
+            logger.info(f"Raw AI Hint Response: {response_text}") # Log raw response
+            
+            cleaned_text = self._clean_json_text(response_text)
+            hint_data = json.loads(cleaned_text)
             
             return {
                 "hint_text": hint_data.get("hint_text", response_text),
@@ -148,9 +138,9 @@ class GeminiAIService:
             }
         
         except json.JSONDecodeError as e:
-            logger.error(f"JSON decode error: {str(e)}")
+            logger.error(f"JSON decode error: {str(e)} - Raw text: {response_text}")
             return {
-                "HintText": f"Lỗi xử lý phản hồi AI: {str(e)}",
+                "HintText": "AI đang gặp sự cố khi tạo gợi ý. Vui lòng thử lại.",
                 "HintLevel": hint_level,
                 "QuestionId": question_id,
                 "Status": "error",
@@ -182,20 +172,6 @@ class GeminiAIService:
     ) -> Dict[str, str]:
         """
         Generate comprehensive feedback after exercise completion.
-        
-        Args:
-            question_text: The question text
-            question_type: Type of question
-            student_answer: Student's answer
-            correct_answer: Correct answer
-            is_correct: Whether student answer is correct
-            explanation: Teacher's explanation (optional)
-            options: List of options for multiple choice (WITH IsCorrect field)
-            attempt_id: Attempt ID for tracking
-            question_image_url: URL to question image (optional)
-        
-        Returns:
-            Dictionary with FullSolution, MistakeAnalysis, ImprovementAdvice
         """
         try:
             # Format options text (including correct answers for feedback)
@@ -240,7 +216,10 @@ class GeminiAIService:
             
             # Parse JSON response
             response_text = response.get("text", "")
-            feedback_data = json.loads(response_text)
+            logger.info(f"Raw AI Feedback Response: {response_text}") # Log raw response
+            
+            cleaned_text = self._clean_json_text(response_text)
+            feedback_data = json.loads(cleaned_text)
             
             return {
                 "full_solution": feedback_data.get("full_solution", ""),
@@ -251,9 +230,9 @@ class GeminiAIService:
             }
         
         except json.JSONDecodeError as e:
-            logger.error(f"JSON decode error: {str(e)}")
+            logger.error(f"JSON decode error: {str(e)} - Raw text: {response_text}")
             return {
-                "FullSolution": f"Lỗi xử lý phản hồi AI: {str(e)}",
+                "FullSolution": "AI đang gặp sự cố khi tạo phản hồi. Vui lòng thử lại.",
                 "MistakeAnalysis": "",
                 "ImprovementAdvice": "",
                 "AttemptId": attempt_id,
@@ -271,6 +250,29 @@ class GeminiAIService:
                 "Status": "error",
                 "Error": str(e)
             }
+
+    
+    def _clean_json_text(self, text: str) -> str:
+        """Clean JSON text from Markdown formatting"""
+        if not text:
+            return ""
+        
+        text = text.strip()
+        # Remove markdown code blocks if present
+        if text.startswith("```"):
+            # Find the first newline to skip the language identifier (e.g. ```json)
+            first_newline = text.find("\n")
+            if first_newline != -1:
+                text = text[first_newline+1:]
+            else:
+                # If no newline, just strip the first 3 chars
+                 text = text[3:]
+            
+            # Remove the last ```
+            if text.endswith("```"):
+                text = text[:-3]
+                
+        return text.strip()
     
     # ==================== HELPER METHODS ====================
     def _download_image(self, image_url: str) -> Optional[Image.Image]:

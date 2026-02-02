@@ -19,14 +19,17 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         public JwtService(IConfiguration configuration)
         {
             _configuration = configuration;
-            _secretKey = _configuration["JwtSettings:SecretKey"];
-            _issuer = _configuration["JwtSettings:Issuer"];
-            _audience = _configuration["JwtSettings:Audience"];
-            _expirationMinutes = int.Parse(_configuration["JwtSettings:ExpirationMinutes"]);
+            _secretKey = _configuration["JwtSettings:SecretKey"] ?? "";
+            _issuer = _configuration["JwtSettings:Issuer"] ?? "";
+            _audience = _configuration["JwtSettings:Audience"] ?? "";
+            _expirationMinutes = int.TryParse(_configuration["JwtSettings:ExpirationMinutes"], out int exp) ? exp : 60;
         }
 
         public string GenerateToken(User user, int? studentId = null, int? parentId = null)
         {
+            if (string.IsNullOrEmpty(_secretKey))
+                throw new InvalidOperationException("SecretKey is not configured.");
+
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secretKey));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
@@ -72,14 +75,14 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             if (principal == null)
                 return null;
 
-            var userIdClaim = principal.FindFirst("UserId")?.Value;
+            var userIdClaim = principal.FindFirst(CustomJwtClaims.UserId)?.Value;
             if (int.TryParse(userIdClaim, out int userId))
                 return userId;
 
             return null;
         }
 
-        public ClaimsPrincipal ValidateToken(string token)
+        public ClaimsPrincipal? ValidateToken(string token)
         {
             try
             {

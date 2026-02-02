@@ -20,6 +20,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
             // Configure HttpClient to call Flask AI server
             var baseUrl = configuration["AI:PythonServerUrl"] ?? "http://localhost:5000";
+            _logger.LogInformation($"[AIService] Initializing with BaseUrl: {baseUrl}");
             _httpClient.BaseAddress = new Uri(baseUrl);
             _httpClient.Timeout = TimeSpan.FromSeconds(60);
         }
@@ -208,6 +209,34 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             catch (Exception ex)
             {
                 _logger.LogError($"[Chatbot] Error sending quick reply: {ex.Message}");
+                return new ChatbotResponse { Success = false, Error = ex.Message };
+            }
+        }
+
+        public async Task<ChatbotResponse?> SendChatbotTriggerAsync(ChatbotTriggerRequest request)
+        {
+            try
+            {
+                var jsonContent = JsonSerializer.Serialize(request);
+                var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+                _logger.LogInformation($"[Chatbot] Sending trigger: {request.Trigger}, User: {request.UserId}");
+                var response = await _httpClient.PostAsync("/api/chatbot/trigger", content);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorMsg = await response.Content.ReadAsStringAsync();
+                    _logger.LogError($"[Chatbot] API error: {response.StatusCode} - {errorMsg}");
+                    return new ChatbotResponse { Success = false, Error = $"AI Server Error: {response.StatusCode}" };
+                }
+
+                var responseString = await response.Content.ReadAsStringAsync();
+                return JsonSerializer.Deserialize<ChatbotResponse>(responseString,
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"[Chatbot] Error sending trigger: {ex.Message}");
                 return new ChatbotResponse { Success = false, Error = ex.Message };
             }
         }

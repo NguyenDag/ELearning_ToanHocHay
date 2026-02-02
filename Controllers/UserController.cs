@@ -88,7 +88,6 @@ namespace ELearning_ToanHocHay_Control.Controllers
             return Ok(response);
         }
         [HttpPost("update-profile/{id:int}")]
-        [HttpPost("update-profile/{id:int}")]
         public async Task<IActionResult> UpdateProfile(int id, [FromBody] UpdateProfileDto model)
         {
             // Lấy user hiện tại từ Database ra trước

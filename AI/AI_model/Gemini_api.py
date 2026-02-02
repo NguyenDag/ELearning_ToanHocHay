@@ -141,10 +141,10 @@ class GeminiAIService:
             hint_data = json.loads(response_text)
             
             return {
-                "HintText": hint_data.get("hint_text", response_text),
-                "HintLevel": hint_level,
-                "QuestionId": question_id,
-                "Status": "success"
+                "hint_text": hint_data.get("hint_text", response_text),
+                "hint_level": hint_level,
+                "question_id": question_id,
+                "status": "success"
             }
         
         except json.JSONDecodeError as e:
@@ -160,11 +160,11 @@ class GeminiAIService:
         except Exception as e:
             logger.error(f"Error generating hint: {str(e)}")
             return {
-                "HintText": f"Lỗi tạo gợi ý: {str(e)}",
-                "HintLevel": hint_level,
-                "QuestionId": question_id,
-                "Status": "error",
-                "Error": str(e)
+                "hint_text": f"Lỗi tạo gợi ý: {str(e)}",
+                "hint_level": hint_level,
+                "question_id": question_id,
+                "status": "error",
+                "error": str(e)
             }
     
     # ==================== FEEDBACK GENERATION ====================
@@ -243,11 +243,11 @@ class GeminiAIService:
             feedback_data = json.loads(response_text)
             
             return {
-                "FullSolution": feedback_data.get("full_solution", ""),
-                "MistakeAnalysis": feedback_data.get("mistake_analysis", ""),
-                "ImprovementAdvice": feedback_data.get("improvement_advice", ""),
-                "AttemptId": attempt_id,
-                "Status": "success"
+                "full_solution": feedback_data.get("full_solution", ""),
+                "mistake_analysis": feedback_data.get("mistake_analysis", ""),
+                "improvement_advice": feedback_data.get("improvement_advice", ""),
+                "attempt_id": attempt_id,
+                "status": "success"
             }
         
         except json.JSONDecodeError as e:

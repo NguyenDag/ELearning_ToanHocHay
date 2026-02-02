@@ -15,5 +15,6 @@ namespace ELearning_ToanHocHay_Control.Services.Interfaces
         // Chatbot Methods
         Task<ChatbotResponse?> SendChatbotMessageAsync(ChatbotMessageRequest request);
         Task<ChatbotResponse?> SendChatbotQuickReplyAsync(ChatbotQuickReplyRequest request);
+        Task<ChatbotResponse?> SendChatbotTriggerAsync(ChatbotTriggerRequest request);
     }
 }

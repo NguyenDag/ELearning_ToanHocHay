@@ -799,7 +799,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 // 2. Lấy lịch sử làm bài của học sinh
                 var attempts = await _context.ExerciseAttempts
                     .Include(a => a.Exercise)
-                    .Where(a => a.StudentId == student.StudentId && a.EndTime != null)
+                    .Where(a => a.StudentId == student.StudentId && a.Status != AttemptStatus.InProgress)
                     .ToListAsync();
 
                 var stats = new StudentDashboardDto();
@@ -851,7 +851,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 {
                     AttemptId = a.AttemptId,
                     ExerciseName = a.Exercise?.ExerciseName ?? "Bài tập",
-                    Score = a.TotalScore,
+                    //Score = a.TotalScore,
                     StartTime = a.StartTime
                 }).ToList();
 

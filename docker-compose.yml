@@ -9,12 +9,15 @@ services:
       POSTGRES_DB: MathELearning
       POSTGRES_USER: elearning_user
       POSTGRES_PASSWORD: 123
-    # ports:
-      # - "5432:5432"
+    ports:
+      - "127.0.0.1:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
 
   api:
+    build:
+      context: .
+      dockerfile: Dockerfile
     image: myapi
     container_name: myapi_container
     depends_on:
@@ -22,25 +25,15 @@ services:
     ports:
       - "80:8080"
     env_file:
-      - .env
+- .env
     restart: always
 
   # AI chính (Gemini / xử lý core)
   ai_core:
-    build: ./AI
-    container_name: ai_core
-    restart: always
-    ports:
-      - "5000:5000"
-    env_file:
-      - .env
-
-  # Chatbot API
-  ai_chatbot:
     build:
       context: ./AI
-      dockerfile: Dockerfile.chatbot
-    container_name: ai_chatbot
+      dockerfile: Dockerfile
+    container_name: ai_core
     restart: always
     ports:
       - "5001:5001"

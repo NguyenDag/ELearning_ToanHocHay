@@ -27,7 +27,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
 
             int userId = int.Parse(userIdClaim.Value);
 
-            // 2. Gọi Service để lấy dữ liệu thống kê mà mình vừa viết lúc nãy
+            // 2. Gọi Service để lấy dữ liệu thống kê
             var result = await _attemptService.GetDashboardStatsAsync(userId);
 
             if (result.Success)

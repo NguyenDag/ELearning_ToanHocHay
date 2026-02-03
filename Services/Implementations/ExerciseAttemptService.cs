@@ -2,6 +2,7 @@
 using ELearning_ToanHocHay_Control.Data;
 using ELearning_ToanHocHay_Control.Data.Entities;
 using ELearning_ToanHocHay_Control.Models.DTOs;
+using ELearning_ToanHocHay_Control.Models.DTOs.Student.Dashboard;
 using ELearning_ToanHocHay_Control.Repositories.Interfaces;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -461,12 +462,12 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 );
 
                 // Check đã làm bài kiểm tra này hay chưa (chỉ cho làm 1 lần)
-                if (hasCompletedAttempt)
+                /*if (hasCompletedAttempt)
                 {
                     return ApiResponse<ExerciseAttemptDto>.ErrorResponse(
                         "Bạn đã hoàn thành bài thi này"
                     );
-                }
+                }*/
 
                 // 1. LOGIC RESUME: Tìm lượt cũ chưa nộp (Status == InProgress)
                 // Nếu tìm thấy, trả về ngay lập tức để học sinh làm tiếp

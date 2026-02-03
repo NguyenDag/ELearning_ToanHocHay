@@ -3,6 +3,7 @@ using ELearning_ToanHocHay_Control.Models.DTOs;
 using ELearning_ToanHocHay_Control.Models.DTOs.AIHint;
 using ELearning_ToanHocHay_Control.Repositories.Interfaces;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
+using System.Linq;
 
 namespace ELearning_ToanHocHay_Control.Services.Implementations
 {
@@ -11,15 +12,21 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         private readonly IAIHintRepository _hintRepository;
         private readonly IExerciseAttemptRepository _attemptRepository;
         private readonly IQuestionRepository _questionRepository;
+        private readonly IAIService _aiService;
+        private readonly ILogger<AIHintService> _logger;
 
         public AIHintService(
             IAIHintRepository hintRepository,
             IExerciseAttemptRepository attemptRepository,
-            IQuestionRepository questionRepository)
+            IQuestionRepository questionRepository,
+            IAIService aiService,
+            ILogger<AIHintService> logger)
         {
             _hintRepository = hintRepository;
             _attemptRepository = attemptRepository;
             _questionRepository = questionRepository;
+            _aiService = aiService;
+            _logger = logger;
         }
 
         public async Task<ApiResponse<AIHintDto>> CreateAsync(CreateAIHintDto dto)
@@ -34,11 +41,50 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             if (question == null)
                 return ApiResponse<AIHintDto>.ErrorResponse("Question not found");
 
+            // Nếu HintText chưa có, gọi AI để sinh
+            string hintText = dto.HintText ?? string.Empty;
+            
+            if (string.IsNullOrWhiteSpace(hintText))
+            {
+                _logger.LogInformation($"Generating AI hint for Question {dto.QuestionId}, Attempt {dto.AttemptId}");
+                
+                var aiRequest = new HintRequest
+                {
+                    QuestionText = question.QuestionText ?? string.Empty,
+                    QuestionType = question.QuestionType.ToString(), // ✅ Convert Enum to String
+                    DifficultyLevel = question.DifficultyLevel.ToString(), // ✅ Convert Enum to String
+                    StudentAnswer = dto.StudentAnswer ?? "Chưa trả lời",
+                    HintLevel = dto.HintLevel,
+                    QuestionId = dto.QuestionId,
+                    QuestionImageUrl = question.QuestionImageUrl, // ✅ Sửa từ ImageUrl -> QuestionImageUrl
+                    Options = question.QuestionOptions?.Select(o => new AIOptionDto
+                    {
+                        OptionId = o.OptionId,
+                        OptionText = o.OptionText ?? string.Empty,
+                        ImageUrl = o.ImageUrl,
+                        IsCorrect = o.IsCorrect
+                    }).ToList()
+                };
+
+                var aiResponse = await _aiService.GenerateHintStructuredAsync(aiRequest);
+                
+                if (aiResponse == null || string.IsNullOrWhiteSpace(aiResponse.HintText))
+                {
+                    _logger.LogError("AI Service failed to generate hint");
+                    return ApiResponse<AIHintDto>.ErrorResponse("Failed to generate hint from AI");
+                }
+
+                hintText = aiResponse.HintText;
+                _logger.LogInformation($"AI hint generated successfully: {hintText.Substring(0, Math.Min(50, hintText.Length))}...");
+            }
+
+
+
             var hint = new AIHint
             {
                 AttemptId = dto.AttemptId,
                 QuestionId = dto.QuestionId,
-                HintText = dto.HintText,
+                HintText = hintText,
                 HintLevel = dto.HintLevel
             };
 

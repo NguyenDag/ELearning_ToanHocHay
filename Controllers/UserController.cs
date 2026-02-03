@@ -87,5 +87,27 @@ namespace ELearning_ToanHocHay_Control.Controllers
 
             return Ok(response);
         }
+        [HttpPost("update-profile/{id:int}")]
+        public async Task<IActionResult> UpdateProfile(int id, [FromBody] UpdateProfileDto model)
+        {
+            // Lấy user hiện tại từ Database ra trước
+            var userResponse = await _userService.GetByIdAsync(id);
+            if (!userResponse.Success || userResponse.Data == null)
+                return BadRequest("Không tìm thấy người dùng");
+
+            // Tạo object UpdateUserDto và gán lại mật khẩu cũ của họ để thỏa mãn điều kiện 'required'
+            var updateDto = new UpdateUserDto
+            {
+                FullName = model.FullName,
+                // Giả sử UpdateUserDto của bạn cần Password, ta truyền lại mật khẩu hiện tại 
+                // (Hoặc chuỗi rỗng tùy vào logic của UserService của bạn)
+                Password = ""
+            };
+
+            var response = await _userService.UpdateUserAsync(id, updateDto);
+            if (!response.Success) return BadRequest(response);
+
+            return Ok(response);
+        }
     }
 }

@@ -27,5 +27,6 @@ namespace ELearning_ToanHocHay_Control.Services.Interfaces
 
         // Nộp toàn bộ câu hỏi
         Task<ApiResponse<bool>> SubmitExamAsync(SubmitExamDto dto);
+        Task<ApiResponse<StudentDashboardDto>> GetDashboardStatsAsync(int userId);
     }
 }

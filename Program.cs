@@ -96,7 +96,7 @@ namespace ELearning_ToanHocHay_Control
                     {
                         if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
                         {
-                            context.Response.Headers.Add("Token-Expired", "true");
+                            context.Response.Headers.Append("Token-Expired", "true");
                         }
                         return Task.CompletedTask;
                     }
@@ -106,12 +106,19 @@ namespace ELearning_ToanHocHay_Control
             builder.Services.AddAuthorization();
 
             // 6. Cấu hình Controllers & JSON Options (Giữ nguyên PascalCase cho WebApp dễ đọc)
+            // Chỉnh lại trong API
             builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
+        // 1. Giữ nguyên tên thuộc tính (PascalCase) để khớp với DTO của WebApp
         options.JsonSerializerOptions.PropertyNamingPolicy = null;
-        // Dùng Preserve để WebApp nhận diện được các Object lồng nhau mà không bị mất dữ liệu
-        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
+
+        // 2. CHÌA KHÓA: Thay Preserve bằng IgnoreCycles
+        // Nó vẫn chống vòng lặp vô tận nhưng trả về JSON dạng mảng [] cực sạch
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+
+        // 3. (Tùy chọn) Bỏ qua các trường null để JSON gọn hơn nữa
+        options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
     });
 
             // 7. Cấu hình Swagger & CORS
@@ -132,6 +139,12 @@ namespace ELearning_ToanHocHay_Control
 
             var app = builder.Build();
 
+            using (var scope = app.Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                db.Database.Migrate();
+            }
+                
             // 8. Cấu hình Middleware Pipeline theo thứ tự chuẩn
             app.UseSwagger();
             app.UseSwaggerUI();

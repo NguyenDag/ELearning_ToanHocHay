@@ -61,7 +61,7 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             return await _context.ExerciseAttempts
                 .AnyAsync(a => a.StudentId == studentId
                     && a.ExerciseId == exerciseId
-                    && a.EndTime == null);
+                    && a.Status == AttemptStatus.InProgress);
         }
 
         public async Task SubmitExamAsync(int attemptId, List<StudentAnswer> answers)
@@ -77,7 +77,7 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
                 if (attempt == null)
                     throw new Exception("Attempt không tồn tại");
 
-                if (attempt.EndTime != null)
+                if (attempt.Status != AttemptStatus.InProgress)
                     throw new Exception("Bài thi đã được nộp");
 
                 foreach (var ans in answers)
@@ -110,6 +110,11 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
                 await transaction.RollbackAsync();
                 throw;
             }
+        }
+
+        public void Update(ExerciseAttempt attempt)
+        {
+            _context.ExerciseAttempts.Update(attempt);
         }
 
         public async Task<ExerciseAttempt> UpdateAttemptAsync(ExerciseAttempt attempt)

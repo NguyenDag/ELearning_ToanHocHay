@@ -47,10 +47,11 @@ namespace ELearning_ToanHocHay_Control.Controllers
 
         /// <summary>
         /// Submit câu trả lời cho một câu hỏi
+        /// Đây là bản cũ, sẽ dùng /save-answer để lưu câu trả lời của học sinh.
         /// </summary>
         [HttpPost("submit-answer")]
         public async Task<ActionResult<ApiResponse<bool>>> SubmitAnswer(
-            [FromBody] SubmitAnswerDto dto)
+            [FromBody] SaveAnswerDto dto)
         {
             var response = await _attemptService.SubmitAnswerAsync(dto);
 
@@ -59,6 +60,21 @@ namespace ELearning_ToanHocHay_Control.Controllers
 
             return Ok(response);
         }
+
+        /// <summary>
+        /// Auto save cho từng câu trả lời
+        /// </summary>
+        [HttpPost("save-answer")]
+        public async Task<ActionResult<ApiResponse<bool>>> SaveAnswer([FromBody] SaveAnswerDto dto)
+        {
+            var response = await _attemptService.SaveAnswerAsync(dto);
+
+            if (!response.Success)
+                return BadRequest(response);
+
+            return Ok(response);
+        }
+
 
         /// <summary>
         /// Submit toàn bộ bài thi trong 1 request

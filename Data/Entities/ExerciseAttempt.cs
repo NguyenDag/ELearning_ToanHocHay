@@ -3,6 +3,13 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ELearning_ToanHocHay_Control.Data.Entities
 {
+    public enum AttemptStatus
+    {
+        InProgress,
+        Submitted,
+        Timeout
+    }
+
     [Table("ExerciseAttempt")]
     public class ExerciseAttempt
     {
@@ -13,7 +20,14 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         public int ExerciseId { get; set; }
 
         public DateTime StartTime { get; set; } = DateTime.UtcNow;
-        public DateTime? EndTime { get; set; }
+
+        // Thời điểm PHẢI kết thúc
+        public DateTime PlannedEndTime { get; set; }
+
+        // Thời điểm thực sự submit
+        public DateTime? SubmittedAt { get; set; }
+
+        public AttemptStatus Status { get; set; } = AttemptStatus.InProgress;
 
         public double TotalScore { get; set; } = 0;
         public double MaxScore { get; set; }

@@ -20,6 +20,12 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             return answer;
         }
 
+        public Task CreateAsync(StudentAnswer answer)
+        {
+            _context.StudentAnswers.Add(answer);
+            return Task.CompletedTask;
+        }
+
         public async Task<StudentAnswer> GetAnswerAsync(int attemptId, int questionId)
         {
             return await _context.StudentAnswers
@@ -36,6 +42,11 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
                     .ThenInclude(q => q.QuestionOptions)
                 .Where(a => a.AttemptId == attemptId)
                 .ToListAsync();
+        }
+
+        public void Update(StudentAnswer answer)
+        {
+            _context.StudentAnswers.Update(answer);
         }
 
         public async Task<StudentAnswer> UpdateAnswerAsync(StudentAnswer answer)

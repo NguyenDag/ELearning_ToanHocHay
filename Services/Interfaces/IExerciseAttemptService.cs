@@ -10,8 +10,11 @@ namespace ELearning_ToanHocHay_Control.Services.Interfaces
         // Bắt đầu làm bài random
         Task<ApiResponse<ExerciseAttemptDto>> StartRandomExerciseAsync(StartRandomExerciseDto dto);
 
-        // Lưu câu trả lời
-        Task<ApiResponse<bool>> SubmitAnswerAsync(SubmitAnswerDto dto);
+        // Lưu câu trả lời (Bản cũ)
+        Task<ApiResponse<bool>> SubmitAnswerAsync(SaveAnswerDto dto);
+
+        // Lưu câu trả lời (Bản mới)
+        Task<ApiResponse<bool>> SaveAnswerAsync(SaveAnswerDto dto);
 
         // Hoàn thành bài tập và tính điểm
         Task<ApiResponse<ExerciseResultDto>> CompleteExerciseAsync(CompleteExerciseDto dto);

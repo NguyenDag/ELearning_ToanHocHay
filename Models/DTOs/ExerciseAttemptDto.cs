@@ -19,7 +19,7 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs
         public int? DurationMinutes { get; set; }
     }
 
-    public class SubmitAnswerDto
+    public class SaveAnswerDto
     {
         public int AttemptId { get; set; }
         public int QuestionId { get; set; }
@@ -29,7 +29,7 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs
     public class SubmitExamDto
     {
         public int AttemptId { get; set; }
-        public List<SubmitAnswerDto> Answers { get; set; } = new();
+        public List<SaveAnswerDto> Answers { get; set; } = new();
     }
 
     public class CompleteExerciseDto
@@ -46,21 +46,30 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs
         public string ExerciseName { get; set; }
         public ExerciseType ExerciseType { get; set; }
         public DateTime StartTime { get; set; }
-        public DateTime? EndTime { get; set; }
-        public int? DurationMinutes { get; set; }
+        // Thời điểm PHẢI kết thúc (đếm giờ)
+        public DateTime PlannedEndTime { get; set; }
+
+        // Thời điểm thực sự nộp bài (null nếu chưa submit)
+        public DateTime? SubmittedAt { get; set; }
+
+        public AttemptStatus Status { get; set; }
         public int TotalQuestions { get; set; }
-        public List<QuestionInAttemptDto> Questions { get; set; }
-        public bool IsCompleted { get; set; }
+        public List<QuestionInAttemptDto> Questions { get; set; } = new();
+        // Helper cho frontend
+        public bool IsCompleted =>
+            Status == AttemptStatus.Submitted ||
+            Status == AttemptStatus.Timeout;
     }
 
     public class QuestionInAttemptDto
     {
         public int QuestionId { get; set; }
         public string QuestionText { get; set; }
-        public string QuestionType { get; set; }
+        public QuestionType QuestionType { get; set; }
         public double Score { get; set; }
-        public List<AnswerOptionDto> Options { get; set; }
-        public string ImageUrl { get; set; }
+        public string? ImageUrl { get; set; }
+
+        public List<AnswerOptionDto> Options { get; set; } = new();
     }
 
     public class AnswerOptionDto
@@ -68,7 +77,6 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs
         public int OptionId { get; set; }
         public string OptionText { get; set; }
         public string? ImageUrl { get; set; }
-        public bool IsCorrect { get; set; }
     }
 
     public class ExerciseResultDto
@@ -76,9 +84,16 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs
         public int AttemptId { get; set; }
         public int StudentId { get; set; }
         public string StudentName { get; set; }
+
+        public int ExerciseId { get; set; }
         public string ExerciseName { get; set; }
+
+        public AttemptStatus Status { get; set; }
+
         public DateTime StartTime { get; set; }
-        public DateTime EndTime { get; set; }
+        // Thời điểm nộp bài thực tế
+        public DateTime SubmittedAt { get; set; }
+
         public TimeSpan Duration { get; set; }
         public double TotalScore { get; set; }
         public double MaxScore { get; set; }
@@ -87,15 +102,16 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs
         public int WrongAnswers { get; set; }
         public int TotalQuestions { get; set; }
         public bool IsPassed { get; set; }
-        public List<AnswerDetailDto> AnswerDetails { get; set; }
+        public List<AnswerDetailDto> AnswerDetails { get; set; } = new();
     }
 
     public class AnswerDetailDto
     {
         public int QuestionId { get; set; }
         public string QuestionText { get; set; }
-        public string StudentAnswer { get; set; }
+        public string? StudentAnswer { get; set; }
         public string CorrectAnswer { get; set; }
+        public bool IsAnswered { get; set; }
         public bool IsCorrect { get; set; }
         public double PointsEarned { get; set; }
         public double MaxScores { get; set; }

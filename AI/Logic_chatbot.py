@@ -13,7 +13,14 @@ load_dotenv()
 # Bật logging để debug
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
 logger = logging.getLogger(__name__)
-logger.disabled = True
+# logger.disabled = True # Enable logger for debugging
+
+try:
+    from Config_manager import api_key_manager
+except ImportError:
+    import sys
+    sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+    from Config_manager import api_key_manager
 
 
 # ==================== USER STATE ====================
@@ -35,54 +42,6 @@ class User:
         self.lead_submitted = False
 
 # ==================== CHATBOT LOGIC BACKEND ====================
-# ==================== API KEY MANAGER ====================
-class GeminiAPIKeyManager:
-    """Manage multiple Gemini API keys with rotation on failure"""
-    
-    def __init__(self):
-        self.api_keys = []
-        self.current_index = 0
-        
-        # Try to get multiple API keys
-        i = 1
-        while True:
-            key = os.getenv(f"GEMINI_API_KEY_{i}")
-            if not key:
-                break
-            self.api_keys.append(key)
-            i += 1
-        
-        # If no numbered keys, try single key
-        if not self.api_keys:
-            key = os.getenv("GEMINI_API_KEY")
-            if key:
-                self.api_keys.append(key)
-        
-        if not self.api_keys:
-            logger.warning("No Gemini API keys found in environment variables")
-        else:
-            logger.info(f"Loaded {len(self.api_keys)} Gemini API key(s)")
-    
-    def get_current_key(self) -> str:
-        """Get current API key"""
-        if self.api_keys:
-            return self.api_keys[self.current_index]
-        return None
-    
-    def rotate_key(self) -> str:
-        """Rotate to next API key on failure"""
-        if not self.api_keys:
-            return None
-        self.current_index = (self.current_index + 1) % len(self.api_keys)
-        logger.warning(f"Rotating to API key #{self.current_index + 1}")
-        return self.get_current_key()
-    
-    def configure(self):
-        """Configure genai with current API key"""
-        if self.get_current_key():
-            genai.configure(api_key=self.get_current_key())
-
-# ==================== CHATBOT LOGIC BACKEND ====================
 class ChatbotLogicBackend:
     """
     Backend chatbot với LLM integration.
@@ -91,7 +50,7 @@ class ChatbotLogicBackend:
     """
     def __init__(self):
         self.users: Dict[str, User] = {}
-        self.api_manager = GeminiAPIKeyManager()
+        self.api_manager = api_key_manager
         self.api_manager.configure()
         self.model_name = "gemini-2.5-flash"
         self._init_model()

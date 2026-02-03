@@ -14,59 +14,25 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Add parent directory to path for imports
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+if parent_dir not in sys.path:
+    sys.path.append(parent_dir)
+
+# Import shared config manager
+try:
+    from Config_manager import api_key_manager
+except ImportError:
+    # Fallback if running from root
+    sys.path.append(current_dir)
+    from Config_manager import api_key_manager
 
 from Prompts import hint_prompt, feedback_prompt
 
 # Load environment variables
 load_dotenv()
 
-# ==================== API KEY ROTATION ====================
-class GeminiAPIKeyManager:
-    """Manage multiple Gemini API keys with rotation on failure"""
-    
-    def __init__(self):
-        # Get API keys from env (support multiple keys: GEMINI_API_KEY_1, GEMINI_API_KEY_2, etc.)
-        self.api_keys = []
-        self.current_index = 0
-        
-        # Try to get multiple API keys
-        i = 1
-        while True:
-            key = os.getenv(f"GEMINI_API_KEY_{i}")
-            if not key:
-                break
-            self.api_keys.append(key)
-            i += 1
-        
-        # If no numbered keys, try single key
-        if not self.api_keys:
-            key = os.getenv("GEMINI_API_KEY")
-            if key:
-                self.api_keys.append(key)
-        
-        if not self.api_keys:
-            raise ValueError("No Gemini API keys found in environment variables")
-        
-        logger.info(f"Loaded {len(self.api_keys)} Gemini API key(s)")
-    
-    def get_current_key(self) -> str:
-        """Get current API key"""
-        return self.api_keys[self.current_index]
-    
-    def rotate_key(self) -> str:
-        """Rotate to next API key on failure"""
-        self.current_index = (self.current_index + 1) % len(self.api_keys)
-        logger.warning(f"Rotating to API key #{self.current_index + 1}")
-        return self.get_current_key()
-    
-    def configure(self):
-        """Configure genai with current API key"""
-        genai.configure(api_key=self.get_current_key())
-
-
-# Initialize API key manager
-api_key_manager = GeminiAPIKeyManager()
+# Configure API key on load
 api_key_manager.configure()
 
 class GeminiAIService:

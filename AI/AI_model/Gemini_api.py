@@ -38,7 +38,7 @@ api_key_manager.configure()
 class GeminiAIService:
     """Service to interact with Google Gemini AI for educational hints and feedback"""
     
-    def __init__(self, model_name: str = "gemini-1.5-flash"):
+    def __init__(self, model_name: str = "gemini-2.5-flash"):
         # Initialize model with JSON mode for structured responses
         self.model_name = model_name
         self.model = genai.GenerativeModel(

@@ -52,7 +52,7 @@ class ChatbotLogicBackend:
         self.users: Dict[str, User] = {}
         self.api_manager = api_key_manager
         self.api_manager.configure()
-        self.model_name = "gemini-1.5-flash"
+        self.model_name = "gemini-2.5-flash"
         self._init_model()
     
     def _init_model(self):

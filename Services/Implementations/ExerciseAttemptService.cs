@@ -447,6 +447,10 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         {
             try
             {
+                var user = await _userRepository.GetUserByStudentIdAsync(dto.StudentId);
+                if (user == null) 
+                    return ApiResponse<ExerciseAttemptDto>.ErrorResponse($"Không tìm thấy học sinh với Id: ${dto.StudentId}");
+
                 var now = DateTime.UtcNow;
 
                 var hasCompletedAttempt =

@@ -454,12 +454,12 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
                 var now = DateTime.UtcNow;
 
-                var hasCompletedAttempt =
+                /*var hasCompletedAttempt =
                     await _context.ExerciseAttempts.AnyAsync(a =>
                     a.StudentId == dto.StudentId
                     && a.ExerciseId == dto.ExerciseId
                     && a.Status != AttemptStatus.InProgress
-                );
+                );*/
 
                 // Check đã làm bài kiểm tra này hay chưa (chỉ cho làm 1 lần)
                 /*if (hasCompletedAttempt)

@@ -6,6 +6,7 @@ namespace ELearning_ToanHocHay_Control.Repositories.Interfaces
     {
         Task<Student?> GetByIdAsync(int studentId);
         Task<Student?> GetByUserIdAsync(int userId);
+        Task<Student?> GetStudentWithUserAsync(int studentId);
         Task<Student> AddAsync(Student student);
     }
 }

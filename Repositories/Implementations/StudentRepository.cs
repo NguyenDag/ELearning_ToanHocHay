@@ -29,7 +29,16 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
         public async Task<Student?> GetByUserIdAsync(int userId)
         {
             return await _context.Students
+                .AsNoTracking()
                 .FirstOrDefaultAsync(u => u.UserId == userId);
+        }
+
+        public async Task<Student?> GetStudentWithUserAsync(int studentId)
+        {
+            return await _context.Students
+            .AsNoTracking()
+            .Include(s => s.User)
+            .FirstOrDefaultAsync(s => s.StudentId == studentId);
         }
     }
 }

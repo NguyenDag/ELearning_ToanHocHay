@@ -9,5 +9,6 @@ namespace ELearning_ToanHocHay_Control.Repositories.Interfaces
         Task AddAsync(Package package);
         Task UpdateAsync(Package package);
         Task DeleteAsync(Package package);
+        Task<Subscription?> GetActivePackageAsync(int studentId);
     }
 }

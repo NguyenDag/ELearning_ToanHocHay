@@ -1,4 +1,4 @@
-﻿using ELearning_ToanHocHay_Control.Models.DTOs;
+﻿using ELearning_ToanHocHay_Control.Models.DTOs.Chapter;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

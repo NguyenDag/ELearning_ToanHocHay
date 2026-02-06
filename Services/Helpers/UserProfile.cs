@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using ELearning_ToanHocHay_Control.Data.Entities;
 using ELearning_ToanHocHay_Control.Models.DTOs;
+using ELearning_ToanHocHay_Control.Models.DTOs.Chapter;
 using ELearning_ToanHocHay_Control.Models.DTOs.Exercise;
 using ELearning_ToanHocHay_Control.Models.DTOs.Payment;
 

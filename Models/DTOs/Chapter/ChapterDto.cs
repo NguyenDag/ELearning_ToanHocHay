@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace ELearning_ToanHocHay_Control.Models.DTOs
+namespace ELearning_ToanHocHay_Control.Models.DTOs.Chapter
 {
     public class ChapterDto
     {

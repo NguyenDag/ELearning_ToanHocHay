@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using ELearning_ToanHocHay_Control.Data.Entities;
+using ELearning_ToanHocHay_Control.Models.DTOs.Chapter;
 
 namespace ELearning_ToanHocHay_Control.Models.DTOs
 {

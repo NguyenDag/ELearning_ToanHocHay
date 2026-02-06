@@ -43,5 +43,17 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             package.IsActive = false;
             await _context.SaveChangesAsync();
         }
+
+        public async Task<Subscription?> GetActivePackageAsync(int studentId)
+        {
+            return await _context.Subscriptions
+            .AsNoTracking()
+            .Include(s => s.Package)
+            .Where(s => s.StudentId == studentId &&
+                       s.Status == SubscriptionStatus.Active &&
+                       s.EndDate > DateTime.UtcNow)
+            .OrderByDescending(s => s.CreatedAt)
+            .FirstOrDefaultAsync();
+        }
     }
 }

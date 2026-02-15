@@ -199,6 +199,7 @@ namespace ELearning_ToanHocHay_Control
             services.AddScoped<IAIHintRepository, AIHintRepository>();
             services.AddScoped<IAIFeedbackRepository, AIFeedbackRepository>();
             services.AddScoped<IDashboardRepository, DashboardRepository>();
+            services.AddScoped<ILessonDataService, LessonDataService>();
 
             // Services
             services.AddScoped<IAuthService, AuthService>();

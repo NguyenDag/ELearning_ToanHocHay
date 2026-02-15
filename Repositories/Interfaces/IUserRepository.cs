@@ -16,5 +16,6 @@ namespace ELearning_ToanHocHay_Control.Repositories.Interfaces
         Task<bool> DeleteUserAsync(int userId);
 
         Task<bool> ExistsByEmail(string email);
+        Task<bool> ExistsAsync(int id);
     }
 }

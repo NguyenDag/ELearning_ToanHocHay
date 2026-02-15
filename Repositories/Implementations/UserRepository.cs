@@ -102,5 +102,11 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
                 .Include(u => u.Parent)
                 .FirstOrDefaultAsync(s => s.Parent.ParentId == parentId);
         }
+
+        public async Task<bool> ExistsAsync(int id)
+        {
+            var entity = await GetByIdAsync(id);
+            return entity != null;
+        }
     }
 }

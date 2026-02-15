@@ -6,16 +6,16 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
 {
     public enum LessonBlockType
     {
-        Heading,        // Tiêu đề
-        Text,           // Đoạn văn thường
-        Definition,     // Khung định nghĩa (màu xanh)
-        Example,        // Ví dụ (màu xanh lá)
-        Note,           // Ghi chú (màu vàng)
-        Formula,        // Công thức
-        Image,
-        Video,
-        Pdf,
-        Audio
+        Heading = 0,        // Tiêu đề
+        Text = 1,           // Đoạn văn thường
+        Definition = 2,     // Khung định nghĩa (màu xanh)
+        Example = 3,        // Ví dụ (màu xanh lá)
+        Note = 4,           // Ghi chú (màu vàng)
+        Formula = 5,        // Công thức
+        Image = 6,
+        Video = 7,
+        Pdf = 8,
+        Audio = 9
     }
 
     [Table("LessonContent")]

@@ -9,5 +9,7 @@ namespace ELearning_ToanHocHay_Control.Repositories.Interfaces
         Task<Lesson> CreateAsync(Lesson lesson);
         Task<Lesson?> UpdateAsync(Lesson lesson);
         Task<bool> DeleteAsync(int lessonId);
+        Task<bool> ExistsAsync(int id);
+        Task<Lesson> GetByIdWithContentsAsync(int id);
     }
 }

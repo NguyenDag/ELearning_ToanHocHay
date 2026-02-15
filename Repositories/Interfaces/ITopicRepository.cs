@@ -9,5 +9,6 @@ namespace ELearning_ToanHocHay_Control.Repositories.Interfaces
         Task<Topic> CreateAsync(Topic topic);
         Task<Topic?> UpdateAsync(Topic topic);
         Task<bool> DeleteAsync(int topicId);
+        Task<bool> ExistsAsync(int id);
     }
 }

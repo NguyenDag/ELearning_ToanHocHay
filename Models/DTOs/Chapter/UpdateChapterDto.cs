@@ -1,16 +1,14 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using ELearning_ToanHocHay_Control.Models.DTOs.Topic;
 
 namespace ELearning_ToanHocHay_Control.Models.DTOs.Chapter
 {
-    public class ChapterDto
+    public class UpdateChapterDto
     {
-        public int ChapterId { get; set; }
-        public int CurriculumId { get; set; }
+        [Required, MaxLength(255)]
         public string ChapterName { get; set; }
+
         public int OrderIndex { get; set; }
         public string? Description { get; set; }
         public bool IsActive { get; set; }
-        public List<TopicDto> Topics { get; set; } = new();
     }
 }

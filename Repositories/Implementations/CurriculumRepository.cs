@@ -33,6 +33,12 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             return true;
         }
 
+        public async Task<bool> ExistsAsync(int id)
+        {
+            var entity = await GetCurriculumByIdAsync(id);
+            return entity != null;
+        }
+
         public async Task<IEnumerable<Curriculum>> GetAllAsync()
         {
             return await _context.Curriculums.ToListAsync();

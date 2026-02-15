@@ -9,5 +9,6 @@ namespace ELearning_ToanHocHay_Control.Repositories.Interfaces
         Task<Curriculum> CreateCurriculumAsync(Curriculum curriculum);
         Task<Curriculum?> UpdateCurriculumAsync(Curriculum curriculum);
         Task<bool> DeleteCurriculumAsync(int curriculumId);
+        Task<bool> ExistsAsync(int id);
     }
 }

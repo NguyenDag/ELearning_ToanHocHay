@@ -20,7 +20,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         /// </summary>
         public string GenerateQrUrl(int subscriptionId, decimal amount)
         {
-            var description = $"SUBSCRIPTION_{subscriptionId}";
+            var description = $"TKPTTS SUBSCRIPTION_{subscriptionId}";
 
             var qrUrl =
                 $"{_options.BaseUrl}/img" +

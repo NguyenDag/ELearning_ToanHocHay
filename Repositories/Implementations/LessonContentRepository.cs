@@ -21,6 +21,12 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             return content;
         }
 
+        public async Task<IEnumerable<LessonContent>> AddRangeAsync(IEnumerable<LessonContent> entities)
+        {
+            await _context.LessonContents.AddRangeAsync(entities);
+            return entities;
+        }
+
         public async Task<bool> DeleteAsync(int contentId)
         {
             var content = await _context.LessonContents
@@ -32,6 +38,12 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             _context.LessonContents.Remove(content);
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<bool> ExistsAsync(int id)
+        {
+            var entity = await GetByIdAsync(id);
+            return entity != null;
         }
 
         public async Task<LessonContent?> GetByIdAsync(int contentId)

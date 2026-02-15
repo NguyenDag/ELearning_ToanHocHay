@@ -1,4 +1,5 @@
 ﻿using ELearning_ToanHocHay_Control.Models.DTOs;
+using ELearning_ToanHocHay_Control.Models.DTOs.Lesson;
 
 namespace ELearning_ToanHocHay_Control.Services.Interfaces
 {

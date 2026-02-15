@@ -27,7 +27,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 $"?acc={_options.VA}" +
                 $"&bank={_options.BankName}" +
                 $"&amount={(long)amount}" +
-                $"&des={HttpUtility.UrlEncode(description)}";
+                $"&des={Uri.EscapeDataString(description)}";
 
             return qrUrl;
         }

@@ -1,6 +1,7 @@
 ﻿using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
+using ELearning_ToanHocHay_Control.Attributes;
 using ELearning_ToanHocHay_Control.Data;
 using ELearning_ToanHocHay_Control.Data.Entities;
 using ELearning_ToanHocHay_Control.Models.DTOs.Sepay;
@@ -31,20 +32,16 @@ namespace ELearning_ToanHocHay_Control.Controllers
         }
 
         [HttpPost]
+        [SePayApiKey] // Attribute tự động validate API Key
         public async Task<IActionResult> IPN(
-            [FromBody] SePayIpnRequest request,
-            [FromHeader(Name = "X-Api-Key")] string apiKey
+            [FromBody] SePayIpnRequest request
         )
         {
-            // 1. Verify ApiKey
-            if (!_sePayService.ValidateApiKey(apiKey))
-                return Unauthorized();
-
-            // 2. Chỉ xử lý tiền vào
+            // 1. Chỉ xử lý tiền vào
             if (request.transferType != "in")
                 return Ok("Ignore out transaction");
 
-            // 3. Parse subscriptionId
+            // 2. Parse subscriptionId
             var subscriptionId = _sePayService.ExtractSubscriptionId(request.content);
             if (subscriptionId == null)
                 return Ok("Invalid content");
@@ -54,11 +51,11 @@ namespace ELearning_ToanHocHay_Control.Controllers
             if (subscription == null)
                 return Ok("Subscription not found");
 
-            // 4. Chống IPN trùng
+            // 3. Chống IPN trùng
             if (subscription.Status == SubscriptionStatus.Active)
                 return Ok("Already processed");
 
-            // 5. Check amount
+            // 4. Check amount
             if (!_sePayService.IsValidAmount(
                 request.transferAmount,
                 subscription.AmountPaid))
@@ -66,12 +63,12 @@ namespace ELearning_ToanHocHay_Control.Controllers
                 return Ok("Amount mismatch");
             }
 
-            // 6. Update Payment
+            // 5. Update Payment
             subscription.Payment.Status = PaymentStatus.Completed;
             subscription.Payment.TransactionId = request.referenceCode;
             subscription.Payment.PaymentDate = DateTime.UtcNow;
 
-            // 7. Active Subscription
+            // 6. Active Subscription
             subscription.Status = SubscriptionStatus.Active;
             subscription.StartDate = DateTime.UtcNow;
             subscription.EndDate = DateTime.UtcNow.AddMonths(1);

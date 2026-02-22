@@ -10,10 +10,12 @@ namespace ELearning_ToanHocHay_Control.Controllers
     public class PaymentController : ControllerBase
     {
         private readonly IPaymentService _service;
+        private readonly ILogger<PaymentController> _logger;
 
-        public PaymentController(IPaymentService service)
+        public PaymentController(IPaymentService service, ILogger<PaymentController> logger)
         {
             _service = service;
+            _logger = logger;
         }
 
         // GET: api/payment

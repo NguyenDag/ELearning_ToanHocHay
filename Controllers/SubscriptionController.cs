@@ -1,6 +1,7 @@
 ﻿using ELearning_ToanHocHay_Control.Models.DTOs.Subscription;
 using ELearning_ToanHocHay_Control.Services.Implementations;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -44,6 +45,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         }
 
         [HttpPost]
+        [Authorize]
         public async Task<IActionResult> CreateSubscriptionAndQr(CreateSubscriptionDto dto)
         {
             var result = await _subscriptionPaymentService.CreatePendingAsync(dto);

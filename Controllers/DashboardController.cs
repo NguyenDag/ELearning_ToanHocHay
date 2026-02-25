@@ -1,7 +1,6 @@
 ﻿using ELearning_ToanHocHay_Control.Models.DTOs.Student.Dashboard;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -9,15 +8,13 @@ namespace ELearning_ToanHocHay_Control.Controllers
 {
     [Route("api/student/{studentId}/dashboard")]
     [ApiController]
-    [Authorize] // Đảm bảo người dùng đã đăng nhập
+    [Authorize] // Backend sẽ kiểm tra Token do WebApp gửi sang
     public class DashboardController : ControllerBase
     {
         private readonly ICoreDashboardService _coreDashboardService;
         private readonly ILogger<DashboardController> _logger;
 
-        public DashboardController(
-            ICoreDashboardService coreDashboardService,
-            ILogger<DashboardController> logger)
+        public DashboardController(ICoreDashboardService coreDashboardService, ILogger<DashboardController> logger)
         {
             _coreDashboardService = coreDashboardService;
             _logger = logger;
@@ -28,40 +25,37 @@ namespace ELearning_ToanHocHay_Control.Controllers
         {
             try
             {
-                // 1. Lấy UserId từ Token (Dạng String)
-                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                // LẤY USERID TỪ TOKEN (Đảm bảo khớp với AccountController WebApp)
+                var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-                // 2. Chuyển đổi UserId sang kiểu int để khớp với tham số của Service
-                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int currentUserId))
+                if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out int currentUserId))
                 {
-                    _logger.LogWarning("Không tìm thấy UserId hợp lệ trong Token.");
-                    return Unauthorized(new { message = "Token không hợp lệ hoặc thiếu thông tin định danh" });
+                    _logger.LogWarning("Token không chứa UserId hợp lệ.");
+                    return Unauthorized(new { message = "Lỗi xác thực Token." });
                 }
 
-                // 3. Kiểm tra quyền truy cập (Đã truyền đúng kiểu int vào Argument 2)
+                // KIỂM TRA QUYỀN: User này có phải chủ sở hữu của StudentId này không?
                 var hasAccess = await _coreDashboardService.VerifyStudentAccessAsync(studentId, currentUserId);
-
                 if (!hasAccess)
                 {
-                    _logger.LogWarning("User {UserId} cố gắng truy cập trái phép Student {StudentId}", currentUserId, studentId);
-                    return Forbid("Bạn không có quyền xem dữ liệu của học sinh này");
+                    _logger.LogWarning("User {UserId} cố truy cập Student {StudentId}", currentUserId, studentId);
+                    return Forbid("Bạn không có quyền xem dữ liệu này.");
                 }
 
-                // 4. Lấy dữ liệu Dashboard
+                // LẤY DỮ LIỆU THỰC
                 var dashboard = await _coreDashboardService.GetCoreDashboardAsync(studentId);
 
                 if (dashboard == null)
                 {
-                    _logger.LogWarning("API trả về NULL cho Student {StudentId} dù đã qua bước Auth", studentId);
-                    return NotFound(new { message = "Không tìm thấy dữ liệu cho học sinh này" });
+                    return NotFound(new { message = "Không tìm thấy dữ liệu học sinh." });
                 }
 
                 return Ok(dashboard);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi nghiêm trọng tại Dashboard API cho Student {StudentId}", studentId);
-                return StatusCode(500, new { message = "Lỗi hệ thống: " + ex.Message });
+                _logger.LogError(ex, "Lỗi tại Dashboard API");
+                return StatusCode(500, new { message = "Lỗi máy chủ: " + ex.Message });
             }
         }
     }

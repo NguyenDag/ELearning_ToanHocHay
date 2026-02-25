@@ -3,16 +3,21 @@ using ELearning_ToanHocHay_Control.Models.DTOs;
 using ELearning_ToanHocHay_Control.Models.DTOs.Subscription;
 using ELearning_ToanHocHay_Control.Repositories.Interfaces;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace ELearning_ToanHocHay_Control.Services.Implementations
 {
     public class SubscriptionService : ISubscriptionService
     {
         private readonly ISubscriptionRepository _repository;
+        private readonly IPackageRepository _packageRepository;
 
-        public SubscriptionService(ISubscriptionRepository repository)
+        public SubscriptionService(
+            ISubscriptionRepository repository,
+            IPackageRepository packageRepository)
         {
             _repository = repository;
+            _packageRepository = packageRepository;
         }
 
         public async Task<ApiResponse<IEnumerable<SubscriptionDto>>> GetAllAsync()
@@ -48,7 +53,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 SubscriptionId = sub.SubscriptionId,
                 StudentId = sub.StudentId,
                 PackageId = sub.PackageId,
-                PaymentId= sub.PaymentId,
+                PaymentId = sub.PaymentId,
                 StartDate = sub.StartDate,
                 EndDate = sub.EndDate,
                 Status = sub.Status,
@@ -56,30 +61,79 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 CreatedAt = sub.CreatedAt,
             };
 
-            return ApiResponse<SubscriptionDto>
-                .SuccessResponse(dto);
+            return ApiResponse<SubscriptionDto>.SuccessResponse(dto);
         }
 
         public async Task<ApiResponse<bool>> CancelAsync(int id)
         {
             var sub = await _repository.GetByIdAsync(id);
             if (sub == null)
-                return ApiResponse<bool>
-                    .ErrorResponse("Subscription không tồn tại");
+                return ApiResponse<bool>.ErrorResponse("Subscription không tồn tại");
 
             sub.Status = SubscriptionStatus.Cancelled;
             await _repository.UpdateAsync(sub);
 
-            return ApiResponse<bool>
-                .SuccessResponse(true, "Hủy subscription thành công");
+            return ApiResponse<bool>.SuccessResponse(true, "Hủy subscription thành công");
         }
 
         public async Task<ApiResponse<bool>> CheckPremiumAsync(int studentId)
         {
             var active = await _repository.GetActiveByStudentAsync(studentId);
+            return ApiResponse<bool>.SuccessResponse(active != null);
+        }
 
-            return ApiResponse<bool>
-                .SuccessResponse(active != null);
+        /// <summary>
+        /// Implement method từ ISubscriptionService — dùng trong CoreDashboardService.
+        /// </summary>
+        public async Task<SubscriptionInfoDto> GetActiveSubscriptionInfoAsync(int studentId)
+        {
+            var activeSubscription = await _packageRepository.GetActivePackageAsync(studentId);
+            return SubscriptionInfoHelper.BuildSubscriptionInfo(activeSubscription);
+        }
+    }
+
+    // ── Tách ra ngoài class, cùng namespace ──────────────────────────────────
+    public static class SubscriptionInfoHelper
+    {
+        public static SubscriptionInfoDto BuildSubscriptionInfo(Subscription? activeSubscription)
+        {
+            if (activeSubscription == null ||
+                activeSubscription.Status != SubscriptionStatus.Active ||
+                activeSubscription.EndDate < DateTime.UtcNow)
+            {
+                return new SubscriptionInfoDto
+                {
+                    PackageType = 0,
+                    PackageName = "Free",
+                    IsActive = false,
+                    AiHintLimitDaily = 0,
+                    UnlimitedAiHint = false
+                };
+            }
+
+            var pkg = activeSubscription.Package!;
+
+            int packageType = pkg.PackageName.ToLower() switch
+            {
+                var n when n.Contains("premium") => 2,
+                var n when n.Contains("standard") => 1,
+                _ => 0
+            };
+
+            return new SubscriptionInfoDto
+            {
+                PackageType = packageType,
+                PackageName = pkg.PackageName,
+                IsActive = true,
+                EndDate = activeSubscription.EndDate,
+                DaysRemaining = (int)(activeSubscription.EndDate - DateTime.UtcNow).TotalDays,
+                UnlimitedAiHint = pkg.UnlimitedAiHint,
+                AiHintLimitDaily = pkg.AiHintLimitDaily,
+                PersonalizedPath = pkg.PersonalizedPath,
+                MistakeRetry = pkg.MistakeRetry,
+                SmartReminder = pkg.SmartReminder,
+                PrioritySupport = pkg.PrioritySupport
+            };
         }
     }
 }

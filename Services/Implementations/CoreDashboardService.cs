@@ -160,9 +160,19 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
         private async Task<PackageType> GetPackageTypeAsync(int studentId)
         {
-            var activePackage = await _packageRepo.GetActivePackageAsync(studentId);
-            //return activePackage?.PackageType ?? PackageType.Free;
-            return PackageType.Free;
+            var subscription = await _packageRepo.GetActivePackageAsync(studentId);
+
+            if (subscription?.Package == null)
+                return PackageType.Free;
+
+            var name = subscription.Package.PackageName.ToLower();
+
+            return name switch
+            {
+                var n when n.Contains("premium") => PackageType.Premium,
+                var n when n.Contains("standard") => PackageType.Standard,
+                _ => PackageType.Free
+            };
         }
 
         private DashboardLinksDto GenerateDashboardLinks(int studentId, PackageType packageType)

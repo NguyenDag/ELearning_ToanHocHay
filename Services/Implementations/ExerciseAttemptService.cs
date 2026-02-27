@@ -110,6 +110,9 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                                     var correctOption = question.QuestionOptions?
                                         .FirstOrDefault(o => o.IsCorrect);
 
+                                    // THÊM DÒNG NÀY
+                                    Console.WriteLine($"=== CHẤM qId={question.QuestionId} | studentOpt={answer.SelectedOptionId} | correctOpt={correctOption?.OptionId} | match={correctOption?.OptionId == answer.SelectedOptionId} ===");
+
                                     isCorrect = correctOption != null &&
                                         correctOption?.OptionId == answer.SelectedOptionId;
                                 }
@@ -439,7 +442,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             {
                 return ApiResponse<bool>.ErrorResponse(
                     "Error saving answer",
-                    new List<string> { ex.Message }
+                    new List<string> { ex.Message, ex.InnerException?.Message ?? "no inner exception" }
                 );
             }
         }

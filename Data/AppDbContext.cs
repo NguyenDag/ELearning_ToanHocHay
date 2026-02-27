@@ -302,6 +302,13 @@ namespace ELearning_ToanHocHay_Control.Data
                       .WithMany(q => q.StudentAnswers)
                       .HasForeignKey(sa => sa.QuestionId)
                       .OnDelete(DeleteBehavior.Restrict);
+
+                // THÊM ĐOẠN NÀY
+                entity.HasOne(sa => sa.SelectedOption)
+                      .WithMany()
+                      .HasForeignKey(sa => sa.SelectedOptionId)
+                      .OnDelete(DeleteBehavior.ClientSetNull)
+                      .IsRequired(false);
             });
 
             modelBuilder.Entity<StudentProgress>(entity =>

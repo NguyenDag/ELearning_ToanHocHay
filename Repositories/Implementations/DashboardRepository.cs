@@ -154,7 +154,8 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
                     CompletedAt = a.SubmittedAt,
                     DurationMinutes = (int)(a.SubmittedAt.Value - a.StartTime).TotalMinutes,
                     IsCompleted = true,
-                    ProgressPercentage = 100
+                    ProgressPercentage = 100,
+                    Score = a.MaxScore > 0 ? Math.Round((a.TotalScore / a.MaxScore) * 100, 1) : (double?)null
                 })
                 .ToListAsync();
 

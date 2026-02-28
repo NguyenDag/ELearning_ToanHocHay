@@ -10,5 +10,6 @@
         public int? DurationMinutes { get; set; }
         public bool IsCompleted { get; set; }
         public int ProgressPercentage { get; set; }  // Nếu chưa hoàn thành
+        public double? Score { get; set; }
     }
 }

@@ -43,6 +43,7 @@ namespace ELearning_ToanHocHay_Control.Repositories.Interfaces
         public int? DurationMinutes { get; set; }
         public bool IsCompleted { get; set; }
         public int ProgressPercentage { get; set; }
+        public double? Score { get; set; } // THÊM DÒNG NÀY
     }
 
     public class ChapterProgressModel

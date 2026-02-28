@@ -10,18 +10,21 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
         private readonly AppDbContext _context;
         private readonly ILogger<DashboardRepository> _logger;
 
-        public DashboardRepository(
-            AppDbContext context,
-            ILogger<DashboardRepository> logger)
+        // Múi giờ Việt Nam UTC+7
+        private static readonly TimeZoneInfo VnTimeZone =
+            TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+
+        private static DateTime VnNow =>
+            TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, VnTimeZone);
+
+        public DashboardRepository(AppDbContext context, ILogger<DashboardRepository> logger)
         {
             _context = context;
             _logger = logger;
         }
 
         public async Task<WeeklyStatsModel> GetWeeklyStatsAsync(
-            int studentId,
-            DateTime startDate,
-            DateTime endDate)
+            int studentId, DateTime startDate, DateTime endDate)
         {
             var attempts = await _context.ExerciseAttempts
                 .AsNoTracking()
@@ -33,20 +36,14 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
                 .ToListAsync();
 
             if (!attempts.Any())
-            {
-                return new WeeklyStatsModel
-                {
-                    TotalMinutes = 0,
-                    ExerciseCount = 0,
-                    AverageScore = 0
-                };
-            }
+                return new WeeklyStatsModel { TotalMinutes = 0, ExerciseCount = 0, AverageScore = 0 };
 
             var totalMinutes = attempts.Sum(a =>
-                (int)(a.SubmittedAt.Value - a.StartTime).TotalMinutes);
+                (int)(a.SubmittedAt!.Value - a.StartTime).TotalMinutes);
 
-            var averageScore = (decimal)attempts.Average(a =>
-                (a.TotalScore / a.MaxScore) * 100);
+            // FIX: cast sang decimal trước khi chia để tránh integer division
+            var averageScore = attempts.Average(a =>
+                a.MaxScore > 0 ? ((decimal)a.TotalScore / (decimal)a.MaxScore) * 100m : 0m);
 
             return new WeeklyStatsModel
             {
@@ -58,21 +55,25 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
 
         public async Task<OverallStatsModel> GetOverallStatsAsync(int studentId)
         {
-            // Thống kê tất cả bài tập đã làm
-            var exerciseStats = await _context.ExerciseAttempts
+            var attempts = await _context.ExerciseAttempts
                 .AsNoTracking()
                 .Where(a => a.StudentId == studentId &&
-                           a.Status != AttemptStatus.InProgress)
-                .GroupBy(a => a.StudentId)
-                .Select(g => new
-                {
-                    TotalExercises = g.Count(),
-                    AverageScore = g.Average(a => (a.TotalScore / a.MaxScore) * 100)
-                })
-                .FirstOrDefaultAsync();
+                           a.Status != AttemptStatus.InProgress &&
+                           a.MaxScore > 0)
+                .ToListAsync();
 
-            // Đếm số bài học đã hoàn thành
-            // (Giả sử có bảng LessonProgress hoặc tracking qua ExerciseAttempt)
+            double averageScore = 0;
+            int totalExercises = 0;
+
+            if (attempts.Any())
+            {
+                totalExercises = attempts.Count;
+                // FIX: cast sang double trước khi chia
+                averageScore = attempts.Average(a =>
+                    ((double)a.TotalScore / (double)a.MaxScore) * 100.0);
+                averageScore = Math.Round(averageScore, 1);
+            }
+
             var completedLessons = await _context.StudentProgresses
                 .AsNoTracking()
                 .Where(sp => sp.StudentId == studentId &&
@@ -83,44 +84,36 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
 
             return new OverallStatsModel
             {
-                AverageScore = exerciseStats != null
-                    ? Math.Round((decimal)exerciseStats.AverageScore, 1)
-                    : 0,
-                TotalExercises = exerciseStats?.TotalExercises ?? 0,
+                AverageScore = (decimal)averageScore,
+                TotalExercises = totalExercises,
                 TotalLessons = completedLessons
             };
         }
 
         public async Task<StreakDataModel> GetStreakDataAsync(int studentId)
         {
-            // Lấy tất cả ngày đã học (distinct dates)
-            var studyDates = await _context.ExerciseAttempts
+            var attempts = await _context.ExerciseAttempts
                 .AsNoTracking()
                 .Where(a => a.StudentId == studentId &&
                            a.Status != AttemptStatus.InProgress &&
                            a.SubmittedAt.HasValue)
-                .Select(a => a.SubmittedAt.Value.Date)
-                .Distinct()
-                .OrderByDescending(d => d)
+                .Select(a => a.SubmittedAt!.Value)
                 .ToListAsync();
 
-            if (!studyDates.Any())
-            {
-                return new StreakDataModel
-                {
-                    CurrentStreak = 0,
-                    LongestStreak = 0,
-                    StudiedToday = false
-                };
-            }
+            if (!attempts.Any())
+                return new StreakDataModel { CurrentStreak = 0, LongestStreak = 0, StudiedToday = false };
 
-            var today = DateTime.UtcNow.Date;
+            // FIX: Chuyển tất cả timestamp sang giờ VN trước khi lấy .Date
+            var studyDates = attempts
+                .Select(dt => TimeZoneInfo.ConvertTimeFromUtc(dt, VnTimeZone).Date)
+                .Distinct()
+                .OrderByDescending(d => d)
+                .ToList();
+
+            // FIX: So sánh với ngày hôm nay theo giờ VN
+            var today = VnNow.Date;
             var studiedToday = studyDates.Contains(today);
-
-            // Tính current streak
             var currentStreak = CalculateCurrentStreak(studyDates, today);
-
-            // Tính longest streak
             var longestStreak = CalculateLongestStreak(studyDates);
 
             return new StreakDataModel
@@ -133,32 +126,34 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
 
         public async Task<List<RecentLessonModel>> GetRecentLessonsAsync(int studentId, int limit)
         {
-            // Option 1: Nếu có bảng LessonProgress riêng
-            // var recentLessons = await _context.LessonProgresses...
-
-            // Option 2: Track qua ExerciseAttempt (mỗi bài tập thuộc 1 topic/lesson)
-            var recentActivities = await _context.ExerciseAttempts
+            // Lấy raw data trước, KHÔNG tính toán trong SQL để tránh EF translation error
+            var raw = await _context.ExerciseAttempts
                 .AsNoTracking()
                 .Where(a => a.StudentId == studentId && a.Status != AttemptStatus.InProgress)
                 .Include(a => a.Exercise)
                     .ThenInclude(e => e.Topic)
                         .ThenInclude(t => t.Chapter)
+                .Include(a => a.Exercise)
+                    .ThenInclude(e => e.Topic)
+                        .ThenInclude(t => t.Lessons)
                 .OrderByDescending(a => a.SubmittedAt)
                 .Take(limit)
-                .Select(a => new RecentLessonModel
-                {
-                    LessonId = a.Exercise.Topic.Lessons.FirstOrDefault().LessonId,
-                    LessonName = a.Exercise.Topic.Lessons.FirstOrDefault().LessonName ?? "N/A",
-                    TopicName = a.Exercise.Topic.TopicName,
-                    ChapterName = a.Exercise.Topic.Chapter.ChapterName,
-                    CompletedAt = a.SubmittedAt,
-                    DurationMinutes = (int)(a.SubmittedAt.Value - a.StartTime).TotalMinutes,
-                    IsCompleted = true,
-                    ProgressPercentage = 100
-                })
                 .ToListAsync();
 
-            return recentActivities;
+            return raw.Select(a => new RecentLessonModel
+            {
+                LessonId = a.Exercise.Topic.Lessons.FirstOrDefault()?.LessonId ?? 0,
+                LessonName = a.Exercise.Topic.Lessons.FirstOrDefault()?.LessonName ?? "N/A",
+                TopicName = a.Exercise.Topic.TopicName,
+                ChapterName = a.Exercise.Topic.Chapter.ChapterName,
+                CompletedAt = a.SubmittedAt,
+                DurationMinutes = a.SubmittedAt.HasValue ? (int)(a.SubmittedAt.Value - a.StartTime).TotalMinutes : 0,
+                IsCompleted = true,
+                ProgressPercentage = 100,
+                Score = a.MaxScore > 0
+                    ? Math.Round((double)a.TotalScore / (double)a.MaxScore * 100.0, 1)
+                    : (double?)null
+            }).ToList();
         }
 
         public async Task<List<ChapterProgressModel>> GetChapterProgressAsync(int studentId)
@@ -177,7 +172,6 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             {
                 var totalTopics = chapter.Topics.Count;
 
-                // Đếm số topics đã hoàn thành (Mastery >= Intermediate)
                 var completedTopics = chapter.Topics
                     .Count(t => t.studentProgresses
                         .Any(sp => sp.StudentId == studentId &&
@@ -187,7 +181,6 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
                     ? Math.Round((decimal)completedTopics / totalTopics * 100, 1)
                     : 0;
 
-                // Tính mastery trung bình của chapter
                 var topicProgresses = chapter.Topics
                     .SelectMany(t => t.studentProgresses)
                     .Where(sp => sp.StudentId == studentId)
@@ -196,12 +189,10 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
                 MasteryLevel? avgMastery = null;
                 if (topicProgresses.Any())
                 {
-                    var avgMasteryValue = (int)topicProgresses
-                        .Average(sp => (int)sp.MasteryLevel);
+                    var avgMasteryValue = (int)topicProgresses.Average(sp => (int)sp.MasteryLevel);
                     avgMastery = (MasteryLevel)avgMasteryValue;
                 }
 
-                // Kiểm tra có bị khóa không (cần Premium)
                 var isLocked = !chapter.Topics.Any(t => t.IsFree);
 
                 progressList.Add(new ChapterProgressModel
@@ -227,16 +218,12 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             int streak = 0;
             var checkDate = today;
 
-            // Nếu hôm nay chưa học, bắt đầu từ hôm qua
             if (!studyDates.Contains(today))
             {
                 checkDate = today.AddDays(-1);
-                // Nếu hôm qua cũng chưa học → streak = 0
-                if (!studyDates.Contains(checkDate))
-                    return 0;
+                if (!studyDates.Contains(checkDate)) return 0;
             }
 
-            // Đếm ngược từ hôm nay/hôm qua
             while (studyDates.Contains(checkDate))
             {
                 streak++;
@@ -258,7 +245,6 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             for (int i = 1; i < studyDates.Count; i++)
             {
                 var daysDiff = (studyDates[i] - studyDates[i - 1]).Days;
-
                 if (daysDiff == 1)
                 {
                     currentStreak++;

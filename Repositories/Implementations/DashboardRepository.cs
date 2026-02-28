@@ -126,32 +126,34 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
 
         public async Task<List<RecentLessonModel>> GetRecentLessonsAsync(int studentId, int limit)
         {
-            var recentActivities = await _context.ExerciseAttempts
+            // Lấy raw data trước, KHÔNG tính toán trong SQL để tránh EF translation error
+            var raw = await _context.ExerciseAttempts
                 .AsNoTracking()
                 .Where(a => a.StudentId == studentId && a.Status != AttemptStatus.InProgress)
                 .Include(a => a.Exercise)
                     .ThenInclude(e => e.Topic)
                         .ThenInclude(t => t.Chapter)
+                .Include(a => a.Exercise)
+                    .ThenInclude(e => e.Topic)
+                        .ThenInclude(t => t.Lessons)
                 .OrderByDescending(a => a.SubmittedAt)
                 .Take(limit)
-                .Select(a => new RecentLessonModel
-                {
-                    LessonId = a.Exercise.Topic.Lessons.FirstOrDefault().LessonId,
-                    LessonName = a.Exercise.Topic.Lessons.FirstOrDefault().LessonName ?? "N/A",
-                    TopicName = a.Exercise.Topic.TopicName,
-                    ChapterName = a.Exercise.Topic.Chapter.ChapterName,
-                    CompletedAt = a.SubmittedAt,
-                    DurationMinutes = (int)(a.SubmittedAt!.Value - a.StartTime).TotalMinutes,
-                    IsCompleted = true,
-                    ProgressPercentage = 100,
-                    // FIX: cast sang double trước khi chia
-                    Score = a.MaxScore > 0
-                        ? Math.Round((double)a.TotalScore / (double)a.MaxScore * 100.0, 1)
-                        : (double?)null
-                })
                 .ToListAsync();
 
-            return recentActivities;
+            return raw.Select(a => new RecentLessonModel
+            {
+                LessonId = a.Exercise.Topic.Lessons.FirstOrDefault()?.LessonId ?? 0,
+                LessonName = a.Exercise.Topic.Lessons.FirstOrDefault()?.LessonName ?? "N/A",
+                TopicName = a.Exercise.Topic.TopicName,
+                ChapterName = a.Exercise.Topic.Chapter.ChapterName,
+                CompletedAt = a.SubmittedAt,
+                DurationMinutes = a.SubmittedAt.HasValue ? (int)(a.SubmittedAt.Value - a.StartTime).TotalMinutes : 0,
+                IsCompleted = true,
+                ProgressPercentage = 100,
+                Score = a.MaxScore > 0
+                    ? Math.Round((double)a.TotalScore / (double)a.MaxScore * 100.0, 1)
+                    : (double?)null
+            }).ToList();
         }
 
         public async Task<List<ChapterProgressModel>> GetChapterProgressAsync(int studentId)

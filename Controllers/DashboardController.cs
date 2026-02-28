@@ -39,7 +39,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
                 if (!hasAccess)
                 {
                     _logger.LogWarning("User {UserId} cố truy cập Student {StudentId}", currentUserId, studentId);
-                    return Forbid("Bạn không có quyền xem dữ liệu này.");
+                    return StatusCode(403, new { message = "Bạn không có quyền xem dữ liệu này." });
                 }
 
                 // LẤY DỮ LIỆU THỰC

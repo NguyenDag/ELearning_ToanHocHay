@@ -10,7 +10,7 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
         private readonly AppDbContext _context;
         private readonly ILogger<DashboardRepository> _logger;
 
-        // Múi giờ Việt Nam UTC+7
+        // Cấu hình múi giờ Việt Nam để tính toán chuỗi ngày học (Streak) chính xác
         private static readonly TimeZoneInfo VnTimeZone =
             TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
 
@@ -23,6 +23,9 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             _logger = logger;
         }
 
+        /// <summary>
+        /// Lấy thống kê theo tuần (Thời gian học, số bài tập, điểm TB)
+        /// </summary>
         public async Task<WeeklyStatsModel> GetWeeklyStatsAsync(
             int studentId, DateTime startDate, DateTime endDate)
         {
@@ -41,7 +44,6 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             var totalMinutes = attempts.Sum(a =>
                 (int)(a.SubmittedAt!.Value - a.StartTime).TotalMinutes);
 
-            // FIX: cast sang decimal trước khi chia để tránh integer division
             var averageScore = attempts.Average(a =>
                 a.MaxScore > 0 ? ((decimal)a.TotalScore / (decimal)a.MaxScore) * 100m : 0m);
 
@@ -53,6 +55,9 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             };
         }
 
+        /// <summary>
+        /// Lấy thống kê tổng thể từ trước đến nay
+        /// </summary>
         public async Task<OverallStatsModel> GetOverallStatsAsync(int studentId)
         {
             var attempts = await _context.ExerciseAttempts
@@ -68,7 +73,6 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             if (attempts.Any())
             {
                 totalExercises = attempts.Count;
-                // FIX: cast sang double trước khi chia
                 averageScore = attempts.Average(a =>
                     ((double)a.TotalScore / (double)a.MaxScore) * 100.0);
                 averageScore = Math.Round(averageScore, 1);
@@ -90,6 +94,9 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             };
         }
 
+        /// <summary>
+        /// Tính toán chuỗi ngày học liên tục (Streak)
+        /// </summary>
         public async Task<StreakDataModel> GetStreakDataAsync(int studentId)
         {
             var attempts = await _context.ExerciseAttempts
@@ -103,14 +110,12 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             if (!attempts.Any())
                 return new StreakDataModel { CurrentStreak = 0, LongestStreak = 0, StudiedToday = false };
 
-            // FIX: Chuyển tất cả timestamp sang giờ VN trước khi lấy .Date
             var studyDates = attempts
                 .Select(dt => TimeZoneInfo.ConvertTimeFromUtc(dt, VnTimeZone).Date)
                 .Distinct()
                 .OrderByDescending(d => d)
                 .ToList();
 
-            // FIX: So sánh với ngày hôm nay theo giờ VN
             var today = VnNow.Date;
             var studiedToday = studyDates.Contains(today);
             var currentStreak = CalculateCurrentStreak(studyDates, today);
@@ -124,9 +129,11 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             };
         }
 
+        /// <summary>
+        /// Lấy danh sách các bài học vừa hoàn thành gần đây
+        /// </summary>
         public async Task<List<RecentLessonModel>> GetRecentLessonsAsync(int studentId, int limit)
         {
-            // Lấy raw data trước, KHÔNG tính toán trong SQL để tránh EF translation error
             var raw = await _context.ExerciseAttempts
                 .AsNoTracking()
                 .Where(a => a.StudentId == studentId && a.Status != AttemptStatus.InProgress)
@@ -156,13 +163,22 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             }).ToList();
         }
 
+        /// <summary>
+        /// Lấy danh sách chương và tiến độ học tập.
+        /// CHÚ Ý: Đã fix cứng CurriculumId = 3 cho chương trình Kết Nối Tri Thức.
+        /// </summary>
         public async Task<List<ChapterProgressModel>> GetChapterProgressAsync(int studentId)
         {
+            // TODO: Tạm thời fix cứng giá trị ID = 3 (Bộ Kết Nối Tri Thức).
+            // Sau này sẽ lấy động từ bảng Student thông qua tham số studentId.
+            int targetCurriculumId = 3;
+
             var chapters = await _context.Chapters
                 .AsNoTracking()
                 .Include(c => c.Topics)
                     .ThenInclude(t => t.studentProgresses)
-                .Where(c => c.IsActive)
+                // Lọc theo các chương đang hoạt động VÀ thuộc bộ sách ID 3
+                .Where(c => c.IsActive && c.CurriculumId == targetCurriculumId)
                 .OrderBy(c => c.OrderIndex)
                 .ToListAsync();
 

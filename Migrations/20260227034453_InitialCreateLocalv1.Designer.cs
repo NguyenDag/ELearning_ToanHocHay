@@ -3,6 +3,7 @@ using System;
 using ELearning_ToanHocHay_Control.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ELearning_ToanHocHay_Control.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260227034453_InitialCreateLocalv1")]
+    partial class InitialCreateLocalv1
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -895,7 +898,8 @@ namespace ELearning_ToanHocHay_Control.Migrations
 
                     b.HasIndex("QuestionId");
 
-                    b.HasIndex("SelectedOptionId");
+                    b.HasIndex("SelectedOptionId")
+                        .IsUnique();
 
                     b.HasIndex("AttemptId", "QuestionId")
                         .IsUnique();
@@ -1565,8 +1569,8 @@ namespace ELearning_ToanHocHay_Control.Migrations
                         .IsRequired();
 
                     b.HasOne("ELearning_ToanHocHay_Control.Data.Entities.QuestionOption", "SelectedOption")
-                        .WithMany()
-                        .HasForeignKey("SelectedOptionId");
+                        .WithOne("StudentAnswer")
+                        .HasForeignKey("ELearning_ToanHocHay_Control.Data.Entities.StudentAnswer", "SelectedOptionId");
 
                     b.Navigation("ExerciseAttempt");
 
@@ -1766,6 +1770,12 @@ namespace ELearning_ToanHocHay_Control.Migrations
             modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.QuestionBank", b =>
                 {
                     b.Navigation("Questions");
+                });
+
+            modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.QuestionOption", b =>
+                {
+                    b.Navigation("StudentAnswer")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.Student", b =>

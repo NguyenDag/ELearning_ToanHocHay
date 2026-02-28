@@ -191,6 +191,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                         : "Đã tạo thành công Lesson và Contents";
 
                 return ApiResponse<LessonDetailResponseDto>.SuccessResponse(result, message);
+
             }
             catch (Exception ex)
             {
@@ -214,13 +215,22 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 if (dto.LessonContents == null || !dto.LessonContents.Any())
                     throw new Exception("Phải có ít nhất 1 content");
 
+                var oldContents = await _unitOfWork.LessonContents.GetByLessonAsync(lessonId);
+
+                if (oldContents.Any())
+                {
+                    await _unitOfWork.LessonContents.RemoveRangeAsync(oldContents);
+                }
+
+                int orderIndex = 1;
+
                 var contents = dto.LessonContents.Select(c => new LessonContent
                 {
                     LessonId = lessonId,
                     BlockType = c.BlockType,
                     ContentText = c.ContentText,
                     ContentUrl = c.ContentUrl,
-                    OrderIndex = c.OrderIndex
+                    OrderIndex = orderIndex++
                 }).ToList();
 
                 await _unitOfWork.LessonContents.AddRangeAsync(contents);

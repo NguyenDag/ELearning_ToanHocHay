@@ -23,6 +23,6 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
 
         // Navigation
         public Question Question { get; set; }
-        public StudentAnswer StudentAnswer { get; set; }
+        //public StudentAnswer StudentAnswer { get; set; }
     }
 }

@@ -60,6 +60,11 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
                 .ToListAsync();
         }
 
+        public async Task RemoveRangeAsync(IEnumerable<LessonContent> entities)
+        {
+            _context.LessonContents.RemoveRange(entities);
+        }
+
         public async Task<LessonContent?> UpdateAsync(LessonContent content)
         {
             var existing = await _context.LessonContents

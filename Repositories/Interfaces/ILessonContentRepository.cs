@@ -12,5 +12,7 @@ namespace ELearning_ToanHocHay_Control.Repositories.Interfaces
         Task<bool> DeleteAsync(int contentId);
         Task<bool> ExistsAsync(int id);
         Task<IEnumerable<LessonContent>> AddRangeAsync(IEnumerable<LessonContent> entities);
+        Task RemoveRangeAsync(IEnumerable<LessonContent> entities);
+
     }
 }

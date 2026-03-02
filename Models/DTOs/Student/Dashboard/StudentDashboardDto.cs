@@ -1,4 +1,6 @@
-﻿namespace ELearning_ToanHocHay_Control.Models.DTOs.Student.Dashboard 
+﻿using ELearning_ToanHocHay_Control.Models.DTOs.ExerciseAttempt;
+
+namespace ELearning_ToanHocHay_Control.Models.DTOs.Student.Dashboard 
 {
     public class StudentDashboardDto
     {

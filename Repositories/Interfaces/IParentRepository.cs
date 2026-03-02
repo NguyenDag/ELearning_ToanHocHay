@@ -7,5 +7,7 @@ namespace ELearning_ToanHocHay_Control.Repositories.Interfaces
         Task<Parent?> GetByIdAsync(int parentId);
         Task<Parent?> GetByUserIdAsync(int userId);
         Task<Parent> AddAsync(Parent parent);
+        Task<Parent?> UpdateAsync(Parent parent);
+        Task<bool> DeleteAsync(int id);
     }
 }

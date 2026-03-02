@@ -1,4 +1,4 @@
-﻿namespace ToanHocHay.WebApp.Models.DTOs // Ở Backend thì đổi thành namespace ELearning_ToanHocHay_Control.Models.DTOs
+﻿namespace ELearning_ToanHocHay_Control.Models.DTOs.Exercise // Ở Backend thì đổi thành namespace ELearning_ToanHocHay_Control.Models.DTOs
 {
     public class ExerciseResultDto
     {

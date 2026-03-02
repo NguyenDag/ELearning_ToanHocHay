@@ -20,6 +20,16 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             return parent;
         }
 
+        public async Task<bool> DeleteAsync(int id)
+        {
+            var entity = await GetByIdAsync(id);
+            if (entity == null) return false;
+
+            _context.Parents.Remove(entity);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
         public async Task<Parent?> GetByIdAsync(int parentId)
         {
             return await _context.Parents
@@ -30,6 +40,13 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
         {
             return await _context.Parents
                 .FirstOrDefaultAsync(u => u.UserId == userId);
+        }
+
+        public async Task<Parent?> UpdateAsync(Parent parent)
+        {
+            _context.Entry(parent).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+            return parent;
         }
     }
 }

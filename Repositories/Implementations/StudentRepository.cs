@@ -20,6 +20,11 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             return student;
         }
 
+        public async Task<bool> ExistsAsync(int id)
+        {
+            return await _context.Students.AnyAsync(s => s.StudentId == id);
+        }
+
         public async Task<Student?> GetByIdAsync(int studentId)
         {
             return await _context.Students

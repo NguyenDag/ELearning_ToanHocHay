@@ -3,9 +3,11 @@ using ELearning_ToanHocHay_Control.Data.Entities;
 using ELearning_ToanHocHay_Control.Models.DTOs;
 using ELearning_ToanHocHay_Control.Models.DTOs.Chapter;
 using ELearning_ToanHocHay_Control.Models.DTOs.Exercise;
+using ELearning_ToanHocHay_Control.Models.DTOs.ExerciseAttempt;
 using ELearning_ToanHocHay_Control.Models.DTOs.Lesson;
 using ELearning_ToanHocHay_Control.Models.DTOs.LessonContent;
 using ELearning_ToanHocHay_Control.Models.DTOs.Payment;
+using ELearning_ToanHocHay_Control.Models.DTOs.Question;
 using ELearning_ToanHocHay_Control.Models.DTOs.Topic;
 
 

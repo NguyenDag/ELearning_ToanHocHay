@@ -1,4 +1,5 @@
 ﻿using ELearning_ToanHocHay_Control.Data.Entities;
+using ELearning_ToanHocHay_Control.Models.DTOs.Question;
 
 namespace ELearning_ToanHocHay_Control.Models.DTOs.Exercise
 {

@@ -1,4 +1,5 @@
-﻿using ELearning_ToanHocHay_Control.Models.DTOs.Subscription;
+﻿using ELearning_ToanHocHay_Control.Common;
+using ELearning_ToanHocHay_Control.Models.DTOs.Subscription;
 using ELearning_ToanHocHay_Control.Services.Implementations;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -81,5 +82,20 @@ namespace ELearning_ToanHocHay_Control.Controllers
             var response = await _service.CheckPremiumAsync(studentId);
             return Ok(response);
         }
+
+        [HttpGet("status/{id}")]
+        public async Task<IActionResult> GetStatus(int id)
+        {
+            var subscription = await _service.GetByIdAsync(id);
+
+            if (subscription == null || subscription.Data == null)
+                return NotFound();
+
+            return Ok(new
+            {
+                status = subscription.Data.Status.ToString()
+            });
+        }
+
     }
 }

@@ -9,21 +9,24 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
     {
         private readonly IStudentParentRepository _repository;
         private readonly IUserRepository _userRepository;
+        private readonly IStudentRepository _studentRepository;
 
         public StudentParentService(
             IStudentParentRepository repository,
-            IUserRepository userRepository)
+            IUserRepository userRepository,
+            IStudentRepository studentRepository)
         {
             _repository = repository;
             _userRepository = userRepository;
+            _studentRepository = studentRepository;
         }
 
-        public async Task<ApiResponse<StudentParentDto>> ConnectParentAsync(int studentUserId, ConnectParentDto dto)
+        public async Task<ApiResponse<StudentParentDto>> ConnectParentAsync(int userId, ConnectParentDto dto)
         {
             try
             {
                 // 1️ Lấy student từ userId
-                var user = await _userRepository.GetByIdAsync(studentUserId);
+                var user = await _userRepository.GetByIdAsync(userId);
 
                 if (user == null || user.Student == null)
                 {

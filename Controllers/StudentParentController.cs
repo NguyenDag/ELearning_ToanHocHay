@@ -1,4 +1,5 @@
 ﻿using ELearning_ToanHocHay_Control.Attributes;
+using ELearning_ToanHocHay_Control.Common;
 using ELearning_ToanHocHay_Control.Data.Entities;
 using ELearning_ToanHocHay_Control.Models.DTOs;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
@@ -27,7 +28,14 @@ namespace ELearning_ToanHocHay_Control.Controllers
                 return BadRequest(ModelState);
 
             // Lấy userId từ JWT
-            var userId = int.Parse(User.FindFirst("UserId").Value);
+            var userIdClaim = User.FindFirst(CustomJwtClaims.UserId)?.Value;
+
+            if (string.IsNullOrEmpty(userIdClaim))
+            {
+                return Unauthorized("Invalid token");
+            }
+
+            var userId = int.Parse(userIdClaim);
 
             var response = await _service.ConnectParentAsync(userId, dto);
 

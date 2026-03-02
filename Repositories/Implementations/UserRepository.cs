@@ -58,6 +58,8 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
         public async Task<User?> GetByIdAsync(int userId)
         {
             return await _context.Users
+                .Include(u => u.Student)
+                .Include(u => u.Parent)
                 .FirstOrDefaultAsync(u => u.UserId == userId);
         }
 

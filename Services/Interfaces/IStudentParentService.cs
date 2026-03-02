@@ -4,6 +4,6 @@ namespace ELearning_ToanHocHay_Control.Services.Interfaces
 {
     public interface IStudentParentService
     {
-        Task<ApiResponse<StudentParentDto>> ConnectParentAsync(int studentUserId, ConnectParentDto dto);
+        Task<ApiResponse<StudentParentDto>> ConnectParentAsync(int userId, ConnectParentDto dto);
     }
 }

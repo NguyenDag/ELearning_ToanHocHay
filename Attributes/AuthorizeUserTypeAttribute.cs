@@ -1,4 +1,5 @@
-﻿using ELearning_ToanHocHay_Control.Data.Entities;
+﻿using ELearning_ToanHocHay_Control.Common;
+using ELearning_ToanHocHay_Control.Data.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
@@ -32,7 +33,7 @@ namespace ELearning_ToanHocHay_Control.Attributes
             }
 
             // Get UserType from claims
-            var userTypeClaim = user.FindFirst("UserType")?.Value;
+            var userTypeClaim = user.FindFirst(CustomJwtClaims.UserType)?.Value;
             if (string.IsNullOrEmpty(userTypeClaim))
             {
                 context.Result = new ForbidResult();

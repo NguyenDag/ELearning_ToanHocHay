@@ -1,4 +1,5 @@
-﻿using ELearning_ToanHocHay_Control.Data;
+﻿// FILE: ELearning_ToanHocHay_Control/Repositories/Implementations/ParentRepository.cs
+using ELearning_ToanHocHay_Control.Data;
 using ELearning_ToanHocHay_Control.Data.Entities;
 using ELearning_ToanHocHay_Control.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -8,11 +9,11 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
     public class ParentRepository : IParentRepository
     {
         private readonly AppDbContext _context;
-
         public ParentRepository(AppDbContext context)
         {
             _context = context;
         }
+
         public async Task<Parent> AddAsync(Parent parent)
         {
             _context.Parents.Add(parent);
@@ -24,22 +25,30 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
         {
             var entity = await GetByIdAsync(id);
             if (entity == null) return false;
-
             _context.Parents.Remove(entity);
             await _context.SaveChangesAsync();
             return true;
         }
 
+        // FIX: Include User + StudentParents + Student.User để có đủ data
         public async Task<Parent?> GetByIdAsync(int parentId)
         {
             return await _context.Parents
-                .FirstOrDefaultAsync(u => u.ParentId == parentId);
+                .Include(p => p.User)
+                .Include(p => p.StudentParents)
+                    .ThenInclude(sp => sp.Student)
+                        .ThenInclude(s => s.User)
+                .FirstOrDefaultAsync(p => p.ParentId == parentId);
         }
 
         public async Task<Parent?> GetByUserIdAsync(int userId)
         {
             return await _context.Parents
-                .FirstOrDefaultAsync(u => u.UserId == userId);
+                .Include(p => p.User)
+                .Include(p => p.StudentParents)
+                    .ThenInclude(sp => sp.Student)
+                        .ThenInclude(s => s.User)
+                .FirstOrDefaultAsync(p => p.UserId == userId);
         }
 
         public async Task<Parent?> UpdateAsync(Parent parent)

@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using ELearning_ToanHocHay_Control.Data.Entities;
+﻿// FILE: ELearning_ToanHocHay_Control/Services/Implementations/ParentService.cs
 using ELearning_ToanHocHay_Control.Models.DTOs;
 using ELearning_ToanHocHay_Control.Models.DTOs.Parent;
 using ELearning_ToanHocHay_Control.Repositories.Interfaces;
@@ -10,17 +9,10 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
     public class ParentService : IParentService
     {
         private readonly IParentRepository _repository;
-        private readonly IUserRepository _userRepository;
-        private readonly IMapper _mapper;
 
-        public ParentService(
-            IParentRepository repository,
-            IUserRepository userRepository,
-            IMapper mapper)
+        public ParentService(IParentRepository repository)
         {
             _repository = repository;
-            _userRepository = userRepository;
-            _mapper = mapper;
         }
 
         public async Task<ApiResponse<ParentDto>> GetByIdAsync(int id)
@@ -29,8 +21,26 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             if (entity == null)
                 return ApiResponse<ParentDto>.ErrorResponse("Not found", null);
 
-            return ApiResponse<ParentDto>.SuccessResponse(
-                _mapper.Map<ParentDto>(entity));
+            var dto = new ParentDto
+            {
+                ParentId = entity.ParentId,
+                UserId = entity.UserId,
+                Job = entity.Job,
+                FullName = entity.User?.FullName ?? "",
+                Email = entity.User?.Email ?? "",
+                ConnectionCode = entity.ConnectionCode,
+                Children = entity.StudentParents?
+                    .Where(sp => sp.Student?.User != null)
+                    .Select(sp => new ChildDto
+                    {
+                        StudentId = sp.StudentId,
+                        FullName = sp.Student!.User!.FullName,
+                        GradeLevel = sp.Student.GradeLevel,
+                        Relationship = sp.Relationship.ToString()
+                    }).ToList() ?? new()
+            };
+
+            return ApiResponse<ParentDto>.SuccessResponse(dto);
         }
 
         public async Task<ApiResponse<ParentDto>> UpdateAsync(int id, UpdateParentDto dto)
@@ -40,12 +50,18 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 return ApiResponse<ParentDto>.ErrorResponse("Not found", null);
 
             entity.Job = dto.Job;
-
             await _repository.UpdateAsync(entity);
 
             return ApiResponse<ParentDto>.SuccessResponse(
-                _mapper.Map<ParentDto>(entity),
-                "Updated successfully");
+                new ParentDto
+                {
+                    ParentId = entity.ParentId,
+                    UserId = entity.UserId,
+                    Job = entity.Job,
+                    FullName = entity.User?.FullName ?? "",
+                    Email = entity.User?.Email ?? "",
+                    ConnectionCode = entity.ConnectionCode
+                }, "Updated successfully");
         }
 
         public async Task<ApiResponse<bool>> DeleteAsync(int id)

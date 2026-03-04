@@ -11,8 +11,20 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
         private readonly ILogger<DashboardRepository> _logger;
 
         // Cấu hình múi giờ Việt Nam để tính toán chuỗi ngày học (Streak) chính xác
-        private static readonly TimeZoneInfo VnTimeZone =
-            TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+
+        private static readonly TimeZoneInfo VnTimeZone = GetVnTimeZone();
+
+        private static TimeZoneInfo GetVnTimeZone()
+        {
+            // Thử Linux IANA ID trước
+            try { return TimeZoneInfo.FindSystemTimeZoneById("Asia/Ho_Chi_Minh"); }
+            catch { }
+            // Fallback Windows ID
+            try { return TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"); }
+            catch { }
+            // Fallback thủ công UTC+7
+            return TimeZoneInfo.CreateCustomTimeZone("VN", TimeSpan.FromHours(7), "Vietnam", "Vietnam");
+        }
 
         private static DateTime VnNow =>
             TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, VnTimeZone);

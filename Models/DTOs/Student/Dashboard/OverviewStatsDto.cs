@@ -1,4 +1,6 @@
-﻿namespace ELearning_ToanHocHay_Control.Models.DTOs.Student.Dashboard
+﻿using ELearning_ToanHocHay_Control.Models.DTOs.ExerciseAttempt;
+
+namespace ELearning_ToanHocHay_Control.Models.DTOs.Student.Dashboard
 {
     public class OverviewStatsDto
     {
@@ -18,6 +20,12 @@
         public int CurrentStreak { get; set; }
         public int LongestStreak { get; set; }
         public bool StudiedToday { get; set; }
+
+        // Danh sách bài kiểm tra đã làm
+        public List<ExerciseAttemptDto> RecentAttempts { get; set; } = new();
+
+        // Biểu đồ cột điểm trung bình theo chương
+        public List<ScoreChartItemDto> ChartData { get; set; } = new();
     }
 
     public enum TrendDirection

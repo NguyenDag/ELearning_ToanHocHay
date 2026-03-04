@@ -45,6 +45,12 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             var chapterProgressTask = await GetChapterProgressSummaryAsync(studentId);
             var packageTypeTask = await GetPackageTypeAsync(studentId);
 
+            /*await Task.WhenAll(
+                studentInfoTask,
+                statsTask,
+                recentLessonsTask,
+                chapterProgressTask,
+                packageTypeTask);*/
 
             var packageType = packageTypeTask;
 

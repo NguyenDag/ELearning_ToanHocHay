@@ -29,28 +29,30 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
         public async Task<WeeklyStatsModel> GetWeeklyStatsAsync(
             int studentId, DateTime startDate, DateTime endDate)
         {
-            var attempts = await _context.ExerciseAttempts
+            var query = _context.ExerciseAttempts
                 .AsNoTracking()
                 .Where(a => a.StudentId == studentId &&
                            a.Status != AttemptStatus.InProgress &&
                            a.SubmittedAt.HasValue &&
                            a.SubmittedAt.Value >= startDate &&
-                           a.SubmittedAt.Value < endDate)
-                .ToListAsync();
+                           a.SubmittedAt.Value < endDate);
 
-            if (!attempts.Any())
-                return new WeeklyStatsModel { TotalMinutes = 0, ExerciseCount = 0, AverageScore = 0 };
+            var totalMinutes = await query
+                .SumAsync(a => (int)(a.SubmittedAt.Value - a.StartTime).TotalMinutes);
 
-            var totalMinutes = attempts.Sum(a =>
-                (int)(a.SubmittedAt!.Value - a.StartTime).TotalMinutes);
+            var exerciseCount = await query.CountAsync();
 
-            var averageScore = attempts.Average(a =>
-                a.MaxScore > 0 ? ((decimal)a.TotalScore / (decimal)a.MaxScore) * 100m : 0m);
+            var totalScore = await query.SumAsync(a => a.TotalScore);
+            var totalMax = await query.SumAsync(a => a.MaxScore);
+
+            var averageScore = totalMax > 0
+                ? (decimal)totalScore / (decimal)totalMax * 100m
+                : 0m;
 
             return new WeeklyStatsModel
             {
                 TotalMinutes = totalMinutes,
-                ExerciseCount = attempts.Count,
+                ExerciseCount = exerciseCount,
                 AverageScore = Math.Round(averageScore, 1)
             };
         }

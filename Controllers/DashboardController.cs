@@ -20,7 +20,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
             _logger = logger;
         }
 
-        [HttpGet]
+        [HttpGet("overview")]
         public async Task<ActionResult<CoreDashboardDto>> GetCoreDashboard(int studentId)
         {
             try

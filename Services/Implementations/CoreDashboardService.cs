@@ -165,7 +165,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             .ToList();
         }
 
-        private async Task<PackageType> GetPackageTypeAsync(int studentId)
+        public async Task<PackageType> GetPackageTypeAsync(int studentId)
         {
             var subscription = await _packageRepo.GetActivePackageAsync(studentId);
 
@@ -220,13 +220,10 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             if (Math.Abs(diff) < 1) return TrendDirection.Same;
             return diff > 0 ? TrendDirection.Up : TrendDirection.Down;
         }
-    }
 
-    public enum PackageType
-    {
-        Free = 0,
-        Standard = 1,
-        Premium = 2,
-        Yearly = 3
+        public async Task<List<ChapterScoreComparisonDto>> GetChapterScoreComparisonAsync(int studentId)
+        {
+            return await _dashboardRepo.GetChapterComparisonAsync(studentId);
+        }
     }
 }

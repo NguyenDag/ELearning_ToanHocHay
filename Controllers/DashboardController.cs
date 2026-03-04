@@ -1,8 +1,9 @@
-﻿using ELearning_ToanHocHay_Control.Models.DTOs.Student.Dashboard;
+﻿using System.Security.Claims;
+using ELearning_ToanHocHay_Control.Models.DTOs.Student.Dashboard;
+using ELearning_ToanHocHay_Control.Services.Implementations;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace ELearning_ToanHocHay_Control.Controllers
 {
@@ -57,6 +58,19 @@ namespace ELearning_ToanHocHay_Control.Controllers
                 _logger.LogError(ex, "Lỗi tại Dashboard API");
                 return StatusCode(500, new { message = "Lỗi máy chủ: " + ex.Message });
             }
+        }
+
+        [HttpGet("chapter-score-comparison")]
+        public async Task<IActionResult> GetChapterScoreComparison(int studentId)
+        {
+            var package = await _coreDashboardService.GetPackageTypeAsync(studentId);
+
+            if (package < PackageType.Standard)
+                return StatusCode(403, new { message = "Gói của bạn không hỗ trợ tính năng này." });
+
+            var result = await _coreDashboardService.GetChapterScoreComparisonAsync(studentId);
+
+            return Ok(result);
         }
     }
 }

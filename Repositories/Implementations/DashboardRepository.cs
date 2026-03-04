@@ -1,5 +1,7 @@
 ﻿using ELearning_ToanHocHay_Control.Data;
 using ELearning_ToanHocHay_Control.Data.Entities;
+using ELearning_ToanHocHay_Control.Models;
+using ELearning_ToanHocHay_Control.Models.DTOs.Student.Dashboard;
 using ELearning_ToanHocHay_Control.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -283,6 +285,28 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             }
 
             return longestStreak;
+        }
+
+        public async Task<List<ChapterScoreComparisonDto>> GetChapterComparisonAsync(int studentId)
+        {
+            return await _context.ExerciseAttempts
+                .Where(a => a.StudentId == studentId &&
+                            a.Status != AttemptStatus.InProgress &&
+                            a.MaxScore > 0)
+                .GroupBy(a => new
+                {
+                    a.Exercise.Chapter.ChapterId,
+                    a.Exercise.Chapter.ChapterName
+                })
+                .Select(g => new ChapterScoreComparisonDto
+                {
+                    ChapterId = g.Key.ChapterId,
+                    ChapterName = g.Key.ChapterName,
+                    AverageScore =
+                        (decimal)g.Sum(x => x.TotalScore) * 10m /
+                        (decimal)g.Sum(x => x.MaxScore)
+                })
+                .ToListAsync();
         }
     }
 }

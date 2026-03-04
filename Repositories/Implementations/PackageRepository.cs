@@ -1,5 +1,6 @@
 ﻿using ELearning_ToanHocHay_Control.Data;
 using ELearning_ToanHocHay_Control.Data.Entities;
+using ELearning_ToanHocHay_Control.Models.DTOs.Student.Dashboard;
 using ELearning_ToanHocHay_Control.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -54,6 +55,20 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
                        s.EndDate > DateTime.UtcNow)
             .OrderByDescending(s => s.CreatedAt)
             .FirstOrDefaultAsync();
+        }
+
+        public async Task<PackageType?> GetActivePackageTypeAsync(int studentId)
+        {
+            var today = DateTime.UtcNow;
+
+            return await _context.Subscriptions
+                .AsNoTracking()
+                .Where(s => s.StudentId == studentId &&
+                            s.StartDate <= today &&
+                            s.EndDate >= today)
+                .OrderByDescending(s => s.Package.PackageId) // lấy gói cao nhất
+                .Select(s => (PackageType?)s.Package.PackageId)
+                .FirstOrDefaultAsync();
         }
     }
 }

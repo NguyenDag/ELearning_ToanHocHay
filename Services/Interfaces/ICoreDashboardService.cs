@@ -6,5 +6,7 @@ namespace ELearning_ToanHocHay_Control.Services.Interfaces
     {
         Task<CoreDashboardDto> GetCoreDashboardAsync(int studentId);
         Task<bool> VerifyStudentAccessAsync(int studentId, int userId);
+        Task<List<ChapterScoreComparisonDto>> GetChapterScoreComparisonAsync(int studentId);
+        Task<PackageType> GetPackageTypeAsync(int studentId);
     }
 }

@@ -1,5 +1,7 @@
 ﻿using ELearning_ToanHocHay_Control.Data;
 using ELearning_ToanHocHay_Control.Data.Entities;
+using ELearning_ToanHocHay_Control.Models;
+using ELearning_ToanHocHay_Control.Models.DTOs.Student.Dashboard;
 using ELearning_ToanHocHay_Control.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -41,28 +43,30 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
         public async Task<WeeklyStatsModel> GetWeeklyStatsAsync(
             int studentId, DateTime startDate, DateTime endDate)
         {
-            var attempts = await _context.ExerciseAttempts
+            var query = _context.ExerciseAttempts
                 .AsNoTracking()
                 .Where(a => a.StudentId == studentId &&
                            a.Status != AttemptStatus.InProgress &&
                            a.SubmittedAt.HasValue &&
                            a.SubmittedAt.Value >= startDate &&
-                           a.SubmittedAt.Value < endDate)
-                .ToListAsync();
+                           a.SubmittedAt.Value < endDate);
 
-            if (!attempts.Any())
-                return new WeeklyStatsModel { TotalMinutes = 0, ExerciseCount = 0, AverageScore = 0 };
+            var totalMinutes = await query
+                .SumAsync(a => (int)(a.SubmittedAt.Value - a.StartTime).TotalMinutes);
 
-            var totalMinutes = attempts.Sum(a =>
-                (int)(a.SubmittedAt!.Value - a.StartTime).TotalMinutes);
+            var exerciseCount = await query.CountAsync();
 
-            var averageScore = attempts.Average(a =>
-                a.MaxScore > 0 ? ((decimal)a.TotalScore / (decimal)a.MaxScore) * 100m : 0m);
+            var totalScore = await query.SumAsync(a => a.TotalScore);
+            var totalMax = await query.SumAsync(a => a.MaxScore);
+
+            var averageScore = totalMax > 0
+                ? (decimal)totalScore / (decimal)totalMax * 100m
+                : 0m;
 
             return new WeeklyStatsModel
             {
                 TotalMinutes = totalMinutes,
-                ExerciseCount = attempts.Count,
+                ExerciseCount = exerciseCount,
                 AverageScore = Math.Round(averageScore, 1)
             };
         }
@@ -293,6 +297,28 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             }
 
             return longestStreak;
+        }
+
+        public async Task<List<ChapterScoreComparisonDto>> GetChapterComparisonAsync(int studentId)
+        {
+            return await _context.ExerciseAttempts
+                .Where(a => a.StudentId == studentId &&
+                            a.Status != AttemptStatus.InProgress &&
+                            a.MaxScore > 0)
+                .GroupBy(a => new
+                {
+                    a.Exercise.Chapter.ChapterId,
+                    a.Exercise.Chapter.ChapterName
+                })
+                .Select(g => new ChapterScoreComparisonDto
+                {
+                    ChapterId = g.Key.ChapterId,
+                    ChapterName = g.Key.ChapterName,
+                    AverageScore =
+                        (decimal)g.Sum(x => x.TotalScore) * 10m /
+                        (decimal)g.Sum(x => x.MaxScore)
+                })
+                .ToListAsync();
         }
     }
 }

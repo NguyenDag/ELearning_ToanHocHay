@@ -4,6 +4,13 @@ using ELearning_ToanHocHay_Control.Models.DTOs.Subscription;
 
 namespace ELearning_ToanHocHay_Control.Models.DTOs.Student.Dashboard
 {
+    public enum PackageType
+    {
+        Free = 0,
+        Standard = 1,
+        Premium = 2,
+        Yearly = 3
+    }
     public class CoreDashboardDto
     {
         // Essential data only

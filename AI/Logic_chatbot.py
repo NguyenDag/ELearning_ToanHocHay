@@ -312,8 +312,8 @@ class ChatbotLogicBackend:
             ),
             "form_fields": [
                 "Họ tên phụ huynh (bắt buộc)",
-                "Số điện thoại (bắt buộc)",
-                "Email (không bắt buộc)"
+                "Số điện thoại (không bắt buộc)",
+                "Email (bắt buộc)"
             ]
         }
 

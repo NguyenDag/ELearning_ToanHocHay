@@ -229,6 +229,7 @@ namespace ELearning_ToanHocHay_Control
             services.AddScoped<ICoreDashboardService, CoreDashboardService>();
             services.AddScoped<IStudentParentService, StudentParentService>();
             services.AddScoped<IParentService, ParentService>();
+            services.AddScoped<ILessonProgressService, LessonProgressService>();
 
             // Background Services
             services.AddSingleton<IBackgroundEmailService, BackgroundEmailService>();

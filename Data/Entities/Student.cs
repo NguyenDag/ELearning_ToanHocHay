@@ -27,5 +27,6 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         public ICollection<ExerciseAttempt> ExerciseAttempts { get; set; }
         public ICollection<LearningPath> LearningPaths { get; set; }
         public ICollection<StudentProgress> StudentProgresses { get; set; }
+        public ICollection<LessonProgress> LessonProgresses { get; set; }
     }
 }

@@ -47,5 +47,7 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         public User? Creator { get; set; }
         public User? Reviewer { get; set; }
         public ICollection<LessonContent> LessonContents { get; set; }
+        public ICollection<LessonProgress> LessonProgresses { get; set; }
+
     }
 }

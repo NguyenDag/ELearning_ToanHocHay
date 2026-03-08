@@ -195,7 +195,8 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             var chapters = await _context.Chapters
                 .AsNoTracking()
                 .Include(c => c.Topics)
-                    .ThenInclude(t => t.studentProgresses)
+                    .ThenInclude(t => t.Lessons)
+                        .ThenInclude(l => l.LessonProgresses)
                 .Where(c => c.IsActive && c.CurriculumId == targetCurriculumId)
                 .OrderBy(c => c.OrderIndex)
                 .ToListAsync();
@@ -206,26 +207,27 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             {
                 var totalTopics = chapter.Topics.Count;
 
-                var completedTopics = chapter.Topics
-                    .Count(t => t.studentProgresses
-                        .Any(sp => sp.StudentId == studentId &&
-                                  sp.MasteryLevel >= MasteryLevel.Intermediate));
+                int completedTopics = 0;
+
+                foreach (var topic in chapter.Topics)
+                {
+                    int totalLessons = topic.Lessons.Count;
+
+                    if (totalLessons == 0) continue;
+
+                    int completedLessons = topic.Lessons
+                        .Count(l => l.LessonProgresses
+                            .Any(lp => lp.StudentId == studentId && lp.IsCompleted));
+
+                    if (completedLessons == totalLessons)
+                    {
+                        completedTopics++;
+                    }
+                }
 
                 var completionPercentage = totalTopics > 0
                     ? Math.Round((decimal)completedTopics / totalTopics * 100, 1)
                     : 0;
-
-                var topicProgresses = chapter.Topics
-                    .SelectMany(t => t.studentProgresses)
-                    .Where(sp => sp.StudentId == studentId)
-                    .ToList();
-
-                MasteryLevel? avgMastery = null;
-                if (topicProgresses.Any())
-                {
-                    var avgMasteryValue = (int)topicProgresses.Average(sp => (int)sp.MasteryLevel);
-                    avgMastery = (MasteryLevel)avgMasteryValue;
-                }
 
                 var isLocked = !chapter.Topics.Any(t => t.IsFree);
 
@@ -238,7 +240,7 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
                     CompletedTopics = completedTopics,
                     TotalTopics = totalTopics,
                     IsLocked = isLocked,
-                    AverageMastery = avgMastery
+                    AverageMastery = null
                 });
             }
 

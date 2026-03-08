@@ -45,6 +45,8 @@ namespace ELearning_ToanHocHay_Control.Data
         public DbSet<SupportMessage> SupportMessages { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<SystemConfig> SystemConfigs { get; set; }
+        public DbSet<LessonProgress> LessonProgresses { get; set; }
+
         #endregion
 
         #region OnModelCreating

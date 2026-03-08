@@ -78,14 +78,14 @@ class ChatbotLogicBackend:
 
         # Dùng 'in' để so sánh từ khóa, tránh lỗi Encoding hoặc sai lệch 1-2 chữ
         
-        # ===== Main flows =====
+        # ===== Main flows (từ fallback menu / trigger đầu tiên) =====
         if "tư vấn" in r and "lớp 6" in r:
             return self._flow_tu_van(user)
         
-        elif "học thử" in r and ("miễn phí" in r or "cho con" in r):
+        elif "học thử miễn phí" in r:  # FIX: chỉ khớp khi có đủ "miễn phí", tránh bắt nhầm option "Học thử" của student
             return self._flow_hoc_thu_student(user)
             
-        elif "báo cáo" in r and "mẫu" in r:
+        elif "báo cáo tiến độ mẫu" in r:  # FIX: khớp chính xác option fallback menu
             return self._flow_bao_cao(user)
             
         elif "hay làm sai" in r or ("không hiểu" in r and "sai" in r):
@@ -100,37 +100,38 @@ class ChatbotLogicBackend:
         elif "theo sát" in r:
             return self._flow_theo_sat(user)
             
-        elif "học phí" in r or "lộ trình" in r:
+        elif "học phí" in r or ("lộ trình" in r and "xem" not in r):
             return self._flow_hoc_phi(user)
         
         # ===== Sub-option flows =====
-        # Từ _flow_con_hay_lam_sai options
-        elif "có" in r and "cho con học thử" in r:
+        # Từ _flow_con_hay_lam_sai: "Có, cho con học thử"
+        # FIX: đặt TRƯỚC nhánh "học thử" chung để không bị bắt nhầm
+        elif "cho con học thử" in r:
             return self._flow_hoc_thu_parent(user)
         
         elif "tìm hiểu thêm" in r:
             return self._flow_tu_van_more(user)
         
-        # Từ _flow_hoc_thu_student options
-        elif "nhờ" in r and "bố" in r and "mẹ" in r:
+        # Từ _flow_hoc_thu_student: "Nhờ bố/mẹ xem giúp"
+        elif "nhờ" in r and ("bố" in r or "mẹ" in r):
             return self._flow_hoc_thu_parent_help(user)
         
-        elif "học thử" in r and "nhờ" not in r:
+        # Từ _flow_hoc_thu_student: "Học thử" (student tự học thử)
+        elif r == "học thử":  # FIX: so sánh chính xác để không bắt các option khác
             return self._flow_hoc_thu_parent(user)
         
-        # Từ _flow_bao_cao options
-        elif "nhận" in r and "báo cáo" in r:
-            return self._flow_bao_cao(user)
-        
-        elif "tư vấn thêm" in r and "báo" not in r:
+        # Từ _flow_bao_cao: "Nhận báo cáo mẫu"
+        # FIX: đổi sang handover thay vì gọi lại bao_cao → tránh vòng lặp vô hạn
+        elif "nhận báo cáo" in r or "báo cáo mẫu" in r:
             return self._flow_handover(user)
         
-        # Từ _flow_hoc_phi options
+        # Từ _flow_bao_cao / _flow_hoc_phi: "Tư vấn thêm" / "Được tư vấn chi tiết"
+        elif "tư vấn thêm" in r or "tư vấn chi tiết" in r or "được tư vấn" in r:
+            return self._flow_handover(user)
+        
+        # Từ _flow_hoc_phi: "Xem lộ trình học"
         elif "xem" in r and "lộ trình" in r:
             return self._flow_tu_van_more(user)
-        
-        elif "được tư vấn chi tiết" in r:
-            return self._flow_handover(user)
         
         elif "cho con học thử trước" in r:
             return self._flow_hoc_thu_parent(user)
@@ -138,9 +139,9 @@ class ChatbotLogicBackend:
         elif "liên hệ" in r or "nhân viên" in r or "gọi điện" in r:
             return self._flow_handover(user)
             
-        # Nếu không khớp cái nào bên trên thì mới fallback
+        # FIX: Fallback nên dùng _flow_fallback (hiện menu) thay vì _flow_handover
         logger.warning(f"✗ Vẫn không khớp: '{r}'")
-        return self._flow_handover(user)
+        return self._flow_fallback(user)
 
     # ---------- Handle Free Text ----------
     def handle_free_text(self, user_id: str, text: str) -> Dict:

@@ -73,7 +73,6 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     );
                 }
 
-                // Không cho submit lại
                 if (attempt.Status != AttemptStatus.InProgress)
                 {
                     return ApiResponse<ExerciseResultDto>.ErrorResponse(
@@ -89,11 +88,16 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 var exerciseQuestions = await _exerciseQuestionRepository
                     .GetByExerciseIdAsync(attempt.ExerciseId);
 
+                // ✅ FIX: Tính scorePerQuestion fallback khi eq.Score = 0
+                var totalQuestions = exerciseQuestions.Count;
+                var scorePerQuestion = totalQuestions > 0
+                    ? attempt.MaxScore / totalQuestions
+                    : 0;
+
                 // 3. Lấy các câu trả lời đã làm
                 var answers = await _answerRepository
                     .GetAttemptAnswersAsync(dto.AttemptId);
 
-                // Map Answer theo QuestionId
                 var answerLookup = answers.ToDictionary(a => a.QuestionId);
 
                 // 4. Biến chấm điểm
@@ -103,7 +107,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
                 var answerDetails = new List<AnswerDetailDto>();
 
-                // 5. DUYỆT THEO CÂU HỎI (CHUẨN)
+                // 5. DUYỆT THEO CÂU HỎI
                 foreach (var eq in exerciseQuestions)
                 {
                     answerLookup.TryGetValue(eq.QuestionId, out var answer);
@@ -113,7 +117,6 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
                     if (answer != null)
                     {
-                        // CHUẨN HÓA VIỆC SO SÁNH TẠI ĐÂY
                         switch (question.QuestionType)
                         {
                             case QuestionType.MultipleChoice:
@@ -121,39 +124,25 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                                 {
                                     var correctOption = question.QuestionOptions?
                                         .FirstOrDefault(o => o.IsCorrect);
-                                    
-                                    // BỔ SUNG: Lưu Text của option vào AnswerText để AI có thể đọc được
-                                    var selectedOpt = question.QuestionOptions?.FirstOrDefault(o => o.OptionId == answer.SelectedOptionId.Value);
-                                    if (selectedOpt != null) 
-                                    {
-                                        answer.AnswerText = selectedOpt.OptionText;
-                                    }
+
+                                    Console.WriteLine($"=== CHẤM qId={question.QuestionId} | studentOpt={answer.SelectedOptionId} | correctOpt={correctOption?.OptionId} | match={correctOption?.OptionId == answer.SelectedOptionId} ===");
 
                                     isCorrect = correctOption != null &&
-                                        correctOption?.OptionId == answer.SelectedOptionId;
+                                        correctOption.OptionId == answer.SelectedOptionId;
                                 }
                                 break;
 
                             case QuestionType.TrueFalse:
                             case QuestionType.FillBlank:
-                                // Sử dụng Trim() và ToLower() cho cả 2 vế để loại bỏ khoảng trắng và không phân biệt hoa thường
-                                string studentAns = (answer.AnswerText ?? "")
-                                    .Trim()
-                                    .ToLower();
-
-                                string correctAns = (question.CorrectAnswer ?? "")
-                                    .Trim()
-                                    .ToLower();
-
-                                isCorrect = !string.IsNullOrEmpty(correctAns) &&
-                                    studentAns == correctAns;
-
+                                string studentAns = (answer.AnswerText ?? "").Trim().ToLower();
+                                string correctAns = (question.CorrectAnswer ?? "").Trim().ToLower();
+                                isCorrect = !string.IsNullOrEmpty(correctAns) && studentAns == correctAns;
                                 break;
                         }
                     }
 
-                    // CẬP NHẬT ĐIỂM DỰA TRÊN KẾT QUẢ SO SÁNH MỚI
-                    var maxScore = eq.Score;
+                    // ✅ FIX: Dùng eq.Score nếu > 0, ngược lại dùng scorePerQuestion
+                    var maxScore = eq.Score > 0 ? eq.Score : scorePerQuestion;
                     var pointsEarned = isCorrect ? maxScore : 0;
 
                     if (isCorrect)
@@ -161,12 +150,11 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                         totalScore += pointsEarned;
                         correctAnswers++;
                     }
-                    else if (answer != null) // chỉ tính sai khi CÓ trả lời
+                    else if (answer != null)
                     {
                         wrongAnswers++;
                     }
 
-                    // Cập nhật vào DB để trang Result hiển thị đúng
                     if (answer != null)
                     {
                         answer.IsCorrect = isCorrect;
@@ -174,7 +162,6 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                         _answerRepository.Update(answer);
                     }
 
-                    // Chi tiết câu trả lời
                     answerDetails.Add(new AnswerDetailDto
                     {
                         QuestionId = question.QuestionId,
@@ -203,10 +190,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 attempt.CompletionPercentage = attempt.MaxScore > 0
                     ? (decimal)(totalScore / attempt.MaxScore) * 100
                     : 0;
-                attempt.Status = isTimeout
-                    ? AttemptStatus.Timeout
-                    : AttemptStatus.Submitted;
-
+                attempt.Status = isTimeout ? AttemptStatus.Timeout : AttemptStatus.Submitted;
                 attempt.SubmittedAt = now;
 
                 _attemptRepository.Update(attempt);
@@ -214,54 +198,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                // 7. CHỜ AI PHÂN TÍCH XONG MỚI TRẢ KẾT QUẢ (Để đảm bảo Review có dữ liệu ngay)
-                try
-                {
-                    // Lấy ra danh sách các câu sai cần AI feedback
-                    var questionsToAnalyze = answerDetails
-                        .Where(d => !d.IsCorrect && !string.IsNullOrEmpty(d.StudentAnswer) && d.StudentAnswer != "Bạn chưa trả lời câu hỏi này")
-                        .ToList();
-
-                    Console.WriteLine($"[AI FEEDBACK] Found {questionsToAnalyze.Count} incorrect questions to analyze for Attempt {attempt.AttemptId}");
-
-                    if (questionsToAnalyze.Any())
-                    {
-                        // CHẠY TUẦN TỰ để đảm bảo độ tin cậy của DB Context và AI Rate Limit
-                        foreach (var detail in questionsToAnalyze)
-                        {
-                            Console.WriteLine($"[AI FEEDBACK] Processing Question {detail.QuestionId}...");
-                            using var scope = _scopeFactory.CreateScope();
-                            var scopedFeedbackService = scope.ServiceProvider.GetRequiredService<IAIFeedbackService>();
-                            
-                            await scopedFeedbackService.CreateAsync(new CreateAIFeedbackDto
-                            {
-                                AttemptId = attempt.AttemptId,
-                                QuestionId = detail.QuestionId,
-                                StudentAnswer = detail.StudentAnswer
-                            });
-                        }
-                    }
-
-                    // 7.1. CẬP NHẬT AnswerDetails với Feedback vừa tạo để trả về ngay
-                    var aiFeedbacks = await _feedbackRepository.GetByAttemptAsync(attempt.AttemptId);
-                    var feedbackLookup = aiFeedbacks.GroupBy(f => f.QuestionId).ToDictionary(g => g.Key, g => g.First());
-
-                    foreach (var detail in answerDetails)
-                    {
-                        if (feedbackLookup.TryGetValue(detail.QuestionId, out var fb))
-                        {
-                            detail.FullSolution = fb.FullSolution;
-                            detail.MistakeAnalysis = fb.MistakeAnalysis;
-                            detail.ImprovementAdvice = fb.ImprovementAdvice;
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"[AI FEEDBACK ERROR] Failed to generate: {ex.Message}");
-                }
-
-                // 8. Trả kết quả
+                // 7. Trả kết quả
                 var result = new ExerciseResultDto
                 {
                     AttemptId = attempt.AttemptId,
@@ -275,7 +212,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     CompletionPercentage = attempt.CompletionPercentage,
                     CorrectAnswers = attempt.CorrectAnswers,
                     WrongAnswers = attempt.WrongAnswers,
-                    TotalQuestions = exerciseQuestions.Count, // ✅ ĐÚNG
+                    TotalQuestions = exerciseQuestions.Count,
                     IsPassed = attempt.Exercise != null &&
                                attempt.TotalScore >= attempt.Exercise.PassingScore,
                     AnswerDetails = answerDetails
@@ -283,15 +220,12 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
                 return ApiResponse<ExerciseResultDto>.SuccessResponse(
                     result,
-                    isTimeout
-                    ? "Exercise auto-submitted due to timeout"
-                    : "Exercise submitted successfully"
+                    isTimeout ? "Exercise auto-submitted due to timeout" : "Exercise submitted successfully"
                 );
             }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-
                 return ApiResponse<ExerciseResultDto>.ErrorResponse(
                     "Error completing exercise",
                     new List<string> { ex.Message }

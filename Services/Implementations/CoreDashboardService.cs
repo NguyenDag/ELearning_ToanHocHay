@@ -152,21 +152,17 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
         public async Task<PackageType> GetPackageTypeAsync(int studentId)
         {
-            // [TEST MODE] Luôn trả về Premium để test tính năng
-            return PackageType.Premium;
-
-            /* Logic thực tế:
             var subscription = await _packageRepo.GetActivePackageAsync(studentId);
             if (subscription?.Package == null) return PackageType.Free;
 
-            var name = subscription.Package.PackageName.ToLower();
+            var name = subscription.Package.PackageName.ToLower().Trim();
             return name switch
             {
                 var n when n.Contains("premium") => PackageType.Premium,
-                var n when n.Contains("standard") => PackageType.Standard,
+                var n when n.Contains("tiêu chuẩn") || n.Contains("standard")
+                        || n.Contains("tieu chuan") => PackageType.Standard,
                 _ => PackageType.Free
             };
-            */
         }
 
         private DashboardLinksDto GenerateDashboardLinks(int studentId, PackageType packageType)

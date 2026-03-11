@@ -83,7 +83,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
             return Ok(response);
         }
         
-        [HttpGet("/api/student/{studentId}/subscription/current")]
+        /*[HttpGet("/api/student/{studentId}/subscription/current")]
         [Authorize]
         public async Task<IActionResult> GetCurrentByStudent(int studentId)
         {
@@ -93,7 +93,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
                 Success = true,
                 Data = info
             });
-        }
+        }*/
 
         [HttpGet("status/{id}")]
         public async Task<IActionResult> GetStatus(int id)

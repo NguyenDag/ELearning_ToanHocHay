@@ -145,20 +145,56 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         }
         public async Task<SubscriptionInfoDto> BuildSubscriptionInfo(Subscription? activeSubscription)
         {
+            // ✅ Handle null - user không có subscription
+            if (activeSubscription == null)
+            {
+                return new SubscriptionInfoDto
+                {
+                    PackageType = 0,
+                    PackageName = "Free",
+                    IsActive = false,
+                    EndDate = null,
+                    DaysRemaining = 0,
+                    UnlimitedAiHint = false,
+                    AiHintLimitDaily = 0,
+                    PersonalizedPath = false,
+                    MistakeRetry = false,
+                    SmartReminder = false,
+                    PrioritySupport = false,
+                };
+            }
+
             var package = await _packageRepository.GetByIdAsync(activeSubscription.PackageId);
-            int packageType = 0; // FREE
-            if (package.PackageName == "Gói trải nghiệm") packageType = 1;
-            if (package.PackageName == "Gói tiêu chuẩn") packageType = 2;
-            if (package.PackageName == "Gói Premium") packageType = 3;
+
+            // ✅ Handle package null
+            if (package == null)
+            {
+                return new SubscriptionInfoDto
+                {
+                    PackageType = 0,
+                    PackageName = "Free",
+                    IsActive = false,
+                };
+            }
+
+            int packageType = package.PackageId switch
+            {
+                1 => 1, // Trải nghiệm
+                2 => 2, // Tiêu chuẩn
+                3 => 3, // Premium
+                _ => 0  // Free
+            };
 
             DateTime now = DateTime.Now;
             return new SubscriptionInfoDto
             {
-                PackageType = packageType, // Premium
+                PackageType = packageType,
                 PackageName = package.PackageName,
-                IsActive = package.IsActive,
+                IsActive = activeSubscription.Status == SubscriptionStatus.Active
+                           && activeSubscription.EndDate > now,
                 EndDate = activeSubscription.EndDate,
-                DaysRemaining = (activeSubscription.EndDate - now).Days,
+                DaysRemaining = activeSubscription.EndDate > now
+                                ? (activeSubscription.EndDate - now).Days : 0,
                 UnlimitedAiHint = package.UnlimitedAiHint,
                 AiHintLimitDaily = package.AiHintLimitDaily != 0 ? package.AiHintLimitDaily : 99,
                 PersonalizedPath = package.PersonalizedPath,

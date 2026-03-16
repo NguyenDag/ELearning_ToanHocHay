@@ -255,17 +255,19 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
         public async Task<List<ChapterScoreComparisonDto>> GetChapterComparisonAsync(int studentId)
         {
             var attempts = await _context.ExerciseAttempts
-                .AsNoTracking()
-                .Where(a => a.StudentId == studentId &&
-                            a.Status != AttemptStatus.InProgress &&
-                            a.MaxScore > 0 &&
-                            a.Exercise != null &&
-                            a.Exercise.Topic != null &&
-                            a.Exercise.Topic.Chapter != null) // ← qua Topic
-                .Include(a => a.Exercise)
-                    .ThenInclude(e => e.Topic)
-                        .ThenInclude(t => t.Chapter) // ← include qua Topic
-                .ToListAsync();
+    .AsNoTracking()
+    .Where(a => a.StudentId == studentId &&
+                a.Status != AttemptStatus.InProgress &&
+                a.MaxScore > 0 &&
+                a.Exercise != null &&
+                a.Exercise.Topic != null &&
+                a.Exercise.Topic.Chapter != null &&
+                (a.Exercise.ExerciseType == ExerciseType.Test ||
+                 a.Exercise.ExerciseType == ExerciseType.Exam)) // ← chỉ lấy Test + Exam
+    .Include(a => a.Exercise)
+        .ThenInclude(e => e.Topic)
+            .ThenInclude(t => t.Chapter)
+    .ToListAsync();
 
             if (!attempts.Any()) return new List<ChapterScoreComparisonDto>();
 

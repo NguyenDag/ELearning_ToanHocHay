@@ -47,6 +47,7 @@ namespace ELearning_ToanHocHay_Control
             RegisterAppServices(builder.Services);
 
 
+
             // 4. Cấu hình AutoMapper
             builder.Services.AddAutoMapper(typeof(UserProfile));
 
@@ -219,6 +220,7 @@ namespace ELearning_ToanHocHay_Control
             services.AddScoped<IQuestionService, QuestionService>();
             services.AddScoped<IPackageService, PackageService>();
             services.AddScoped<ISubscriptionService, SubscriptionService>();
+            services.AddScoped<SubscriptionInfoHelper>();
             services.AddScoped<IPaymentService, PaymentService>();
             services.AddScoped<ISubscriptionPaymentService, SubscriptionPaymentService>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();

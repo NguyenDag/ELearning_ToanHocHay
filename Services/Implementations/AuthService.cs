@@ -305,9 +305,9 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                         var parent = new Parent
                         {
                             UserId = user.UserId,
-                            Job = request.Job
+                            Job = request.Job,
+                            ConnectionCode = Guid.NewGuid().ToString("N")[..8].ToUpper() 
                         };
-
                         await _parentRepository.AddAsync(parent);
                         break;
 

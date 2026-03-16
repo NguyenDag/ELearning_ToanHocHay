@@ -24,15 +24,16 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         private readonly ILogger<CoreDashboardService> _logger;
 
         public CoreDashboardService(
-            IDashboardRepository dashboardRepo,
-            IStudentRepository studentRepo,
-            IPackageRepository packageRepo,
-            IAIService aiService,
-            IExerciseAttemptRepository attemptRepo,
-            IStudentParentRepository studentParentRepo,
-            IParentRepository parentRepo,
-            IMapper mapper,
-            ILogger<CoreDashboardService> logger)
+    IDashboardRepository dashboardRepo,
+    IStudentRepository studentRepo,
+    IPackageRepository packageRepo,
+    IAIService aiService,
+    IExerciseAttemptRepository attemptRepo,
+    IStudentParentRepository studentParentRepo,
+    IParentRepository parentRepo,
+    IMapper mapper,
+    SubscriptionInfoHelper subscriptionInfoHelper, // ← THÊM
+    ILogger<CoreDashboardService> logger)
         {
             _dashboardRepo = dashboardRepo;
             _studentRepo = studentRepo;
@@ -42,6 +43,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             _studentParentRepo = studentParentRepo;
             _parentRepo = parentRepo;
             _mapper = mapper;
+            _subscriptionInfoHelper = subscriptionInfoHelper; // ← THÊM
             _logger = logger;
         }
 

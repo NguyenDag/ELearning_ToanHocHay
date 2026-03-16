@@ -254,29 +254,31 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
         /// </summary>
         public async Task<List<ChapterScoreComparisonDto>> GetChapterComparisonAsync(int studentId)
         {
-            // ✅ FIX: Load về client trước, tránh crash khi GroupBy trên navigation property
             var attempts = await _context.ExerciseAttempts
                 .AsNoTracking()
                 .Where(a => a.StudentId == studentId &&
                             a.Status != AttemptStatus.InProgress &&
                             a.MaxScore > 0 &&
-                            a.Exercise != null &&           // ✅ null check
-                            a.Exercise.Chapter != null)     // ✅ null check
+                            a.Exercise != null &&
+                            a.Exercise.Topic != null &&
+                            a.Exercise.Topic.Chapter != null) // ← qua Topic
                 .Include(a => a.Exercise)
-                    .ThenInclude(e => e.Chapter)
+                    .ThenInclude(e => e.Topic)
+                        .ThenInclude(t => t.Chapter) // ← include qua Topic
                 .ToListAsync();
+
+            if (!attempts.Any()) return new List<ChapterScoreComparisonDto>();
 
             return attempts
                 .GroupBy(a => new
                 {
-                    a.Exercise.Chapter.ChapterId,
-                    a.Exercise.Chapter.ChapterName
+                    a.Exercise.Topic.Chapter.ChapterId,
+                    a.Exercise.Topic.Chapter.ChapterName
                 })
                 .Select(g => new ChapterScoreComparisonDto
                 {
                     ChapterId = g.Key.ChapterId,
                     ChapterName = g.Key.ChapterName,
-                    // ✅ FIX: Thang 10, làm tròn 1 chữ số
                     AverageScore = Math.Round(
                         g.Sum(x => (decimal)x.TotalScore) * 10m /
                         g.Sum(x => (decimal)x.MaxScore), 1)
@@ -284,7 +286,7 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
                 .OrderBy(x => x.ChapterId)
                 .ToList();
         }
-        
+
         public async Task<List<WeakTopicDto>> GetWeakTopicsAsync(int studentId, int limit)
         {
             // Lấy 20 bài làm gần nhất có lỗi sai

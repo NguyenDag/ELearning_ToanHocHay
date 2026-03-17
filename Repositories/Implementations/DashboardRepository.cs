@@ -247,7 +247,7 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             return progressList;
         }
 
-        
+
         /// Lấy điểm TB theo từng chương để vẽ biểu đồ
         /// FIX: Load về client trước rồi GroupBy để tránh crash navigation property null
         /// FIX: Thang điểm 10 thay vì không nhất quán
@@ -262,19 +262,22 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
                 .Include(a => a.Exercise)
                     .ThenInclude(e => e.Topic)
                         .ThenInclude(t => t.Chapter)
+                .Include(a => a.Exercise)
+                    .ThenInclude(e => e.Chapter) // ← include Chapter trực tiếp
                 .ToListAsync();
 
-            // Filter null sau khi load về client
+            // Lấy chapter từ Topic hoặc trực tiếp từ Exercise
             var valid = attempts.Where(a =>
-                a.Exercise?.Topic?.Chapter != null).ToList();
+                a.Exercise != null &&
+                (a.Exercise.Topic?.Chapter != null || a.Exercise.Chapter != null))
+                .ToList();
 
             if (!valid.Any()) return new List<ChapterScoreComparisonDto>();
 
             return valid
-                .GroupBy(a => new
-                {
-                    a.Exercise.Topic.Chapter.ChapterId,
-                    a.Exercise.Topic.Chapter.ChapterName
+                .GroupBy(a => {
+                    var chapter = a.Exercise.Topic?.Chapter ?? a.Exercise.Chapter;
+                    return new { chapter!.ChapterId, chapter.ChapterName };
                 })
                 .Select(g => new ChapterScoreComparisonDto
                 {

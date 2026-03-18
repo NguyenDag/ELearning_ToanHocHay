@@ -1,6 +1,6 @@
 import openai
 import json
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 import os
 from dotenv import load_dotenv
 import sys
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 # Add parent directory to path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from Prompts import hint_prompt, feedback_prompt
+from Prompts import hint_prompt, feedback_prompt, ai_assessment_prompt, ai_roadmap_prompt
 
 # Load environment variables
 load_dotenv()
@@ -132,30 +132,30 @@ class OpenAIService:
             hint_data = json.loads(response_text)
             
             return {
-                "HintText": hint_data.get("hint_text", response_text),
-                "HintLevel": hint_level,
-                "QuestionId": question_id,
-                "Status": "success"
+                "hint_text": hint_data.get("hint_text", response_text),
+                "hint_level": hint_level,
+                "question_id": question_id,
+                "status": "success"
             }
         
         except json.JSONDecodeError as e:
             logger.error(f"JSON decode error: {str(e)}")
             return {
-                "HintText": f"Lỗi xử lý phản hồi AI: {str(e)}",
-                "HintLevel": hint_level,
-                "QuestionId": question_id,
-                "Status": "error",
-                "Error": str(e)
+                "hint_text": f"Lỗi xử lý phản hồi AI: {str(e)}",
+                "hint_level": hint_level,
+                "question_id": question_id,
+                "status": "error",
+                "error": str(e)
             }
         
         except Exception as e:
             logger.error(f"Error generating hint: {str(e)}")
             return {
-                "HintText": f"Lỗi tạo gợi ý: {str(e)}",
-                "HintLevel": hint_level,
-                "QuestionId": question_id,
-                "Status": "error",
-                "Error": str(e)
+                "hint_text": f"Lỗi tạo gợi ý: {str(e)}",
+                "hint_level": hint_level,
+                "question_id": question_id,
+                "status": "error",
+                "error": str(e)
             }
     
     # ==================== FEEDBACK GENERATION ====================
@@ -221,12 +221,12 @@ class OpenAIService:
             
             if response.get("Status") == "error":
                 return {
-                    "FullSolution": response.get("text", "Lỗi tạo feedback"),
-                    "MistakeAnalysis": "",
-                    "ImprovementAdvice": "",
-                    "AttemptId": attempt_id,
-                    "Status": "error",
-                    "Error": response.get("Error")
+                    "full_solution": response.get("text", "Lỗi tạo feedback"),
+                    "mistake_analysis": "",
+                    "improvement_advice": "",
+                    "attempt_id": attempt_id,
+                    "status": "error",
+                    "error": response.get("Error")
                 }
             
             # Parse JSON response
@@ -234,33 +234,93 @@ class OpenAIService:
             feedback_data = json.loads(response_text)
             
             return {
-                "FullSolution": feedback_data.get("full_solution", ""),
-                "MistakeAnalysis": feedback_data.get("mistake_analysis", ""),
-                "ImprovementAdvice": feedback_data.get("improvement_advice", ""),
-                "AttemptId": attempt_id,
-                "Status": "success"
+                "full_solution": feedback_data.get("full_solution", ""),
+                "mistake_analysis": feedback_data.get("mistake_analysis", ""),
+                "improvement_advice": feedback_data.get("improvement_advice", ""),
+                "attempt_id": attempt_id,
+                "status": "success"
             }
         
         except json.JSONDecodeError as e:
             logger.error(f"JSON decode error: {str(e)}")
             return {
-                "FullSolution": f"Lỗi xử lý phản hồi AI: {str(e)}",
-                "MistakeAnalysis": "",
-                "ImprovementAdvice": "",
-                "AttemptId": attempt_id,
-                "Status": "error",
-                "Error": str(e)
+                "full_solution": f"Lỗi xử lý phản hồi AI: {str(e)}",
+                "mistake_analysis": "",
+                "improvement_advice": "",
+                "attempt_id": attempt_id,
+                "status": "error",
+                "error": str(e)
             }
         
         except Exception as e:
             logger.error(f"Error generating feedback: {str(e)}")
             return {
-                "FullSolution": f"Lỗi tạo feedback: {str(e)}",
-                "MistakeAnalysis": "",
-                "ImprovementAdvice": "",
-                "AttemptId": attempt_id,
-                "Status": "error",
-                "Error": str(e)
+                "full_solution": f"Lỗi tạo feedback: {str(e)}",
+                "mistake_analysis": "",
+                "improvement_advice": "",
+                "attempt_id": attempt_id,
+                "status": "error",
+                "error": str(e)
+            }
+            
+    # ==================== INSIGHT GENERATION ====================
+    def generate_insight(
+        self,
+        question_text: str,
+        student_answer: str,
+        correct_answer: str,
+        insight_type: str = "assessment"
+    ) -> Dict[str, Any]:
+        """
+        Generate educational insights (assessment or roadmap) based on student data.
+        """
+        try:
+            if insight_type == "roadmap":
+                prompt_template = ai_roadmap_prompt
+            else:
+                prompt_template = ai_assessment_prompt
+            
+            formatted_prompt = prompt_template.format(
+                question_text=question_text,
+                student_answer=student_answer,
+                correct_answer=correct_answer
+            )
+            
+            formatted_prompt += """\n\nCung cấp phản hồi dưới dạng JSON với cấu trúc:
+{
+    "concepts_to_review": ["Khái niệm 1", "Khái niệm 2"],
+    "recommended_exercises": ["Bài tập 1", "Bài tập 2"],
+    "quick_tips": ["Mẹo 1", "Mẹo 2"],
+    "summary": "Tóm tắt ngắn gọn nhận xét cho em..."
+}"""
+            
+            messages = self._prepare_messages_with_image(formatted_prompt, None)
+            
+            response = self._call_api_with_retry(messages)
+            
+            if response.get("Status") == "error":
+                return {
+                    "status": "error",
+                    "error": response.get("Error", "Unknown error")
+                }
+            
+            response_text = response.get("text", "")
+            insight_data = json.loads(response_text)
+            
+            return {
+                "concepts_to_review": insight_data.get("concepts_to_review", []),
+                "recommended_exercises": insight_data.get("recommended_exercises", []),
+                "quick_tips": insight_data.get("quick_tips", []),
+                "summary": insight_data.get("summary", ""),
+                "status": "success"
+            }
+            
+        except Exception as e:
+            logger.error(f"Error generating insight ({insight_type}): {str(e)}")
+            return {
+                "status": "error",
+                "error": str(e),
+                "summary": f"AI đang gặp khó khăn khi tạo {insight_type}. Vui lòng thử lại sau giây lát."
             }
     
     # ==================== HELPER METHODS ====================
@@ -422,7 +482,7 @@ async def get_ai_hint(
     question_data: Dict,
     student_answer: str,
     hint_level: int = 1
-) -> Dict[str, str]:
+) -> Dict[str, Any]:
     """
     Standalone function to get AI hint using OpenAI.
     
@@ -458,7 +518,7 @@ async def get_ai_feedback(
     student_answer_data: Dict,
     correct_answer: str,
     is_correct: bool
-) -> Dict[str, str]:
+) -> Dict[str, Any]:
     """
     Standalone function to get AI feedback using OpenAI.
     

@@ -155,5 +155,19 @@ namespace ELearning_ToanHocHay_Control.Controllers
 
             return Ok(response);
         }
+
+        /// <summary>
+        /// Lấy danh sách lịch sử thoát tab của 1 lượt làm bài
+        /// </summary>
+        [HttpGet("{attemptId}/tab-switch-logs")]
+        public async Task<ActionResult<ApiResponse<List<DateTime>>>> GetTabSwitchLogs(int attemptId)
+        {
+            var response = await _attemptService.GetTabSwitchLogsAsync(attemptId);
+
+            if (!response.Success)
+                return BadRequest(response);
+
+            return Ok(response);
+        }
     }
 }

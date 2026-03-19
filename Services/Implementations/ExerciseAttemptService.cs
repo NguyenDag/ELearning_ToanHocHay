@@ -948,8 +948,14 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 var exerciseName = attempt.Exercise?.ExerciseName ?? "Bài kiểm tra";
                 var switchedAt = DateTime.UtcNow;
 
-                // Lấy số lần chuyển tab từ cache trong memory (đơn giản: tăng counter qua meta)
-                // Tạm thời dùng fixed count = 1, frontend sẽ truyền lên nếu cần
+                // Lưu lịch sử vi phạm vào DB
+                var log = new TabSwitchLog { AttemptId = attemptId, SwitchedAt = switchedAt };
+                _context.TabSwitchLogs.Add(log);
+                await _context.SaveChangesAsync();
+
+                // Lấy số lần vi phạm
+                var switchCount = await _context.TabSwitchLogs.CountAsync(l => l.AttemptId == attemptId);
+
                 var parents = attempt.Student?.StudentParents
                     ?.Select(sp => sp.Parent)
                     .Where(p => p?.User?.Email != null)
@@ -969,7 +975,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                         studentName: studentName,
                         exerciseName: exerciseName,
                         switchedAt: switchedAt,
-                        switchCount: 1
+                        switchCount: switchCount
                     )
                 );
 
@@ -981,6 +987,24 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             {
                 Console.WriteLine($"[ReportTabSwitch Error] {ex.Message}");
                 return ApiResponse<bool>.ErrorResponse("Lỗi khi gửi thông báo: " + ex.Message);
+            }
+        }
+
+        public async Task<ApiResponse<List<DateTime>>> GetTabSwitchLogsAsync(int attemptId)
+        {
+            try
+            {
+                var logs = await _context.TabSwitchLogs
+                    .Where(l => l.AttemptId == attemptId)
+                    .OrderBy(l => l.SwitchedAt)
+                    .Select(l => l.SwitchedAt)
+                    .ToListAsync();
+
+                return ApiResponse<List<DateTime>>.SuccessResponse(logs, "Thành công");
+            }
+            catch (Exception ex)
+            {
+                return ApiResponse<List<DateTime>>.ErrorResponse("Lỗi truy xuất lịch sử: " + ex.Message);
             }
         }
     }

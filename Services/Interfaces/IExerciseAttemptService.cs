@@ -33,5 +33,8 @@ namespace ELearning_ToanHocHay_Control.Services.Interfaces
 
         // Báo cáo chuyển tab
         Task<ApiResponse<bool>> ReportTabSwitchAsync(int attemptId);
+
+        // Lấy lịch sử chuyển tab
+        Task<ApiResponse<List<DateTime>>> GetTabSwitchLogsAsync(int attemptId);
     }
 }

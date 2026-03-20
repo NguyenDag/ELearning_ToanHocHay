@@ -421,3 +421,4 @@ FodyWeavers.xsd
 
 .env
 appsettings.json
+data_backup.sql

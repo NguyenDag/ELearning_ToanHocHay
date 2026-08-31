@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ELearning_ToanHocHay_Control.Data.Entities
@@ -18,14 +18,22 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         Archived
     }
 
+    public enum AccessTier
+    {
+        Free,
+        Standard,
+        Premium
+    }
+
     [Table("Exercise")]
     public class Exercise
     {
         [Key]
         public int ExerciseId { get; set; }
 
-        public int? TopicId { get; set; }
-        public int? ChapterId { get; set; }
+        // §5.5 — một FK NodeId thay TopicId?/ChapterId? (xoá hack ClientSetNull).
+        // Nullable: bài luyện tập/ngẫu nhiên có thể không gắn node cụ thể.
+        public int? NodeId { get; set; }
 
         [Required, MaxLength(255)]
         public string ExerciseName { get; set; }
@@ -36,16 +44,16 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
 
         public int? DurationMinutes { get; set; }
 
-        //public bool IsRequired { get; set; }
+        public int? MaxAttempts { get; set; }
 
         public bool IsFree { get; set; } = false;
+
+        public AccessTier RequiredTier { get; set; } = AccessTier.Free;
 
         public bool IsActive { get; set; } = false;
 
         public double TotalScores { get; set; }
-        
         public double PassingScore { get; set; }
-
 
         public ExerciseStatus Status { get; set; }
 
@@ -54,8 +62,7 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation
-        public Topic? Topic { get; set; }
-        public Chapter? Chapter { get; set; }
+        public ContentNode? Node { get; set; }
         public User? Creator { get; set; }
 
         public ICollection<ExerciseQuestion> ExerciseQuestions { get; set; }

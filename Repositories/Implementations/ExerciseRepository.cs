@@ -82,8 +82,9 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
 
         public async Task<IEnumerable<Exercise>> GetByChapterIdAsync(int chapterId)
         {
+            // v3: Exercise gắn 1 FK NodeId (chương/topic/bài đều là node).
             return await _context.Exercises
-                .Where(e => e.ChapterId == chapterId)
+                .Where(e => e.NodeId == chapterId)
                 .ToListAsync();
         }
 
@@ -96,7 +97,7 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
         public async Task<IEnumerable<Exercise>> GetByTopicIdAsync(int topicId)
         {
             return await _context.Exercises
-                .Where(e => e.TopicId == topicId)
+                .Where(e => e.NodeId == topicId)
                 .ToListAsync();
         }
 

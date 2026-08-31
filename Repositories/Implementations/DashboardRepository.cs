@@ -7,24 +7,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ELearning_ToanHocHay_Control.Repositories.Implementations
 {
+    /// <summary>
+    /// Dashboard chạy trên mô hình v3 (Course / CourseVersion / ContentNode / NodeProgress).
+    /// Không còn hard-code curriculumId; tiến độ theo từng khoá học sinh đã ghi danh.
+    /// Roll-up chi tiết (chapter/topic/skill) phụ thuộc ProgressProjectionService — Giai đoạn 2.
+    /// </summary>
     public class DashboardRepository : IDashboardRepository
     {
         private readonly AppDbContext _context;
         private readonly ILogger<DashboardRepository> _logger;
-
-        private static readonly TimeZoneInfo VnTimeZone = GetVnTimeZone();
-
-        private static TimeZoneInfo GetVnTimeZone()
-        {
-            try { return TimeZoneInfo.FindSystemTimeZoneById("Asia/Ho_Chi_Minh"); }
-            catch { }
-            try { return TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"); }
-            catch { }
-            return TimeZoneInfo.CreateCustomTimeZone("VN", TimeSpan.FromHours(7), "Vietnam", "Vietnam");
-        }
-
-        private static DateTime VnNow =>
-            TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, VnTimeZone);
 
         public DashboardRepository(AppDbContext context, ILogger<DashboardRepository> logger)
         {
@@ -32,30 +23,21 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             _logger = logger;
         }
 
-        /// <summary>
-        /// Lấy thống kê theo tuần (Thời gian học, số bài tập, điểm TB)
-        /// FIX: Đổi *100m thành *10m để thống nhất thang điểm 10
-        /// </summary>
-        public async Task<WeeklyStatsModel> GetWeeklyStatsAsync(
-            int studentId, DateTime startDate, DateTime endDate)
+        public async Task<WeeklyStatsModel> GetWeeklyStatsAsync(int studentId, DateTime startDate, DateTime endDate)
         {
             var query = _context.ExerciseAttempts
                 .AsNoTracking()
                 .Where(a => a.StudentId == studentId &&
-                           a.Status != AttemptStatus.InProgress &&
-                           a.SubmittedAt.HasValue &&
-                           a.SubmittedAt.Value >= startDate &&
-                           a.SubmittedAt.Value < endDate);
+                            a.Status != AttemptStatus.InProgress &&
+                            a.SubmittedAt.HasValue &&
+                            a.SubmittedAt.Value >= startDate &&
+                            a.SubmittedAt.Value < endDate);
 
-            var totalMinutes = await query
-                .SumAsync(a => (int)(a.SubmittedAt!.Value - a.StartTime).TotalMinutes);
-
+            var totalMinutes = await query.SumAsync(a => (int)(a.SubmittedAt!.Value - a.StartTime).TotalMinutes);
             var exerciseCount = await query.CountAsync();
-
             var totalScore = await query.SumAsync(a => a.TotalScore);
             var totalMax = await query.SumAsync(a => a.MaxScore);
 
-            // ✅ FIX: *10m thay vì *100m → thang điểm 10
             var averageScore = totalMax > 0
                 ? Math.Round((decimal)totalScore / (decimal)totalMax * 10m, 1)
                 : 0m;
@@ -68,355 +50,172 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             };
         }
 
-        /// <summary>
-        /// Lấy thống kê tổng thể từ trước đến nay
-        /// FIX: Thêm null check cho Exercise
-        /// </summary>
         public async Task<OverallStatsModel> GetOverallStatsAsync(int studentId)
-        {
-            var attempts = await _context.ExerciseAttempts
-                .AsNoTracking()
-                .Where(a => a.StudentId == studentId &&
-                           a.Status != AttemptStatus.InProgress &&
-                           a.MaxScore > 0 &&
-                           a.Exercise != null) // ✅ FIX: null check
-                .ToListAsync();
-
-            double averageScore = 0;
-            int totalExercises = 0;
-
-            if (attempts.Any())
-            {
-                totalExercises = attempts.Count;
-                // Thang 10, làm tròn 1 chữ số
-                averageScore = Math.Round(
-                    attempts.Average(a => (double)a.TotalScore / (double)a.MaxScore * 10.0), 1);
-            }
-
-            var completedLessons = await _context.StudentProgresses
-                .AsNoTracking()
-                .Where(sp => sp.StudentId == studentId &&
-                            sp.MasteryLevel >= MasteryLevel.Intermediate)
-                .Select(sp => sp.TopicId)
-                .Distinct()
-                .CountAsync();
-
-            return new OverallStatsModel
-            {
-                AverageScore = (decimal)averageScore,
-                TotalExercises = totalExercises,
-                TotalLessons = completedLessons
-            };
-        }
-
-        /// <summary>
-        /// Tính toán chuỗi ngày học liên tục (Streak)
-        /// </summary>
-        public async Task<StreakDataModel> GetStreakDataAsync(int studentId)
-        {
-            var attempts = await _context.ExerciseAttempts
-                .AsNoTracking()
-                .Where(a => a.StudentId == studentId &&
-                           a.Status != AttemptStatus.InProgress &&
-                           a.SubmittedAt.HasValue)
-                .Select(a => a.SubmittedAt!.Value)
-                .ToListAsync();
-
-            if (!attempts.Any())
-                return new StreakDataModel { CurrentStreak = 0, LongestStreak = 0, StudiedToday = false };
-
-            var studyDates = attempts
-                .Select(dt => TimeZoneInfo.ConvertTimeFromUtc(dt, VnTimeZone).Date)
-                .Distinct()
-                .OrderByDescending(d => d)
-                .ToList();
-
-            var today = VnNow.Date;
-            var studiedToday = studyDates.Contains(today);
-            var currentStreak = CalculateCurrentStreak(studyDates, today);
-            var longestStreak = CalculateLongestStreak(studyDates);
-
-            return new StreakDataModel
-            {
-                CurrentStreak = currentStreak,
-                LongestStreak = longestStreak,
-                StudiedToday = studiedToday
-            };
-        }
-
-        /// <summary>
-        /// Lấy danh sách các bài học vừa hoàn thành gần đây
-        /// </summary>
-        public async Task<List<RecentLessonModel>> GetRecentLessonsAsync(int studentId, int limit)
-        {
-            var raw = await _context.ExerciseAttempts
-                .AsNoTracking()
-                .Where(a => a.StudentId == studentId &&
-                           a.Status != AttemptStatus.InProgress &&
-                           a.Exercise != null)
-                .Include(a => a.Exercise)
-                    .ThenInclude(e => e.Topic)
-                        .ThenInclude(t => t.Chapter)
-                .Include(a => a.Exercise)
-                    .ThenInclude(e => e.Topic)
-                        .ThenInclude(t => t.Lessons)
-                .OrderByDescending(a => a.SubmittedAt)
-                .Take(limit)
-                .ToListAsync();
-
-            if (!raw.Any()) return new List<RecentLessonModel>();
-
-            var attemptIds = raw.Select(a => a.AttemptId).ToList();
-            var tabSwitchCounts = await _context.TabSwitchLogs
-                .Where(l => attemptIds.Contains(l.AttemptId))
-                .GroupBy(l => l.AttemptId)
-                .Select(g => new { AttemptId = g.Key, Count = g.Count() })
-                .ToDictionaryAsync(x => x.AttemptId, x => x.Count);
-
-            return raw
-                .Where(a => a.Exercise != null) // ← bỏ check Topic
-                .Select(a => new RecentLessonModel
-                {
-                    LessonId = a.Exercise.Topic?.Lessons?.FirstOrDefault()?.LessonId ?? 0,
-                    LessonName = a.Exercise.Topic?.Lessons?.FirstOrDefault()?.LessonName
-                                      ?? a.Exercise.Topic?.TopicName
-                                      ?? a.Exercise.ExerciseName, // ← fallback
-                    TopicName = a.Exercise.Topic?.TopicName ?? a.Exercise.ExerciseName ?? "N/A",
-                    ChapterName = a.Exercise.Topic?.Chapter?.ChapterName
-                               ?? a.Exercise.Chapter?.ChapterName ?? "N/A",
-                    CompletedAt = a.SubmittedAt,
-                    DurationMinutes = a.SubmittedAt.HasValue
-                        ? (int)(a.SubmittedAt.Value - a.StartTime).TotalMinutes
-                        : 0,
-                    IsCompleted = true,
-                    ProgressPercentage = 100,
-                    Score = a.MaxScore > 0
-                        ? Math.Round((double)a.TotalScore / (double)a.MaxScore * 10.0, 2) // ← 2 chữ số
-                        : (double?)null,
-                    AttemptId = a.AttemptId,
-                    TabSwitchCount = tabSwitchCounts.ContainsKey(a.AttemptId) ? tabSwitchCounts[a.AttemptId] : 0
-                }).ToList();
-        }
-
-        /// <summary>
-        /// Lấy danh sách chương và tiến độ học tập.
-        /// </summary>
-        public async Task<List<ChapterProgressModel>> GetChapterProgressAsync(int studentId)
-        {
-            int targetCurriculumId = 3;
-
-            var chapters = await _context.Chapters
-                .AsNoTracking()
-                .Include(c => c.Topics)
-                    .ThenInclude(t => t.Lessons)
-                        .ThenInclude(l => l.LessonProgresses)
-                .Where(c => c.IsActive && c.CurriculumId == targetCurriculumId)
-                .OrderBy(c => c.OrderIndex)
-                .ToListAsync();
-
-            var progressList = new List<ChapterProgressModel>();
-
-            foreach (var chapter in chapters)
-            {
-                var totalTopics = chapter.Topics.Count;
-
-                int completedTopics = 0;
-
-                foreach (var topic in chapter.Topics)
-                {
-                    int totalLessons = topic.Lessons.Count;
-
-                    if (totalLessons == 0) continue;
-
-                    int completedLessons = topic.Lessons
-                        .Count(l => l.LessonProgresses
-                            .Any(lp => lp.StudentId == studentId && lp.IsCompleted));
-
-                    if (completedLessons == totalLessons)
-                    {
-                        completedTopics++;
-                    }
-                }
-
-                var completionPercentage = totalTopics > 0
-                    ? Math.Round((decimal)completedTopics / totalTopics * 100, 1)
-                    : 0;
-
-                var isLocked = !chapter.Topics.Any(t => t.IsFree);
-
-                progressList.Add(new ChapterProgressModel
-                {
-                    ChapterId = chapter.ChapterId,
-                    ChapterName = chapter.ChapterName,
-                    OrderIndex = chapter.OrderIndex,
-                    CompletionPercentage = completionPercentage,
-                    CompletedTopics = completedTopics,
-                    TotalTopics = totalTopics,
-                    IsLocked = isLocked,
-                    AverageMastery = null
-                });
-            }
-
-            return progressList;
-        }
-
-
-        /// Lấy điểm TB theo từng chương để vẽ biểu đồ
-        /// FIX: Load về client trước rồi GroupBy để tránh crash navigation property null
-        /// FIX: Thang điểm 10 thay vì không nhất quán
-        /// </summary>
-        public async Task<List<ChapterScoreComparisonDto>> GetChapterComparisonAsync(int studentId)
         {
             var attempts = await _context.ExerciseAttempts
                 .AsNoTracking()
                 .Where(a => a.StudentId == studentId &&
                             a.Status != AttemptStatus.InProgress &&
                             a.MaxScore > 0)
-                .Include(a => a.Exercise)
-                    .ThenInclude(e => e.Topic)
-                        .ThenInclude(t => t.Chapter)
-                .Include(a => a.Exercise)
-                    .ThenInclude(e => e.Chapter) // ← include Chapter trực tiếp
+                .Select(a => new { a.TotalScore, a.MaxScore })
                 .ToListAsync();
 
-            // Lấy chapter từ Topic hoặc trực tiếp từ Exercise
-            var valid = attempts.Where(a =>
-                a.Exercise != null &&
-                (a.Exercise.Topic?.Chapter != null || a.Exercise.Chapter != null))
-                .ToList();
+            double averageScore = 0;
+            if (attempts.Count > 0)
+                averageScore = Math.Round(attempts.Average(a => a.TotalScore / a.MaxScore * 10.0), 1);
 
-            if (!valid.Any()) return new List<ChapterScoreComparisonDto>();
+            var completedLessons = await _context.NodeProgresses
+                .AsNoTracking()
+                .Where(np => np.StudentId == studentId && np.Status == ProgressStatus.Completed
+                             && np.Node!.NodeType == NodeType.Lesson)
+                .CountAsync();
 
-            return valid
-                .GroupBy(a => {
-                    var chapter = a.Exercise.Topic?.Chapter ?? a.Exercise.Chapter;
-                    return new { chapter!.ChapterId, chapter.ChapterName };
+            return new OverallStatsModel
+            {
+                AverageScore = (decimal)averageScore,
+                TotalExercises = attempts.Count,
+                TotalLessons = completedLessons
+            };
+        }
+
+        public async Task<StreakDataModel> GetStreakDataAsync(int studentId)
+        {
+            var days = await _context.ExerciseAttempts
+                .AsNoTracking()
+                .Where(a => a.StudentId == studentId && a.Status != AttemptStatus.InProgress && a.SubmittedAt.HasValue)
+                .Select(a => a.SubmittedAt!.Value.Date)
+                .Distinct()
+                .OrderByDescending(d => d)
+                .ToListAsync();
+
+            if (days.Count == 0)
+                return new StreakDataModel();
+
+            var today = DateTime.UtcNow.Date;
+            bool studiedToday = days.Contains(today);
+
+            int current = 0;
+            var cursor = studiedToday ? today : today.AddDays(-1);
+            foreach (var _ in days)
+            {
+                if (days.Contains(cursor)) { current++; cursor = cursor.AddDays(-1); }
+                else break;
+            }
+
+            int longest = 1, run = 1;
+            for (int i = 1; i < days.Count; i++)
+            {
+                if (days[i] == days[i - 1].AddDays(-1)) run++;
+                else run = 1;
+                longest = Math.Max(longest, run);
+            }
+
+            return new StreakDataModel
+            {
+                CurrentStreak = current,
+                LongestStreak = Math.Max(longest, current),
+                StudiedToday = studiedToday
+            };
+        }
+
+        public async Task<List<RecentLessonModel>> GetRecentLessonsAsync(int studentId, int limit)
+        {
+            return await _context.NodeProgresses
+                .AsNoTracking()
+                .Where(np => np.StudentId == studentId && np.Node!.NodeType == NodeType.Lesson)
+                .OrderByDescending(np => np.LastAccessedAt)
+                .Take(limit)
+                .Select(np => new RecentLessonModel
+                {
+                    LessonId = np.NodeId,
+                    LessonName = np.Node!.Title,
+                    TopicName = np.Node.Parent != null ? np.Node.Parent.Title : "",
+                    ChapterName = "",
+                    CompletedAt = np.Status == ProgressStatus.Completed ? np.LastAccessedAt : null,
+                    IsCompleted = np.Status == ProgressStatus.Completed,
+                    ProgressPercentage = (int)np.CompletionPercent
                 })
+                .ToListAsync();
+        }
+
+        public async Task<List<ChapterProgressModel>> GetChapterProgressAsync(int studentId)
+        {
+            // Chương = ContentNode kiểu Chapter trong các CourseVersion học sinh đã ghi danh.
+            var versionIds = await _context.StudentCourses
+                .AsNoTracking()
+                .Where(sc => sc.StudentId == studentId)
+                .Select(sc => sc.CourseVersionId)
+                .ToListAsync();
+
+            if (versionIds.Count == 0)
+                return new List<ChapterProgressModel>();
+
+            var chapters = await _context.ContentNodes
+                .AsNoTracking()
+                .Where(n => n.NodeType == NodeType.Chapter && versionIds.Contains(n.CourseVersionId))
+                .OrderBy(n => n.OrderIndex)
+                .Select(n => new { n.NodeId, n.Title, n.OrderIndex, n.MaterializedPath })
+                .ToListAsync();
+
+            var result = new List<ChapterProgressModel>();
+            foreach (var ch in chapters)
+            {
+                var prefix = ch.MaterializedPath + ch.NodeId + "/";
+                var lessons = await _context.ContentNodes
+                    .AsNoTracking()
+                    .Where(n => n.NodeType == NodeType.Lesson && n.MaterializedPath.StartsWith(prefix))
+                    .Select(n => n.NodeId)
+                    .ToListAsync();
+
+                int total = lessons.Count;
+                int done = total == 0 ? 0 : await _context.NodeProgresses
+                    .AsNoTracking()
+                    .CountAsync(np => np.StudentId == studentId && lessons.Contains(np.NodeId)
+                                      && np.Status == ProgressStatus.Completed);
+
+                result.Add(new ChapterProgressModel
+                {
+                    ChapterId = ch.NodeId,
+                    ChapterName = ch.Title,
+                    OrderIndex = ch.OrderIndex,
+                    TotalTopics = total,
+                    CompletedTopics = done,
+                    CompletionPercentage = total == 0 ? 0 : Math.Round((decimal)done / total * 100m, 1),
+                    IsLocked = false,
+                    AverageMastery = null
+                });
+            }
+            return result;
+        }
+
+        public async Task<List<ChapterScoreComparisonDto>> GetChapterComparisonAsync(int studentId)
+        {
+            // TODO(GĐ2): điểm TB theo chương qua Exercise.Node + MaterializedPath.
+            var rows = await _context.ExerciseAttempts
+                .AsNoTracking()
+                .Where(a => a.StudentId == studentId && a.Status != AttemptStatus.InProgress
+                            && a.MaxScore > 0 && a.Exercise!.NodeId != null)
+                .GroupBy(a => a.Exercise!.NodeId!.Value)
                 .Select(g => new ChapterScoreComparisonDto
                 {
-                    ChapterId = g.Key.ChapterId,
-                    ChapterName = g.Key.ChapterName,
-                    AverageScore = Math.Round(
-                        g.Sum(x => (decimal)x.TotalScore) * 10m /
-                        g.Sum(x => (decimal)x.MaxScore), 1)
+                    ChapterId = g.Key,
+                    ChapterName = "",
+                    AverageScore = (decimal)g.Average(a => a.TotalScore / a.MaxScore * 10.0)
                 })
-                .OrderBy(x => x.ChapterId)
-                .ToList();
-        }
-
-        public async Task<List<WeakTopicDto>> GetWeakTopicsAsync(int studentId, int limit)
-        {
-            // Lấy 20 bài làm gần nhất có lỗi sai
-            var recentMistakes = await _context.ExerciseAttempts
-                .AsNoTracking()
-                .Where(a => a.StudentId == studentId && a.WrongAnswers > 0 && a.Exercise != null && a.Exercise.Topic != null)
-                .Include(a => a.Exercise)
-                    .ThenInclude(e => e.Topic)
-                        .ThenInclude(t => t.Chapter)
-                .Include(a => a.Exercise)
-                    .ThenInclude(e => e.Topic)
-                        .ThenInclude(t => t.Lessons)
-                .OrderByDescending(a => a.SubmittedAt)
-                .Take(20)
                 .ToListAsync();
-            
-            if (!recentMistakes.Any()) return new List<WeakTopicDto>();
-            
-            // Nhóm theo topic và đếm số lỗi tổng cộng trong 20 bài gần đây
-            return recentMistakes
-                .GroupBy(a => a.Exercise.Topic)
-                .Select(g => new WeakTopicDto
-                {
-                    TopicId = g.Key.TopicId,
-                    TopicName = g.Key.TopicName,
-                    ChapterName = g.Key.Chapter?.ChapterName ?? "N/A",
-                    ErrorCount = g.Sum(a => a.WrongAnswers),
-                    FirstLessonId = g.Key.Lessons?.OrderBy(l => l.OrderIndex).FirstOrDefault()?.LessonId,
-                    LessonNames = g.Key.Lessons?
-                                    .OrderBy(l => l.OrderIndex)
-                                    .Select(l => l.LessonName)
-                                    .Take(3)
-                                    .ToList() ?? new List<string>()
-                })
-                .OrderByDescending(x => x.ErrorCount)
-                .Take(limit)
-                .ToList();
+            return rows;
         }
 
-        public async Task<List<TopicPerformanceDto>> GetFullPerformanceAsync(int studentId)
+        public Task<List<WeakTopicDto>> GetWeakTopicsAsync(int studentId, int limit)
         {
-            var attempts = await _context.ExerciseAttempts
-                .AsNoTracking()
-                .Where(a => a.StudentId == studentId && a.Status != AttemptStatus.InProgress && a.Exercise != null && a.Exercise.Topic != null)
-                .Include(a => a.Exercise)
-                    .ThenInclude(e => e.Topic)
-                        .ThenInclude(t => t.Chapter)
-                .OrderByDescending(a => a.SubmittedAt)
-                .Take(30)
-                .ToListAsync();
-            
-            if (!attempts.Any()) return new List<TopicPerformanceDto>();
-            
-            return attempts
-                .GroupBy(a => a.Exercise.Topic)
-                .Select(g => new TopicPerformanceDto
-                {
-                    TopicName = g.Key.TopicName,
-                    ChapterName = g.Key.Chapter?.ChapterName ?? "N/A",
-                    TotalAttempts = g.Count(),
-                    AverageScore = Math.Round(g.Average(a => (decimal)a.TotalScore / (decimal)a.MaxScore * 10m), 1)
-                })
-                .ToList();
+            // TODO(GĐ2): dựa SkillProgress / NodeProgress khi ProgressProjectionService có dữ liệu.
+            return Task.FromResult(new List<WeakTopicDto>());
         }
 
-        // ==================== PRIVATE HELPERS ====================
-
-        private int CalculateCurrentStreak(List<DateTime> studyDates, DateTime today)
+        public Task<List<TopicPerformanceDto>> GetFullPerformanceAsync(int studentId)
         {
-            if (!studyDates.Any()) return 0;
-
-            int streak = 0;
-            var checkDate = today;
-
-            if (!studyDates.Contains(today))
-            {
-                checkDate = today.AddDays(-1);
-                if (!studyDates.Contains(checkDate)) return 0;
-            }
-
-            while (studyDates.Contains(checkDate))
-            {
-                streak++;
-                checkDate = checkDate.AddDays(-1);
-            }
-
-            return streak;
-        }
-
-        private int CalculateLongestStreak(List<DateTime> studyDates)
-        {
-            if (!studyDates.Any()) return 0;
-
-            studyDates = studyDates.OrderBy(d => d).ToList();
-
-            int longestStreak = 1;
-            int currentStreak = 1;
-
-            for (int i = 1; i < studyDates.Count; i++)
-            {
-                var daysDiff = (studyDates[i] - studyDates[i - 1]).Days;
-                if (daysDiff == 1)
-                {
-                    currentStreak++;
-                    longestStreak = Math.Max(longestStreak, currentStreak);
-                }
-                else
-                {
-                    currentStreak = 1;
-                }
-            }
-
-            return longestStreak;
+            // TODO(GĐ2): dựa NodeProgress / SkillProgress.
+            return Task.FromResult(new List<TopicPerformanceDto>());
         }
     }
 }

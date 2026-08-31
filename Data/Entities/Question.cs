@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ELearning_ToanHocHay_Control.Data.Entities
@@ -11,7 +11,6 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         Essay
     }
 
-    // (Có thể giữ hoặc bỏ Enum DifficultyLevel nếu chuyển sang dùng int Level)
     public enum DifficultyLevel
     {
         Easy,
@@ -27,13 +26,15 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         Rejected
     }
 
-    [Table("Question")] 
+    [Table("Question")]
     public class Question
     {
         [Key]
         public int QuestionId { get; set; }
 
         public int BankId { get; set; }
+
+        public int SubjectId { get; set; }            // denormalize để lọc (§5.5)
 
         public required string QuestionText { get; set; }
 
@@ -44,7 +45,6 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
 
         public DifficultyLevel DifficultyLevel { get; set; }
 
-        // Đáp án đúng (dùng cho TrueFalse, FillInBlank)
         public string? CorrectAnswer { get; set; }
 
         public string? Explanation { get; set; }
@@ -64,18 +64,31 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
 
         public int Version { get; set; } = 1;
 
-        // Navigation Properties
+        // Navigation
         public QuestionBank? QuestionBank { get; set; }
+        public Subject? Subject { get; set; }
         public User? Creator { get; set; }
         public User? Reviewer { get; set; }
 
-        // Danh sách đáp án
         public ICollection<QuestionOption> QuestionOptions { get; set; }
-
         public ICollection<QuestionTag> QuestionTags { get; set; }
+        public ICollection<QuestionNode> QuestionNodes { get; set; }
+        public ICollection<QuestionSkill> QuestionSkills { get; set; }
         public ICollection<ExerciseQuestion> ExerciseQuestions { get; set; }
         public ICollection<StudentAnswer> StudentAnswers { get; set; }
         public ICollection<AIFeedback> AIFeedbacks { get; set; }
         public ICollection<AIHint> AIHints { get; set; }
+    }
+
+    // M:N — một câu hỏi tái sử dụng ở nhiều node / course (§5.5).
+    [Table("QuestionNode")]
+    public class QuestionNode
+    {
+        public int QuestionId { get; set; }
+        public int NodeId { get; set; }
+
+        // Navigation
+        public Question? Question { get; set; }
+        public ContentNode? Node { get; set; }
     }
 }

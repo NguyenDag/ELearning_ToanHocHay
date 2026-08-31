@@ -1,4 +1,5 @@
 ﻿// FILE: ELearning_ToanHocHay_Control/Services/Implementations/ParentService.cs
+using ELearning_ToanHocHay_Control.Data.Entities;
 using ELearning_ToanHocHay_Control.Models.DTOs;
 using ELearning_ToanHocHay_Control.Models.DTOs.Parent;
 using ELearning_ToanHocHay_Control.Repositories.Interfaces;
@@ -29,13 +30,13 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 FullName = entity.User?.FullName ?? "",
                 Email = entity.User?.Email ?? "",
                 ConnectionCode = entity.ConnectionCode,
-                Children = entity.StudentParents?
-                    .Where(sp => sp.Student?.User != null)
+                Children = entity.ParentLinks?
+                    .Where(sp => sp.Student?.User != null && sp.Status != LinkStatus.Revoked)
                     .Select(sp => new ChildDto
                     {
                         StudentId = sp.StudentId,
                         FullName = sp.Student!.User!.FullName,
-                        GradeLevel = sp.Student.GradeLevel,
+                        GradeLevel = sp.Student.CurrentGradeLevelId ?? 0,
                         Relationship = sp.Relationship.ToString()
                     }).ToList() ?? new()
             };

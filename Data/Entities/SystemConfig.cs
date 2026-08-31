@@ -1,8 +1,17 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ELearning_ToanHocHay_Control.Data.Entities
 {
+    public enum ConfigValueType
+    {
+        Int,
+        Decimal,
+        Bool,
+        String,
+        Json
+    }
+
     [Table("SystemConfig")]
     public class SystemConfig
     {
@@ -13,6 +22,11 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         public string ConfigKey { get; set; }
 
         public string? ConfigValue { get; set; }
+
+        public ConfigValueType ConfigType { get; set; } = ConfigValueType.String;
+
+        [MaxLength(100)]
+        public string? ConfigGroup { get; set; }
 
         public string? Description { get; set; }
 

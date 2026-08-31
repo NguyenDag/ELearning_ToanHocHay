@@ -1,5 +1,4 @@
 using AutoMapper;
-using ELearning_ToanHocHay_Control.Models.DTOs.Chapter;
 using ELearning_ToanHocHay_Control.Models.DTOs.Student;
 using ELearning_ToanHocHay_Control.Models.DTOs.Student.Dashboard;
 using ELearning_ToanHocHay_Control.Models.DTOs.AI;
@@ -17,7 +16,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         private readonly IPackageRepository _packageRepo;
         private readonly IAIService _aiService;
         private readonly IExerciseAttemptRepository _attemptRepo;
-        private readonly IStudentParentRepository _studentParentRepo;
+        private readonly IParentLinkRepository _parentLinkRepo;
         private readonly IParentRepository _parentRepo;
         private readonly IMapper _mapper;
         private readonly SubscriptionInfoHelper _subscriptionInfoHelper;
@@ -29,7 +28,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
     IPackageRepository packageRepo,
     IAIService aiService,
     IExerciseAttemptRepository attemptRepo,
-    IStudentParentRepository studentParentRepo,
+    IParentLinkRepository parentLinkRepo,
     IParentRepository parentRepo,
     IMapper mapper,
     SubscriptionInfoHelper subscriptionInfoHelper, // ← THÊM
@@ -40,7 +39,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             _packageRepo = packageRepo;
             _aiService = aiService;
             _attemptRepo = attemptRepo;
-            _studentParentRepo = studentParentRepo;
+            _parentLinkRepo = parentLinkRepo;
             _parentRepo = parentRepo;
             _mapper = mapper;
             _subscriptionInfoHelper = subscriptionInfoHelper; // ← THÊM
@@ -83,7 +82,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             {
                 StudentId = student.StudentId,
                 FullName = student.User.FullName,
-                GradeLevel = student.GradeLevel,
+                GradeLevel = student.CurrentGradeLevelId ?? 0,
                 SchoolName = student.SchoolName,
             };
         }
@@ -196,7 +195,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             var parent = await _parentRepo.GetByUserIdAsync(userId);
             if (parent != null)
             {
-                return await _studentParentRepo.ExistsAsync(studentId, parent.ParentId);
+                return await _parentLinkRepo.ExistsActiveAsync(studentId, parent.ParentId);
             }
 
             return false;

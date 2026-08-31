@@ -28,6 +28,8 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         public int CreatedByUserId { get; set; }
         public int? AssignedToStaffId { get; set; }
 
+        public int? ConversationId { get; set; }   // sinh từ ChatConversation (§5.12)
+
         [Required, MaxLength(255)]
         public string Subject { get; set; }
 
@@ -40,6 +42,7 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         // Navigation
         public User? CreatedBy { get; set; }
         public User? AssignedStaff { get; set; }
+        public ChatConversation? Conversation { get; set; }
 
         public ICollection<SupportMessage> Messages { get; set; }
     }

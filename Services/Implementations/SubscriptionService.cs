@@ -30,8 +30,8 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             var data = subs.Select(x => new SubscriptionDto
             {
                 SubscriptionId = x.SubscriptionId,
-                StudentId = x.StudentId,
-                PaymentId = x.PaymentId,
+                StudentId = x.StudentId ?? 0,
+                PaymentId = x.PaymentId ?? 0,
                 PackageId = x.PackageId,
                 StartDate = x.StartDate,
                 EndDate = x.EndDate,
@@ -54,9 +54,9 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             var dto = new SubscriptionDto
             {
                 SubscriptionId = sub.SubscriptionId,
-                StudentId = sub.StudentId,
+                StudentId = sub.StudentId ?? 0,
                 PackageId = sub.PackageId,
-                PaymentId = sub.PaymentId,
+                PaymentId = sub.PaymentId ?? 0,
                 StartDate = sub.StartDate,
                 EndDate = sub.EndDate,
                 Status = sub.Status,

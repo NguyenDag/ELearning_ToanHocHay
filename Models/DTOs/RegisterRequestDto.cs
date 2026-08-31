@@ -26,8 +26,8 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs
         public UserType UserType { get; set; }
 
         // ===== Student =====
-        [Range(6, 9)]
-        public int? GradeLevel { get; set; }
+        // FK tới bảng GradeLevel (không còn là số 6..9). "Lớp mặc định" cho UX.
+        public int? GradeLevelId { get; set; }
 
         public string? SchoolName { get; set; }
 

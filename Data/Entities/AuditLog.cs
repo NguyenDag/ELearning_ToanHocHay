@@ -7,7 +7,7 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
     public class AuditLog
     {
         [Key]
-        public int LogId { get; set; }
+        public long LogId { get; set; }
         public int? UserId { get; set; }
 
         [Required, MaxLength(100)]

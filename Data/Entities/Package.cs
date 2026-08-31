@@ -1,8 +1,15 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ELearning_ToanHocHay_Control.Data.Entities
 {
+    public enum PackageTier
+    {
+        Free,
+        Standard,
+        Premium
+    }
+
     [Table("Package")]
     public class Package
     {
@@ -17,10 +24,15 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
 
         public string? Description { get; set; }
 
+        public PackageTier Tier { get; set; } = PackageTier.Standard;  // thay so khớp chuỗi tên gói
+
+        [Column(TypeName = "decimal(18,2)")]
         [Range(0, double.MaxValue)]
         public decimal Price { get; set; }
 
         public int DurationDays { get; set; }
+
+        public int? MaxMembers { get; set; }          // gói gia đình (§11)
 
         public int? AiHintLimitDaily { get; set; }
 
@@ -40,5 +52,6 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         // Navigation
         public User? User { get; set; }
         public ICollection<Subscription> Subscriptions { get; set; }
+        public ICollection<PackageEntitlement> Entitlements { get; set; }
     }
 }

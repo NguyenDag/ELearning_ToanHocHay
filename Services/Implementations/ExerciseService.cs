@@ -60,8 +60,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             {
                 var _exercise = new Exercise
                 {
-                    TopicId = exercise.TopicId,
-                    ChapterId = exercise.ChapterId,
+                    NodeId = exercise.TopicId ?? exercise.ChapterId,
                     ExerciseName = exercise.ExerciseName,
                     ExerciseType = exercise.ExerciseType,
                     TotalQuestions = exercise.TotalQuestions,
@@ -234,8 +233,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                             new List<string> { $"No user found with ID: {id}" }
                         );
                 // Update info
-                exercise.TopicId = exerciseRequestDto.TopicId;
-                exercise.ChapterId = exerciseRequestDto.ChapterId;
+                exercise.NodeId = exerciseRequestDto.TopicId ?? exerciseRequestDto.ChapterId;
                 exercise.ExerciseName = exerciseRequestDto.ExerciseName;
                 exercise.ExerciseType = exerciseRequestDto.ExerciseType;
                 exercise.TotalQuestions = exerciseRequestDto.TotalQuestions;

@@ -25,7 +25,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             var data = payments.Select(x => new PaymentDto
             {
                 PaymentId = x.PaymentId,
-                StudentId = x.StudentId,
+                StudentId = x.StudentId ?? 0,
                 Amount = x.Amount,
                 PaymentMethod = x.PaymentMethod,
                 Status = x.Status,
@@ -46,7 +46,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             var dto = new PaymentDto
             {
                 PaymentId = payment.PaymentId,
-                StudentId = payment.StudentId,
+                StudentId = payment.StudentId ?? 0,
                 Amount = payment.Amount,
                 PaymentMethod = payment.PaymentMethod,
                 Status = payment.Status,

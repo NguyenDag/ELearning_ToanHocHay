@@ -286,15 +286,10 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 switch (request.UserType)
                 {
                     case UserType.Student:
-                        if (!request.GradeLevel.HasValue)
-                        {
-                            return ApiResponse<bool>.ErrorResponse("Học sinh phải có khối lớp");
-                        }
-
                         var student = new Student
                         {
                             UserId = user.UserId,
-                            GradeLevel = request.GradeLevel.Value,
+                            CurrentGradeLevelId = request.GradeLevelId,
                             SchoolName = request.SchoolName
                         };
 

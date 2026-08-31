@@ -35,7 +35,7 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
         {
             return await _context.Parents
                 .Include(p => p.User)
-                .Include(p => p.StudentParents)
+                .Include(p => p.ParentLinks)
                     .ThenInclude(sp => sp.Student)
                         .ThenInclude(s => s.User)
                 .FirstOrDefaultAsync(p => p.ParentId == parentId);
@@ -45,7 +45,7 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
         {
             return await _context.Parents
                 .Include(p => p.User)
-                .Include(p => p.StudentParents)
+                .Include(p => p.ParentLinks)
                     .ThenInclude(sp => sp.Student)
                         .ThenInclude(s => s.User)
                 .FirstOrDefaultAsync(p => p.UserId == userId);

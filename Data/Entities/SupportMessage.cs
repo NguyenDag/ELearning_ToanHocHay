@@ -15,6 +15,8 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         [Required]
         public string MessageText { get; set; }
 
+        public bool IsInternalNote { get; set; } = false;
+
         public DateTime SentAt { get; set; } = DateTime.UtcNow;
 
         // Navigation

@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ELearning_ToanHocHay_Control.Data.Entities
@@ -12,10 +12,10 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         public int AttemptId { get; set; }
         public int QuestionId { get; set; }
 
-        // Use for answer: text (FillBlank, Essay)
+        // text (FillBlank, Essay)
         public string? AnswerText { get; set; }
 
-        // Use for answer: MultipleChoice, TrueFalse
+        // MultipleChoice, TrueFalse
         public int? SelectedOptionId { get; set; }
         public bool IsCorrect { get; set; } = false;
 

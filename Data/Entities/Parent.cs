@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ELearning_ToanHocHay_Control.Data.Entities
@@ -21,6 +21,7 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         // Navigation
         public User? User { get; set; }
 
-        public ICollection<StudentParent> StudentParents { get; set; }
+        public ICollection<ParentLink> ParentLinks { get; set; }
+        public ICollection<ParentInvite> ParentInvites { get; set; }
     }
 }

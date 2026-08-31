@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ELearning_ToanHocHay_Control.Data.Entities
@@ -37,33 +37,34 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         public string? AvatarUrl { get; set; }
 
         [Required]
-        public UserType UserType { get; set; }
+        public UserType UserType { get; set; }        // mỗi người 1 vai; admin đổi được (ghi AuditLog)
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public bool IsEmailConfirmed { get; set; } = false;
-
         public DateTime? EmailConfirmedAt { get; set; }
 
         public DateTime? UpdatedAt { get; set; }
-
         public DateTime? LastLogin { get; set; }
 
         public bool IsActive { get; set; } = true;
 
+        // Khoá tài khoản (§5.13)
+        public DateTime? LockedAt { get; set; }
+        public string? LockedReason { get; set; }
+        public int? LockedByUserId { get; set; }
+
         // Navigation
         public Student? Student { get; set; }
         public Parent? Parent { get; set; }
-        public virtual ICollection<Package> Packages { get; set; }
-        public virtual ICollection<Curriculum> Curriculums { get; set; }
 
-        public virtual ICollection<Lesson> CreatedLessons { get; set; }
-        public virtual ICollection<Lesson> ReviewedLessons { get; set; }
+        public virtual ICollection<Package> Packages { get; set; }
+        public virtual ICollection<Course> CreatedCourses { get; set; }
 
         public virtual ICollection<Question> CreatedQuestions { get; set; }
         public virtual ICollection<Question> ReviewedQuestions { get; set; }
-
         public virtual ICollection<Exercise> Exercises { get; set; }
+
         public virtual ICollection<Notification> Notifications { get; set; }
         public virtual ICollection<SupportTicket> CreatedSupportTickets { get; set; }
         public virtual ICollection<SupportTicket> AssignedSupportTickets { get; set; }

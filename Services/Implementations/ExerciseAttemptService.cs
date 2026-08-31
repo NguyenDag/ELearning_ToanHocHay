@@ -249,7 +249,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 var result = new ExerciseResultDto
                 {
                     AttemptId = attempt.AttemptId,
-                    StudentId = attempt.StudentId,
+                    StudentId = attempt.StudentId ?? 0,
                     StudentName = attempt.Student?.User?.FullName,
                     ExerciseName = attempt.Exercise?.ExerciseName,
                     StartTime = attempt.StartTime,
@@ -350,7 +350,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 var result = new ExerciseResultDto
                 {
                     AttemptId = attempt.AttemptId,
-                    StudentId = attempt.StudentId,
+                    StudentId = attempt.StudentId ?? 0,
                     StudentName = attempt.Student?.User?.FullName,
 
                     ExerciseId = attempt.ExerciseId,
@@ -393,7 +393,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     .Select(a => new ExerciseResultDto
                     {
                         AttemptId = a.AttemptId,
-                        StudentId = a.StudentId,
+                        StudentId = a.StudentId ?? 0,
                         StudentName = a.Student?.User?.FullName,
                         ExerciseId = a.ExerciseId,
                         ExerciseName = a.Exercise?.ExerciseName,
@@ -631,8 +631,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 var exercise = new Exercise
                 {
                     ExerciseName = $"Random {dto.ExerciseType} - {DateTime.UtcNow:yyyy-MM-dd HH:mm}",
-                    ChapterId = questionBank.ChapterId,
-                    TopicId = questionBank.TopicId,
+                    NodeId = questionBank.PrimaryNodeId,
                     ExerciseType = dto.ExerciseType,
                     TotalQuestions = questions.Count,
                     DurationMinutes = dto.DurationMinutes,
@@ -677,7 +676,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 var attemptDto = new ExerciseAttemptDto
                 {
                     AttemptId = createdAttempt.AttemptId,
-                    StudentId = createdAttempt.StudentId,
+                    StudentId = createdAttempt.StudentId ?? 0,
                     ExerciseId = createdAttempt.ExerciseId,
                     ExerciseName = exercise.ExerciseName,
                     ExerciseType = exercise.ExerciseType,
@@ -833,7 +832,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             return new ExerciseAttemptDto
             {
                 AttemptId = attempt.AttemptId,
-                StudentId = attempt.StudentId,
+                StudentId = attempt.StudentId ?? 0,
                 ExerciseId = attempt.ExerciseId,
                 ExerciseName = exercise.ExerciseName ?? "Không tên",
                 ExerciseType = exercise.ExerciseType,
@@ -852,59 +851,61 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 var student = await _context.Students.FirstOrDefaultAsync(s => s.UserId == userId);
                 if (student == null) return ApiResponse<StudentDashboardDto>.ErrorResponse("Không tìm thấy học sinh.");
 
-                // 1. Lấy tất cả chương và bài tập trong chương đó
-                var allChapters = await _context.Chapters
-                    .Include(c => c.Exercises)
+                // 1. Chương = ContentNode kiểu Chapter trong các CourseVersion học sinh đã ghi danh.
+                var versionIds = await _context.StudentCourses
+                    .Where(sc => sc.StudentId == student.StudentId)
+                    .Select(sc => sc.CourseVersionId)
+                    .ToListAsync();
+
+                var allChapters = await _context.ContentNodes
+                    .Where(n => n.NodeType == NodeType.Chapter && versionIds.Contains(n.CourseVersionId))
+                    .OrderBy(n => n.OrderIndex)
+                    .Select(n => new { n.NodeId, n.Title, Prefix = n.MaterializedPath + n.NodeId + "/" })
                     .ToListAsync();
 
                 // 2. Lấy lịch sử làm bài của học sinh
                 var attempts = await _context.ExerciseAttempts
-                    .Include(a => a.Exercise)
+                    .Include(a => a.Exercise).ThenInclude(e => e!.Node)
                     .Where(a => a.StudentId == student.StudentId && a.Status != AttemptStatus.InProgress)
                     .ToListAsync();
 
                 var stats = new StudentDashboardDto();
-
-                // --- Giữ nguyên logic cũ ---
                 stats.TotalAttempts = attempts.Count;
                 stats.AverageScore = attempts.Any() ? Math.Round(attempts.Average(a => a.TotalScore), 1) : 0;
 
-                // --- LOGIC MỚI: Đổ dữ liệu vào danh sách Chapters ---
                 foreach (var ch in allChapters)
                 {
-                    int totalExercisesInChapter = ch.Exercises.Count;
+                    var exInChapter = await _context.Exercises
+                        .Where(e => e.Node != null && (e.NodeId == ch.NodeId
+                                    || e.Node.MaterializedPath.StartsWith(ch.Prefix)))
+                        .Select(e => e.ExerciseId)
+                        .ToListAsync();
 
-                    // Đếm số bài tập khác nhau trong chương này mà học sinh đã làm
+                    int totalExercisesInChapter = exInChapter.Count;
                     int completedInChapter = attempts
-                        .Where(a => a.Exercise.ChapterId == ch.ChapterId)
-                        .Select(a => a.ExerciseId)
-                        .Distinct()
-                        .Count();
+                        .Where(a => exInChapter.Contains(a.ExerciseId))
+                        .Select(a => a.ExerciseId).Distinct().Count();
 
-                    // Tính % tiến độ
-                    int progress = 0;
-                    if (totalExercisesInChapter > 0)
-                    {
-                        progress = (int)((double)completedInChapter / totalExercisesInChapter * 100);
-                    }
+                    int progress = totalExercisesInChapter > 0
+                        ? (int)((double)completedInChapter / totalExercisesInChapter * 100) : 0;
 
                     stats.Chapters.Add(new ChapterProgressDto
                     {
-                        ChapterId = ch.ChapterId,
-                        ChapterName = ch.ChapterName,
+                        ChapterId = ch.NodeId,
+                        ChapterName = ch.Title,
                         TotalLessons = totalExercisesInChapter,
-                        ProgressPercentage = progress > 100 ? 100 : progress // Đảm bảo không quá 100%
+                        ProgressPercentage = progress > 100 ? 100 : progress
                     });
                 }
 
-                // Đếm số chương đã hoàn thành (tiến độ = 100%)
                 stats.CompletedChapters = stats.Chapters.Count(x => x.ProgressPercentage == 100);
 
-                // Biểu đồ và Lịch sử (Giữ nguyên như cũ)
-                stats.ChartData = attempts.GroupBy(a => a.Exercise.ChapterId)
+                stats.ChartData = attempts
+                    .Where(a => a.Exercise?.NodeId != null)
+                    .GroupBy(a => a.Exercise!.NodeId!.Value)
                     .Select(g => new ScoreChartItemDto
                     {
-                        ChapterName = stats.Chapters.FirstOrDefault(c => c.ChapterId == g.Key)?.ChapterName ?? "Chương " + g.Key,
+                        ChapterName = stats.Chapters.FirstOrDefault(c => c.ChapterId == g.Key)?.ChapterName ?? "Node " + g.Key,
                         AvgScore = Math.Round(g.Average(a => a.TotalScore), 1)
                     }).ToList();
 
@@ -933,7 +934,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     .Include(a => a.Student)
                         .ThenInclude(s => s.User)
                     .Include(a => a.Student)
-                        .ThenInclude(s => s.StudentParents)
+                        .ThenInclude(s => s.ParentLinks)
                             .ThenInclude(sp => sp.Parent)
                                 .ThenInclude(p => p.User)
                     .FirstOrDefaultAsync(a => a.AttemptId == attemptId);
@@ -956,8 +957,9 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 // Lấy số lần vi phạm
                 var switchCount = await _context.TabSwitchLogs.CountAsync(l => l.AttemptId == attemptId);
 
-                var parents = attempt.Student?.StudentParents
-                    ?.Select(sp => sp.Parent)
+                var parents = attempt.Student?.ParentLinks
+                    ?.Where(sp => sp.Status == LinkStatus.Active)
+                    .Select(sp => sp.Parent)
                     .Where(p => p?.User?.Email != null)
                     .ToList() ?? new List<Parent>();
 

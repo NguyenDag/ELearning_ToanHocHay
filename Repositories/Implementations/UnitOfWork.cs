@@ -13,20 +13,10 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
         {
             _context = context;
 
-            Curriculums = new CurriculumRepository(_context);
-            Chapters = new ChapterRepository(_context);
-            Topics = new TopicRepository(_context);
-            Lessons = new LessonRepository(_context);
-            LessonContents = new LessonContentRepository(_context);
             Users = new UserRepository(_context);
         }
 
         public IUserRepository Users { get; private set; }
-        public ICurriculumRepository Curriculums { get; private set; }
-        public IChapterRepository Chapters { get; private set; }
-        public ITopicRepository Topics { get; private set; }
-        public ILessonRepository Lessons { get; private set; }
-        public ILessonContentRepository LessonContents { get; private set; }
 
 
         public async Task BeginTransactionAsync()

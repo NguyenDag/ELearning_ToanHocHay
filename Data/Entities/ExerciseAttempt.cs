@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ELearning_ToanHocHay_Control.Data.Entities
@@ -13,18 +13,18 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
     [Table("ExerciseAttempt")]
     public class ExerciseAttempt
     {
+        // NOTE: doc §12.3 khuyến nghị bigint cho bảng này — hoãn lại để giảm ripple ở app layer.
         [Key]
         public int AttemptId { get; set; }
 
-        public int StudentId { get; set; }
+        // §5.14 — cho phép khách làm bài: đúng 1 trong 2 được set (CHECK).
+        public int? StudentId { get; set; }
+        public Guid? GuestSessionId { get; set; }
+
         public int ExerciseId { get; set; }
 
         public DateTime StartTime { get; set; } = DateTime.UtcNow;
-
-        // Thời điểm PHẢI kết thúc
         public DateTime PlannedEndTime { get; set; }
-
-        // Thời điểm thực sự submit
         public DateTime? SubmittedAt { get; set; }
 
         public AttemptStatus Status { get; set; } = AttemptStatus.InProgress;
@@ -38,6 +38,7 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
 
         // Navigation
         public Student? Student { get; set; }
+        public GuestSession? GuestSession { get; set; }
         public Exercise? Exercise { get; set; }
 
         public ICollection<StudentAnswer> StudentAnswers { get; set; }

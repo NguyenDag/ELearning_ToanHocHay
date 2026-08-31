@@ -188,11 +188,6 @@ namespace ELearning_ToanHocHay_Control
             services.AddScoped<IStudentAnswerRepository, StudentAnswerRepository>();
             services.AddScoped<IQuestionBankRepository, QuestionBankRepository>();
             services.AddScoped<IExerciseQuestionRepository, ExerciseQuestionRepository>();
-            services.AddScoped<ICurriculumRepository, CurriculumRepository>();
-            services.AddScoped<IChapterRepository, ChapterRepository>();
-            services.AddScoped<ITopicRepository, TopicRepository>();
-            services.AddScoped<ILessonRepository, LessonRepository>();
-            services.AddScoped<ILessonContentRepository, LessonContentRepository>();
             services.AddScoped<IPackageRepository, PackageRepository>();
             services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
             services.AddScoped<IPaymentRepository, PaymentRepository>();
@@ -200,7 +195,7 @@ namespace ELearning_ToanHocHay_Control
             services.AddScoped<IAIHintRepository, AIHintRepository>();
             services.AddScoped<IAIFeedbackRepository, AIFeedbackRepository>();
             services.AddScoped<IDashboardRepository, DashboardRepository>();
-            services.AddScoped<IStudentParentRepository, StudentParentRepository>();
+            services.AddScoped<IParentLinkRepository, ParentLinkRepository>();
             services.AddScoped<IParentRepository, ParentRepository>();
 
             // Services
@@ -209,11 +204,6 @@ namespace ELearning_ToanHocHay_Control
             services.AddScoped<IJwtService, JwtService>();
             services.AddScoped<IExerciseService, ExerciseService>();
             services.AddScoped<IExerciseAttemptService, ExerciseAttemptService>();
-            services.AddScoped<ICurriculumService, CurriculumService>();
-            services.AddScoped<IChapterService, ChapterService>();
-            services.AddScoped<ITopicService, TopicService>();
-            services.AddScoped<ILessonSevice, LessonService>(); // Đã sửa chính tả
-            services.AddScoped<ILessonContentService, LessonContentService>();
             services.AddScoped<IEmailService, SendGridEmailService>();
             services.AddSingleton<IPasswordHasher, PasswordHasher>();
             services.AddHttpClient<IAIService, AIService>();
@@ -227,11 +217,8 @@ namespace ELearning_ToanHocHay_Control
             services.AddScoped<ISePayService, SePayService>();
             services.AddScoped<IAIHintService, AIHintService>();
             services.AddScoped<IAIFeedbackService, AIFeedbackService>();
-            services.AddScoped<ILessonDataService, LessonDataService>();
             services.AddScoped<ICoreDashboardService, CoreDashboardService>();
-            services.AddScoped<IStudentParentService, StudentParentService>();
             services.AddScoped<IParentService, ParentService>();
-            services.AddScoped<ILessonProgressService, LessonProgressService>();
 
             // Background Services
             services.AddSingleton<IBackgroundEmailService, BackgroundEmailService>();

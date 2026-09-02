@@ -146,6 +146,26 @@ có controller/service nào:
 - **Thông báo / Hỗ trợ / Duyệt nội dung:** chưa có (nằm ở giai đoạn sau theo roadmap).
 - **Vận hành:** endpoint health/readiness cho chính API (`/health`).
 
+### Trạng thái triển khai (cập nhật)
+
+> Nhánh `feat/a3-p2-content-layer`. Build xanh, 58/58 test xanh (có `A3ContentLayerTests`).
+
+| Hạng mục A3 (thuộc P2) | Trạng thái | Ghi chú |
+|---|---|---|
+| Catalog CRUD (Subject/GradeLevel/CurriculumFramework) | ✅ | `CatalogController` — đọc công khai bản active, ghi cần content role |
+| Course + CourseVersion CRUD | ✅ | `CoursesController` — slug + (môn×lớp×bộ sách) unique |
+| Workflow version Draft→InReview→Approved→Published | ✅ | publish trong transaction, archive version cũ, lật `Course.Status` |
+| Clone cây nội dung khi tạo version | ✅ | `CloneFromVersionId` |
+| Cây nội dung: ContentNode (NodeTypeRule + MaterializedPath/Depth) | ✅ | `ContentAuthoringController`, chặn sửa khi version ≠ Draft |
+| ContentBlock / LessonResource / FlashcardDeck + Flashcard CRUD | ✅ | |
+| `IContentAccessService` 3 bậc (ẩn danh / đăng ký / entitlement) | ✅ | enrolment `StudentCourse` hoặc `PackageEntitlement` trên sub active |
+| StudentCourse ghi danh + "khoá của tôi" | ✅ | `EnrollmentController` |
+| Tiêu thụ nội dung (cây published + node detail, có gating) | ✅ | `LearnController` (công khai) |
+| QuestionBank CRUD + Question CRUD + workflow duyệt câu hỏi | ✅ | `QuestionBanksController` (Draft→PendingReview→Approved/Rejected) |
+| Exercise publish/unpublish + lấy đề kèm đáp án | ✅ | `ExercisesController` `{id}/publish`, `{id}/unpublish`, `{id}/for-edit` |
+| A2-13 — `CreatedBy` lấy từ token | ✅ | Exercise + Question service |
+| **Còn lại (chưa làm trong đợt này)** | ⏳ | Duyệt `CourseVersion` bằng `ReviewComment` neo theo node/block; `LessonResource` gắn `MediaAsset` (upload file); re-parent node + rewrite `MaterializedPath`; `CurriculumFramework` gắn `Course` nhiều-nhiều; `NodeRevision` (diff/rollback); `ContentImportJob` (import hàng loạt); phân trang cho danh sách course/node |
+
 ---
 
 ## A4 — API thừa · trùng · code chết

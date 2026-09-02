@@ -1,10 +1,12 @@
-﻿using ELearning_ToanHocHay_Control.Data;
+﻿using ELearning_ToanHocHay_Control.Common;
+using ELearning_ToanHocHay_Control.Data;
 using ELearning_ToanHocHay_Control.Models.DTOs;
 using ELearning_ToanHocHay_Control.Services.Implementations;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace ELearning_ToanHocHay_Control.Controllers
@@ -26,6 +28,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
 
         [HttpPost("login")]
         [AllowAnonymous]
+        [EnableRateLimiting("auth")]
         public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
         {
             if (!ModelState.IsValid)
@@ -68,7 +71,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         }
 
         /// <summary>
-        /// Lấy thông tin user hiện tại từ token
+        /// Get the current user's info from the token.
         /// </summary>
         [HttpGet("me")]
         [Authorize]
@@ -83,9 +86,9 @@ namespace ELearning_ToanHocHay_Control.Controllers
             var user = new
             {
                 UserId = userId.Value,
-                Email = User.FindFirst("Email")?.Value,
+                Email = User.GetEmail(),
                 FullName = User.Identity?.Name,
-                UserType = User.FindFirst("UserType")?.Value
+                UserType = User.GetUserType()?.ToString()
             };
 
             return Ok(ApiResponse<object>.SuccessResponse(user, "Lấy thông tin thành công"));
@@ -149,10 +152,11 @@ namespace ELearning_ToanHocHay_Control.Controllers
         }
 
         /// <summary>
-        /// Xác nhận email đăng ký
+        /// Confirm a registration email.
         /// </summary>
-        /// <param name="token">Token gửi qua email</param>
+        /// <param name="token">Token sent by email</param>
         [HttpGet("confirm-email")]
+        [AllowAnonymous]
         public async Task<IActionResult> ConfirmEmail([FromQuery] string token)
         {
             if (string.IsNullOrWhiteSpace(token))

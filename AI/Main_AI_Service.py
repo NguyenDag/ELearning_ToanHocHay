@@ -1,5 +1,4 @@
 from flask import Flask, request, jsonify, render_template_string
-from flask_cors import CORS
 import logging
 import sys
 import os
@@ -42,19 +41,40 @@ except ImportError as e:
 logger.info(logger_msg)
 
 app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "*"}})
+# Internal service (server-to-server) — no browser CORS.
 
 app.config['JSON_AS_ASCII'] = False
 app.config['JSON_SORT_KEYS'] = False
 
-# Khởi tạo các service
+# Shared secret with the C# backend (A1-06). Must be set in every non-local environment.
+INTERNAL_API_KEY = os.environ.get("INTERNAL_API_KEY", "")
+
+# Public paths (no API key required).
+_PUBLIC_PATHS = {"/api/health", "/api/chatbot/health", "/api/status", "/api/chatbot/status"}
+
+# Initialise services
 chatbot = ChatbotLogicBackend()
 openai_ai = OpenAIService()
 
 @app.before_request
-def log_request_info():
+def guard_request():
     print(f">>> [HTTP] Incoming {request.method} request to: {request.path}")
     logger.info(f"Incoming {request.method} request to: {request.path}")
+
+    # Only guard /api/* endpoints; skip health/status.
+    if not request.path.startswith("/api/") or request.path in _PUBLIC_PATHS:
+        return None
+
+    if not INTERNAL_API_KEY:
+        # Local dev: key not configured -> allow, but warn.
+        logger.warning("INTERNAL_API_KEY is not set — skipping the internal auth check.")
+        return None
+
+    if request.headers.get("X-Internal-Api-Key") != INTERNAL_API_KEY:
+        logger.warning("Rejected request with missing/invalid X-Internal-Api-Key: %s", request.path)
+        return jsonify({"error": "Unauthorized"}), 401
+
+    return None
 
 # ==================== VALIDATION HELPERS ====================
 def validate_fields(data, required_fields):

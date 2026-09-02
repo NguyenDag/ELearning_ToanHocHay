@@ -8,6 +8,7 @@ using ELearning_ToanHocHay_Control.Models.DTOs.Sepay;
 using ELearning_ToanHocHay_Control.Repositories.Interfaces;
 using ELearning_ToanHocHay_Control.Services.Implementations;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -32,12 +33,13 @@ namespace ELearning_ToanHocHay_Control.Controllers
         }
 
         [HttpPost]
-        [SePayApiKey] // Attribute tự động validate API Key
+        [AllowAnonymous] // no JWT — authenticated via SePay's API key
+        [SePayApiKey] // attribute validates the API key automatically
         public async Task<IActionResult> IPN(
             [FromBody] SePayIpnRequest request
         )
         {
-            // 1. Chỉ xử lý tiền vào
+            // 1. Only handle incoming transfers
             if (request.transferType != "in")
                 return Ok("Ignore out transaction");
 
@@ -51,7 +53,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
             if (subscription == null)
                 return Ok("Subscription not found");
 
-            // 3. Chống IPN trùng
+            // 3. Guard against duplicate IPN
             if (subscription.Status == SubscriptionStatus.Active)
                 return Ok("Already processed");
 

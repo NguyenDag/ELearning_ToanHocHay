@@ -29,4 +29,12 @@
     <Folder Include="Data\Migrations\" />
   </ItemGroup>
 
+  <!-- Project test nằm trong thư mục con Tests/ — không thuộc project API -->
+  <ItemGroup>
+    <Compile Remove="Tests/**/*.cs" />
+    <Content Remove="Tests/**" />
+    <None Remove="Tests/**" />
+    <EmbeddedResource Remove="Tests/**" />
+  </ItemGroup>
+
 </Project>

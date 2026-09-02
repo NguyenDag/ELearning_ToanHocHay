@@ -1,5 +1,9 @@
-﻿using ELearning_ToanHocHay_Control.Models.DTOs.Package;
+using ELearning_ToanHocHay_Control.Attributes;
+using ELearning_ToanHocHay_Control.Common;
+using ELearning_ToanHocHay_Control.Data.Entities;
+using ELearning_ToanHocHay_Control.Models.DTOs.Package;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,8 +20,9 @@ namespace ELearning_ToanHocHay_Control.Controllers
             _packageService = packageService;
         }
 
-        // GET: api/package
+        // GET: api/package — pricing page, allowed anonymously
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> GetAll()
         {
             var response = await _packageService.GetAllAsync();
@@ -30,6 +35,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
 
         // GET: api/package/5
         [HttpGet("{id:int}")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetById(int id)
         {
             var response = await _packageService.GetByIdAsync(id);
@@ -40,13 +46,16 @@ namespace ELearning_ToanHocHay_Control.Controllers
             return Ok(response);
         }
 
-        // POST: api/package
+        // POST: api/package — Finance/Admin only
         [HttpPost]
-        public async Task<IActionResult> Create(
-            [FromQuery] int userId,
-            [FromBody] CreateOrUpdatePackageDto dto)
+        [AuthorizeUserType(UserType.FinanceManager, UserType.SystemAdmin)]
+        public async Task<IActionResult> Create([FromBody] CreateOrUpdatePackageDto dto)
         {
-            var response = await _packageService.CreateAsync(userId, dto);
+            var userId = User.GetUserId();
+            if (userId == null)
+                return this.Forbidden();
+
+            var response = await _packageService.CreateAsync(userId.Value, dto);
 
             if (!response.Success)
                 return BadRequest(response);
@@ -54,8 +63,9 @@ namespace ELearning_ToanHocHay_Control.Controllers
             return Ok(response);
         }
 
-        // PUT: api/package/5
+        // PUT: api/package/5 — Finance/Admin only
         [HttpPut("{id:int}")]
+        [AuthorizeUserType(UserType.FinanceManager, UserType.SystemAdmin)]
         public async Task<IActionResult> Update(
             int id,
             [FromBody] CreateOrUpdatePackageDto dto)
@@ -68,8 +78,9 @@ namespace ELearning_ToanHocHay_Control.Controllers
             return Ok(response);
         }
 
-        // DELETE: api/package/5
+        // DELETE: api/package/5 — Finance/Admin only
         [HttpDelete("{id:int}")]
+        [AuthorizeUserType(UserType.FinanceManager, UserType.SystemAdmin)]
         public async Task<IActionResult> Delete(int id)
         {
             var response = await _packageService.DeleteAsync(id);

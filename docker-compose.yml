@@ -28,15 +28,18 @@ services:
       - .env
     restart: always
 
-  # AI chính (Gemini / xử lý core)
+  # Core AI service (Gemini / core processing) — internal only, via the compose network (api -> ai_core:5001).
   ai_core:
     build:
       context: ./AI
       dockerfile: Dockerfile
     container_name: ai_core
     restart: always
+    expose:
+      - "5001"
     ports:
-      - "5001:5001"
+      # Bind to localhost only for debugging; do NOT publish externally.
+      - "127.0.0.1:5001:5001"
     env_file:
       - .env
       - AI/.env

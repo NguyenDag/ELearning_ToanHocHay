@@ -1,4 +1,6 @@
 ﻿using System.Text;
+using System.Threading.RateLimiting;
+using ELearning_ToanHocHay_Control.Common;
 using ELearning_ToanHocHay_Control.Data;
 using ELearning_ToanHocHay_Control.Models.DTOs;
 using ELearning_ToanHocHay_Control.Models.DTOs.Sepay;
@@ -8,6 +10,7 @@ using ELearning_ToanHocHay_Control.Services.Helpers;
 using ELearning_ToanHocHay_Control.Services.Implementations;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -20,41 +23,41 @@ namespace ELearning_ToanHocHay_Control
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // 1. Cấu hình Database (Hỗ trợ cả Railway URL và Local Connection String)
+            // 1. Database config (supports both a Railway URL and a local connection string)
             var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
             string connectionString;
 
             if (!string.IsNullOrEmpty(databaseUrl))
             {
-                // Logic cho môi trường Production (Railway)
+                // Production (Railway)
                 connectionString = ConvertRailwayUrlToConnectionString(databaseUrl);
             }
             else
             {
-                // Logic cho môi trường Local
+                // Local
                 connectionString = builder.Configuration.GetConnectionString("MyCnn")!;
             }
 
             builder.Services.AddDbContext<AppDbContext>(options =>
                 options.UseNpgsql(connectionString));
 
-            // 2. Cấu hình App Base URL & Email
+            // 2. App base URL & email config
             var appBaseUrl = Environment.GetEnvironmentVariable("APP_BASE_URL") ?? "https://localhost:5001";
             builder.Services.Configure<AppSettings>(options => options.BaseUrl = appBaseUrl);
             builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 
-            // 3. Đăng ký toàn bộ Repositories và Services
+            // 3. Register all repositories and services
             RegisterAppServices(builder.Services);
 
 
 
-            // 4. Cấu hình AutoMapper
+            // 4. AutoMapper
             builder.Services.AddAutoMapper(typeof(UserProfile));
 
-            // 5. CẤU HÌNH JWT (Tích hợp logic kiểm tra SecretKey linh hoạt)
+            // 5. JWT config (flexible SecretKey resolution)
             var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 
-            // Ưu tiên lấy từ biến môi trường (Server), nếu không có mới lấy từ appsettings (Local)
+            // Prefer an environment variable (server), fall back to appsettings (local)
             var secretKey = Environment.GetEnvironmentVariable("JwtSettings__SecretKey")
                             ?? jwtSettings["SecretKey"]
                             ?? builder.Configuration["JwtSettings:SecretKey"];
@@ -66,10 +69,10 @@ namespace ELearning_ToanHocHay_Control
             );
 
             
-            // Kiểm tra an toàn: Nếu không tìm thấy SecretKey ở cả 2 nơi thì báo lỗi rõ ràng thay vì ArgumentNullException
+            // Fail fast with a clear message instead of an ArgumentNullException if the key is missing
             if (string.IsNullOrEmpty(secretKey))
             {
-                throw new Exception("CRITICAL ERROR: Không tìm thấy 'SecretKey' trong cấu hình! Hãy kiểm tra appsettings.json hoặc Environment Variables.");
+                throw new Exception("CRITICAL ERROR: 'SecretKey' not found in configuration! Check appsettings.json or environment variables.");
             }
 
             builder.Services.AddAuthentication(options =>
@@ -104,37 +107,76 @@ namespace ELearning_ToanHocHay_Control
                 };
             });
 
-            builder.Services.AddAuthorization();
+            // Default: EVERY endpoint requires authentication. Public endpoints must be marked [AllowAnonymous].
+            builder.Services.AddAuthorization(options =>
+            {
+                options.FallbackPolicy = new AuthorizationPolicyBuilder()
+                    .RequireAuthenticatedUser()
+                    .Build();
+            });
 
-            // 6. Cấu hình Controllers & JSON Options (Giữ nguyên PascalCase cho WebApp dễ đọc)
-            // Chỉnh lại trong API
+            // Rate limiting
+            builder.Services.AddRateLimiter(options =>
+            {
+                options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+                // 5 requests / minute / IP for sensitive endpoints (login).
+                options.AddPolicy("auth", context =>
+                    RateLimitPartition.GetFixedWindowLimiter(
+                        partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                        factory: _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = 5,
+                            Window = TimeSpan.FromMinutes(1),
+                            QueueLimit = 0
+                        }));
+
+                // 20 requests / minute / user for AI endpoints.
+                options.AddPolicy("ai", context =>
+                    RateLimitPartition.GetFixedWindowLimiter(
+                        partitionKey: context.User.GetUserId()?.ToString()
+                                      ?? context.Connection.RemoteIpAddress?.ToString()
+                                      ?? "unknown",
+                        factory: _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = 20,
+                            Window = TimeSpan.FromMinutes(1),
+                            QueueLimit = 0
+                        }));
+            });
+
+            // 6. Controllers & JSON options (keep PascalCase to match the WebApp DTOs)
             builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        // 1. Giữ nguyên tên thuộc tính (PascalCase) để khớp với DTO của WebApp
+        // 1. Keep property names as-is (PascalCase) to match the WebApp DTOs
         options.JsonSerializerOptions.PropertyNamingPolicy = null;
 
-        // 2. CHÌA KHÓA: Thay Preserve bằng IgnoreCycles
-        // Nó vẫn chống vòng lặp vô tận nhưng trả về JSON dạng mảng [] cực sạch
+        // 2. Use IgnoreCycles instead of Preserve: still guards against infinite
+        //    loops but returns clean array-shaped JSON
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
 
-        // 3. (Tùy chọn) Bỏ qua các trường null để JSON gọn hơn nữa
+        // 3. (Optional) Drop null fields to make the JSON smaller
         options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
     });
 
-            // 7. Cấu hình Swagger & CORS
+            // 7. Swagger & CORS
             builder.Services.AddEndpointsApiExplorer();
             ConfigureSwagger(builder.Services);
+            var allowedOrigins = builder.Configuration
+                .GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
 
-            // 7. Cấu hình Swagger & CORS
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowWebApp", policy =>
                 {
-                    policy.SetIsOriginAllowed(origin => true) // Cho phép tất cả mọi nơi, kể cả local của An
-                          .AllowAnyMethod()
-                          .AllowAnyHeader()
-                          .AllowCredentials();
+                    if (allowedOrigins.Length > 0)
+                    {
+                        policy.WithOrigins(allowedOrigins)
+                              .AllowAnyMethod()
+                              .AllowAnyHeader()
+                              .AllowCredentials();
+                    }
                 });
             });
 
@@ -146,11 +188,11 @@ namespace ELearning_ToanHocHay_Control
                 db.Database.Migrate();
             }
                 
-            // 8. Cấu hình Middleware Pipeline theo thứ tự chuẩn
+            // 8. Middleware pipeline, in the standard order
             app.UseSwagger();
             app.UseSwaggerUI();
 
-            // CORS phải đặt TRƯỚC Authentication/Authorization
+            // CORS must come BEFORE Authentication/Authorization
             app.UseCors("AllowWebApp");
             app.UseForwardedHeaders(new ForwardedHeadersOptions
             {
@@ -165,17 +207,21 @@ namespace ELearning_ToanHocHay_Control
 
             app.UseAuthentication();
             app.UseAuthorization();
+            app.UseRateLimiter();
 
             app.MapControllers();
 
-            // Chuyển hướng mặc định về Swagger
-            app.MapGet("/", () => Results.Redirect("/swagger"));
+            // Default redirect to Swagger
+            app.MapGet("/", () => Results.Redirect("/swagger")).AllowAnonymous();
+
+            // Health check (A3)
+            app.MapGet("/health", () => Results.Ok(new { status = "healthy" })).AllowAnonymous();
 
             app.Run();
         }
 
         /// <summary>
-        /// Phương thức đăng ký toàn bộ Repositories và Services
+        /// Registers all repositories and services.
         /// </summary>
         private static void RegisterAppServices(IServiceCollection services)
         {
@@ -219,6 +265,7 @@ namespace ELearning_ToanHocHay_Control
             services.AddScoped<IAIFeedbackService, AIFeedbackService>();
             services.AddScoped<ICoreDashboardService, CoreDashboardService>();
             services.AddScoped<IParentService, ParentService>();
+            services.AddScoped<IResourceAccessService, ResourceAccessService>();
 
             // Background Services
             services.AddSingleton<IBackgroundEmailService, BackgroundEmailService>();
@@ -234,12 +281,12 @@ namespace ELearning_ToanHocHay_Control
                 {
                     Title = "ELearning API",
                     Version = "v1",
-                    Description = "API cho hệ thống E-Learning ToanHocHay"
+                    Description = "API for the ToanHocHay e-learning platform"
                 });
 
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
-                    Description = "JWT Authorization header sử dụng Bearer scheme. Nhập 'Bearer' [space] và token của bạn",
+                    Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] then your token",
                     Name = "Authorization",
                     In = ParameterLocation.Header,
                     Type = SecuritySchemeType.ApiKey,
@@ -263,7 +310,7 @@ namespace ELearning_ToanHocHay_Control
         {
             var uri = new Uri(databaseUrl);
             var userInfo = uri.UserInfo.Split(':');
-            if (userInfo.Length != 2) throw new Exception("DATABASE_URL không hợp lệ");
+            if (userInfo.Length != 2) throw new Exception("Invalid DATABASE_URL");
 
             return $"Host={uri.Host};" +
                    $"Port={uri.Port};" +

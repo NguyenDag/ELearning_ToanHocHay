@@ -6,12 +6,12 @@ using ELearning_ToanHocHay_Control.Models.DTOs.ExerciseAttempt;
 using ELearning_ToanHocHay_Control.Models.DTOs.AIFeedback;
 using ELearning_ToanHocHay_Control.Models.DTOs.Student.Dashboard;
 using ELearning_ToanHocHay_Control.Repositories.Interfaces;
+using ELearning_ToanHocHay_Control.Services.Helpers;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
-using System.Linq; // Bổ sung để hỗ trợ LINQ Queryable
-using Microsoft.Extensions.DependencyInjection;
+using System.Linq;
 using System.Threading.Tasks;
 
 
@@ -27,8 +27,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         private readonly IMapper _mapper;
         private readonly IExerciseQuestionRepository _exerciseQuestionRepository;
         private readonly IAIFeedbackRepository _feedbackRepository;
-        private readonly IAIFeedbackService _aiFeedbackService;
-        private readonly IServiceScopeFactory _scopeFactory;
+        private readonly IAiFeedbackQueue _aiFeedbackQueue;
         private readonly AppDbContext _context;
         private readonly IEmailService _emailService;
 
@@ -40,8 +39,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             IQuestionBankRepository questionBankRepository,
             IExerciseQuestionRepository exerciseQuestionRepository,
             IAIFeedbackRepository feedbackRepository,
-            IAIFeedbackService aiFeedbackService,
-            IServiceScopeFactory scopeFactory,
+            IAiFeedbackQueue aiFeedbackQueue,
             IMapper mapper,
             AppDbContext context,
             IEmailService emailService)
@@ -53,8 +51,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             _questionBankRepository = questionBankRepository;
             _exerciseQuestionRepository = exerciseQuestionRepository;
             _feedbackRepository = feedbackRepository;
-            _aiFeedbackService = aiFeedbackService;
-            _scopeFactory = scopeFactory;
+            _aiFeedbackQueue = aiFeedbackQueue;
             _mapper = mapper;
             _context = context;
             _emailService = emailService;
@@ -65,7 +62,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                // 1. Lấy attempt + kiểm tra
+                // 1. Load the attempt and validate it
                 var attempt = await _attemptRepository.GetAttemptWithDetailsAsync(dto.AttemptId);
 
                 if (attempt == null)
@@ -85,66 +82,41 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 }
 
                 var now = DateTime.UtcNow;
-                var isTimeout = now >= attempt.PlannedEndTime;
+                var isTimeout = attempt.PlannedEndTime.HasValue && now >= attempt.PlannedEndTime.Value;
 
-                // 2. Lấy danh sách câu hỏi của bài
+                // 2. Load the exercise's questions
                 var exerciseQuestions = await _exerciseQuestionRepository
                     .GetByExerciseIdAsync(attempt.ExerciseId);
 
-                // ✅ FIX: Tính scorePerQuestion fallback khi eq.Score = 0
+                // Even split fallback when eq.Score is 0
                 var totalQuestions = exerciseQuestions.Count;
                 var scorePerQuestion = totalQuestions > 0
                     ? attempt.MaxScore / totalQuestions
                     : 0;
 
-                // 3. Lấy các câu trả lời đã làm
+                // 3. Load the saved answers
                 var answers = await _answerRepository
                     .GetAttemptAnswersAsync(dto.AttemptId);
 
                 var answerLookup = answers.ToDictionary(a => a.QuestionId);
 
-                // 4. Biến chấm điểm
+                // 4. Grading accumulators
                 double totalScore = 0;
                 int correctAnswers = 0;
                 int wrongAnswers = 0;
+                bool hasPendingManualGrading = false;
 
                 var answerDetails = new List<AnswerDetailDto>();
 
-                // 5. DUYỆT THEO CÂU HỎI
+                // 5. Grade question by question
                 foreach (var eq in exerciseQuestions)
                 {
                     answerLookup.TryGetValue(eq.QuestionId, out var answer);
                     var question = eq.Question;
 
-                    bool isCorrect = false;
+                    var (isCorrect, needsManual) = AnswerGrading.GradeAnswer(question, answer);
 
-                    if (answer != null)
-                    {
-                        switch (question.QuestionType)
-                        {
-                            case QuestionType.MultipleChoice:
-                                if (answer.SelectedOptionId.HasValue)
-                                {
-                                    var correctOption = question.QuestionOptions?
-                                        .FirstOrDefault(o => o.IsCorrect);
-
-                                    Console.WriteLine($"=== CHẤM qId={question.QuestionId} | studentOpt={answer.SelectedOptionId} | correctOpt={correctOption?.OptionId} | match={correctOption?.OptionId == answer.SelectedOptionId} ===");
-
-                                    isCorrect = correctOption != null &&
-                                        correctOption.OptionId == answer.SelectedOptionId;
-                                }
-                                break;
-
-                            case QuestionType.TrueFalse:
-                            case QuestionType.FillBlank:
-                                string studentAns = (answer.AnswerText ?? "").Trim().ToLower();
-                                string correctAns = (question.CorrectAnswer ?? "").Trim().ToLower();
-                                isCorrect = !string.IsNullOrEmpty(correctAns) && studentAns == correctAns;
-                                break;
-                        }
-                    }
-
-                    // ✅ FIX: Dùng eq.Score nếu > 0, ngược lại dùng scorePerQuestion
+                    // Use eq.Score when set, otherwise the even split.
                     var maxScore = eq.Score > 0 ? eq.Score : scorePerQuestion;
                     var pointsEarned = isCorrect ? maxScore : 0;
 
@@ -153,15 +125,18 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                         totalScore += pointsEarned;
                         correctAnswers++;
                     }
-                    else if (answer != null)
+                    else if (answer != null && !needsManual)
                     {
                         wrongAnswers++;
                     }
+
+                    if (needsManual) hasPendingManualGrading = true;
 
                     if (answer != null)
                     {
                         answer.IsCorrect = isCorrect;
                         answer.PointsEarned = pointsEarned;
+                        answer.NeedsManualGrading = needsManual;
                         _answerRepository.Update(answer);
                     }
 
@@ -180,13 +155,14 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                                 .FirstOrDefault(o => o.IsCorrect)
                                 ?.OptionText,
                         IsCorrect = isCorrect,
+                        NeedsManualGrading = needsManual,
                         PointsEarned = pointsEarned,
                         MaxScores = maxScore,
                         Explanation = question.Explanation
                     });
                 }
 
-                // 6. Cập nhật attempt
+                // 6. Update the attempt
                 attempt.TotalScore = totalScore;
                 attempt.CorrectAnswers = correctAnswers;
                 attempt.WrongAnswers = wrongAnswers;
@@ -201,59 +177,25 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                // ✅ Kích hoạt AI tạo lời giải cho các câu sai trong background
-                // Chỉ lấy câu học sinh ĐÃ TRẢ LỜI NHƯNG SAI (loại bỏ câu bỏ trống)
+                // 7. Queue AI feedback for wrong (answered) questions — do NOT wait for it (A2-04).
                 var wrongAnswerDetails = answerDetails
-                    .Where(d => !d.IsCorrect && d.StudentAnswer != null)
+                    .Where(d => !d.IsCorrect && !d.NeedsManualGrading && d.StudentAnswer != null)
                     .ToList();
 
-                Console.WriteLine($"[AI Feedback] AttemptId={attempt.AttemptId} | Sai: {wrongAnswerDetails.Count} câu");
+                foreach (var w in wrongAnswerDetails)
+                    _aiFeedbackQueue.Enqueue(attempt.AttemptId, w.QuestionId, w.StudentAnswer);
 
-                if (wrongAnswerDetails.Any())
-                {
-                    try
-                    {
-                        var aiTasks = wrongAnswerDetails.Select(async w =>
-                        {
-                            Console.WriteLine($"[AI Feedback] Đang tạo feedback cho QuestionId={w.QuestionId}, AttemptId={attempt.AttemptId}");
-                            try
-                            {
-                                // ✅ TẠO SCOPE RIÊNG CHO TỪNG TASK
-                                using var scope = _scopeFactory.CreateScope();
-                                var feedbackService = scope.ServiceProvider.GetRequiredService<IAIFeedbackService>();
-                                
-                                var result = await feedbackService.CreateAsync(new CreateAIFeedbackDto
-                                {
-                                    AttemptId = attempt.AttemptId,
-                                    QuestionId = w.QuestionId,
-                                    StudentAnswer = w.StudentAnswer
-                                });
-                                Console.WriteLine($"[AI Feedback] QuestionId={w.QuestionId}: {(result.Success ? "✅ OK" : "❌ Lỗi: " + result.Message)}");
-                            }
-                            catch (Exception ex)
-                            {
-                                Console.WriteLine($"[AI Feedback Error] Attempt {attempt.AttemptId}, Question {w.QuestionId}: {ex.GetType().Name} - {ex.Message}");
-                            }
-                        });
-                        
-                        // Đợi TẤT CẢ các câu được AI chấm xong mới nộp bài được
-                        await Task.WhenAll(aiTasks);
-                    }
-                    catch (Exception globalEx)
-                    {
-                        Console.WriteLine($"[AI Feedback Fatal Error]: {globalEx.GetType().Name} - {globalEx.Message}");
-                    }
-                }
-
-                // 7. Trả kết quả
+                // 8. Return the result immediately (AI fields fill in later via /result)
                 var result = new ExerciseResultDto
                 {
                     AttemptId = attempt.AttemptId,
                     StudentId = attempt.StudentId ?? 0,
                     StudentName = attempt.Student?.User?.FullName,
                     ExerciseName = attempt.Exercise?.ExerciseName,
+                    Status = attempt.Status,
                     StartTime = attempt.StartTime,
-                    Duration = attempt.PlannedEndTime - attempt.StartTime,
+                    SubmittedAt = now,
+                    Duration = now - attempt.StartTime,
                     TotalScore = attempt.TotalScore,
                     MaxScore = attempt.MaxScore,
                     CompletionPercentage = attempt.CompletionPercentage,
@@ -262,6 +204,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     TotalQuestions = exerciseQuestions.Count,
                     IsPassed = attempt.Exercise != null &&
                                attempt.TotalScore >= attempt.Exercise.PassingScore,
+                    HasPendingManualGrading = hasPendingManualGrading,
                     AnswerDetails = answerDetails
                 };
 
@@ -285,12 +228,12 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         {
             try
             {
-                // 1. Lấy thông tin lượt làm bài
+                // 1. Load the attempt
                 var attempt = await _attemptRepository.GetAttemptWithDetailsAsync(attemptId);
                 if (attempt == null)
                     return ApiResponse<ExerciseResultDto>.ErrorResponse("Không tìm thấy lượt làm bài");
 
-                // Chưa hoàn thành thì không cho xem kết quả
+                // Results are only available once the attempt has been submitted
                 if (attempt.Status == AttemptStatus.InProgress)
                 {
                     return ApiResponse<ExerciseResultDto>.ErrorResponse(
@@ -298,22 +241,22 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     );
                 }
 
-                // 2. Lấy danh sách câu hỏi của bài
+                // 2. Load the exercise's questions
                 var exerciseQuestions = await _exerciseQuestionRepository.GetByExerciseIdAsync(attempt.ExerciseId);
 
-                // 3. Lấy câu trả lời của học sinh
+                // 3. Load the student's answers
                 var studentAnswers =
                     await _answerRepository.GetAttemptAnswersAsync(attemptId);
 
                 var answerLookup = studentAnswers.ToDictionary(a => a.QuestionId);
 
-                // Lấy Feedback của AI nếu có
+                // Load AI feedback if any
                 var aiFeedbacks = await _feedbackRepository.GetByAttemptAsync(attemptId);
                 var feedbackLookup = aiFeedbacks.GroupBy(f => f.QuestionId).ToDictionary(g => g.Key, g => g.First());
 
                 var answerDetails = new List<AnswerDetailDto>();
 
-                // 4. DUYỆT THEO DANH SÁCH CÂU HỎI GỐC CỦA ĐỀ THI
+                // 4. Iterate the exercise's original question list
                 foreach (var eq in exerciseQuestions)
                 {
                     var question = eq.Question;
@@ -335,18 +278,19 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                                         question.QuestionOptions?.FirstOrDefault(o => o.IsCorrect)?.OptionText,
 
                         IsCorrect = isCorrect,
+                        NeedsManualGrading = isAnswered && answer!.NeedsManualGrading,
                         PointsEarned = isAnswered ? answer!.PointsEarned : 0,
                         MaxScores = eq.Score,
                         Explanation = question.Explanation,
                         
-                        // Gán Feedback từ AI
+                        // AI feedback
                         FullSolution = feedbackLookup.TryGetValue(question.QuestionId, out var fb) ? fb.FullSolution : null,
                         MistakeAnalysis = fb?.MistakeAnalysis,
                         ImprovementAdvice = fb?.ImprovementAdvice
                     });
                 }
 
-                // 5. Map kết quả
+                // 5. Map the result
                 var result = new ExerciseResultDto
                 {
                     AttemptId = attempt.AttemptId,
@@ -370,7 +314,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     WrongAnswers = attempt.WrongAnswers,
                     TotalQuestions = exerciseQuestions.Count,
                     CompletionPercentage = attempt.CompletionPercentage,
-                    //IsPassed = 
+                    HasPendingManualGrading = answerDetails.Any(d => d.NeedsManualGrading),
                     AnswerDetails = answerDetails
                 };
 
@@ -439,7 +383,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     );
                 }
 
-                // Không cho lưu nếu đã submit
+                // No saving once the attempt has been submitted
                 if (attempt.Status != AttemptStatus.InProgress)
                 {
                     return ApiResponse<bool>.ErrorResponse(
@@ -448,8 +392,8 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     );
                 }
 
-                // Hết giờ thì KHÔNG cho save nữa
-                if (attempt.PlannedEndTime <= DateTime.UtcNow)
+                // Reject saves once the time limit has passed (null = no limit).
+                if (attempt.PlannedEndTime.HasValue && attempt.PlannedEndTime.Value <= DateTime.UtcNow)
                 {
                     return ApiResponse<bool>.ErrorResponse(
                         "Time is up",
@@ -510,32 +454,15 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
                 var now = DateTime.UtcNow;
 
-                /*var hasCompletedAttempt =
-                    await _context.ExerciseAttempts.AnyAsync(a =>
-                    a.StudentId == dto.StudentId
-                    && a.ExerciseId == dto.ExerciseId
-                    && a.Status != AttemptStatus.InProgress
-                );*/
-
-                // Check đã làm bài kiểm tra này hay chưa (chỉ cho làm 1 lần)
-                /*if (hasCompletedAttempt)
-                {
-                    return ApiResponse<ExerciseAttemptDto>.ErrorResponse(
-                        "Bạn đã hoàn thành bài thi này"
-                    );
-                }*/
-
-                // 1. LOGIC RESUME: Tìm lượt cũ chưa nộp (Status == InProgress)
-                // Nếu tìm thấy, trả về ngay lập tức để học sinh làm tiếp
+                // 1. RESUME: return an in-progress attempt so the student can carry on.
                 var existingAttempt = await _context.ExerciseAttempts
-                    .AsNoTracking()
                     .Where(a => a.StudentId == dto.StudentId && a.ExerciseId == dto.ExerciseId && a.Status == AttemptStatus.InProgress)
                     .OrderByDescending(a => a.StartTime)
                     .FirstOrDefaultAsync();
 
                 if (existingAttempt != null)
                 {
-                    if (now < existingAttempt.PlannedEndTime)
+                    if (existingAttempt.PlannedEndTime == null || now < existingAttempt.PlannedEndTime.Value)
                     {
                         var exerciseInfo = await _exerciseRepository.GetExerciseWithQuestionsAsync(dto.ExerciseId);
 
@@ -543,24 +470,34 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                             MapToAttemptDto(existingAttempt, exerciseInfo);
 
                         return ApiResponse<ExerciseAttemptDto>
-                            .SuccessResponse(resumeDto, "Tiếp tục lượt làm bài trước");
+                            .SuccessResponse(resumeDto, "Resuming your previous attempt");
                     }
-                    else
-                    {
-                        // Hết giờ → cập nhật timeout
-                        existingAttempt.Status = AttemptStatus.Timeout;
-                        existingAttempt.SubmittedAt = existingAttempt.PlannedEndTime;
-                        await _context.SaveChangesAsync();
-                    }
+
+                    // Time is up -> mark it as timed out.
+                    existingAttempt.Status = AttemptStatus.Timeout;
+                    existingAttempt.SubmittedAt = existingAttempt.PlannedEndTime;
+                    await _context.SaveChangesAsync();
                 }
 
-                // 2. TẠO MỚI (Chỉ chạy khi không có bài cũ dang dở)
+                // 2. CREATE A NEW ATTEMPT (only when there is no in-progress one)
                 var exercise = await _exerciseRepository.GetExerciseWithQuestionsAsync(dto.ExerciseId);
-                if (exercise == null) return ApiResponse<ExerciseAttemptDto>.ErrorResponse("Không tìm thấy đề thi");
+                if (exercise == null) return ApiResponse<ExerciseAttemptDto>.ErrorResponse("Exercise not found");
 
                 if (!exercise.IsActive || exercise.Status != ExerciseStatus.Published)
                 {
-                    return ApiResponse<ExerciseAttemptDto>.ErrorResponse("Bài thi hiện không khả dụng.");
+                    return ApiResponse<ExerciseAttemptDto>.ErrorResponse("This exercise is not available.");
+                }
+
+                // A2-08: enforce MaxAttempts (null = unlimited).
+                if (exercise.MaxAttempts.HasValue)
+                {
+                    var used = await _context.ExerciseAttempts.CountAsync(a =>
+                        a.StudentId == dto.StudentId && a.ExerciseId == dto.ExerciseId
+                        && a.Status != AttemptStatus.InProgress);
+
+                    if (used >= exercise.MaxAttempts.Value)
+                        return ApiResponse<ExerciseAttemptDto>.ErrorResponse(
+                            "You have used all attempts for this exercise");
                 }
 
                 var startTime = DateTime.UtcNow;
@@ -570,7 +507,9 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     StudentId = dto.StudentId,
                     ExerciseId = dto.ExerciseId,
                     StartTime = startTime,
-                    PlannedEndTime = startTime.AddMinutes((double)exercise.DurationMinutes),
+                    PlannedEndTime = exercise.DurationMinutes.HasValue
+                        ? startTime.AddMinutes(exercise.DurationMinutes.Value)
+                        : (DateTime?)null,
                     MaxScore = exercise.TotalScores,
                     Status = AttemptStatus.InProgress
                 };
@@ -591,7 +530,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         {
             try
             {
-                // Lấy câu hỏi random từ question bank
+                // Pull random questions from the question bank
                 var questions = await _exerciseRepository.GetRandomQuestionsAsync(
                     dto.BankId,
                     dto.NumberOfQuestions
@@ -627,7 +566,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     );
                 }
 
-                // Tạo exercise tạm thời (hoặc lưu vào DB nếu cần)
+                // Create a throwaway exercise for this random session
                 var exercise = new Exercise
                 {
                     ExerciseName = $"Random {dto.ExerciseType} - {DateTime.UtcNow:yyyy-MM-dd HH:mm}",
@@ -644,35 +583,39 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
                 await _exerciseRepository.CreateExerciseAsync(exercise);
 
-                // Tạo ExerciseQuestion (NƠI LƯU SCORE)
+                // Create the ExerciseQuestion rows (these hold the per-question score)
                 var exerciseQuestions = questions.Select((q, index) => new ExerciseQuestion
                 {
                     ExerciseId = exercise.ExerciseId,
                     QuestionId = q.QuestionId,
-                    Score = dto.MaxScore / questions.Count,   // chia đều điểm
+                    Score = dto.MaxScore / questions.Count,   // even split
                     OrderIndex = index + 1
                 }).ToList();
 
                 await _exerciseQuestionRepository.AddRangeAsync(exerciseQuestions);
 
-                // Tạo attempt
+                // Create the attempt (A2-03: set PlannedEndTime + Status)
+                var randomStart = DateTime.UtcNow;
                 var attempt = new ExerciseAttempt
                 {
                     StudentId = dto.StudentId,
                     ExerciseId = exercise.ExerciseId,
-                    StartTime = DateTime.UtcNow,
+                    StartTime = randomStart,
+                    PlannedEndTime = dto.DurationMinutes.HasValue
+                        ? randomStart.AddMinutes(dto.DurationMinutes.Value)
+                        : (DateTime?)null,
                     MaxScore = dto.MaxScore,
+                    Status = AttemptStatus.InProgress
                 };
 
                 var createdAttempt = await _attemptRepository.CreateAttemptAsync(attempt);
 
-                // Tạo lookup để lấy Score nhanh
                 var scoreLookup = exerciseQuestions.ToDictionary(
                     eq => eq.QuestionId,
                     eq => eq.Score
                 );
 
-                // Map sang DTO với questions
+                // Map to the DTO with its questions
                 var attemptDto = new ExerciseAttemptDto
                 {
                     AttemptId = createdAttempt.AttemptId,
@@ -681,6 +624,8 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     ExerciseName = exercise.ExerciseName,
                     ExerciseType = exercise.ExerciseType,
                     StartTime = createdAttempt.StartTime,
+                    PlannedEndTime = createdAttempt.PlannedEndTime,
+                    Status = createdAttempt.Status,
                     TotalQuestions = questions.Count,
                     Questions = questions.Select(q => new QuestionInAttemptDto
                     {
@@ -712,91 +657,27 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             }
         }
 
-        public async Task<ApiResponse<bool>> SubmitAnswerAsync(SaveAnswerDto dto)
+        public async Task<ApiResponse<FeedbackStatusDto>> GetFeedbackStatusAsync(int attemptId)
         {
             try
             {
-                // Kiểm tra attempt có tồn tại không
-                var attempt = await _attemptRepository.GetAttemptByIdAsync(dto.AttemptId);
+                var answers = await _answerRepository.GetAttemptAnswersAsync(attemptId);
+                var wrong = answers.Count(a => !a.IsCorrect && !a.NeedsManualGrading
+                                               && (a.AnswerText != null || a.SelectedOptionId != null));
 
-                if (attempt == null)
+                var feedbacks = await _feedbackRepository.GetByAttemptAsync(attemptId);
+                var ready = feedbacks.Select(f => f.QuestionId).Distinct().Count();
+
+                return ApiResponse<FeedbackStatusDto>.SuccessResponse(new FeedbackStatusDto
                 {
-                    return ApiResponse<bool>.ErrorResponse(
-                        "Attempt not found",
-                        new List<string> { $"No attempt found with ID: {dto.AttemptId}" }
-                    );
-                }
-
-                if (attempt.Status != AttemptStatus.InProgress)
-                {
-                    return ApiResponse<bool>.ErrorResponse(
-                        "Attempt already completed",
-                        new List<string> { "Cannot submit answer for completed attempt" }
-                    );
-                }
-
-                // Kiểm tra xem đã trả lời câu này chưa
-                var existingAnswer = await _answerRepository.GetAnswerAsync(
-                    dto.AttemptId,
-                    dto.QuestionId
-                );
-
-                if (existingAnswer != null)
-                {
-                    // Cập nhật câu trả lời
-                    existingAnswer.AnswerText = dto.AnswerText;
-                    existingAnswer.SelectedOptionId = dto.SelectedOptionId;
-                    existingAnswer.AnsweredAt = DateTime.UtcNow;
-
-                    await _answerRepository.UpdateAnswerAsync(existingAnswer);
-                }
-                else
-                {
-                    // Tạo câu trả lời mới
-                    var answer = new StudentAnswer
-                    {
-                        AttemptId = dto.AttemptId,
-                        QuestionId = dto.QuestionId,
-                        AnswerText = dto.AnswerText,
-                        SelectedOptionId = dto.SelectedOptionId,
-                        AnsweredAt = DateTime.UtcNow
-                    };
-
-                    await _answerRepository.CreateAnswerAsync(answer);
-                }
-
-                return ApiResponse<bool>.SuccessResponse(
-                    true,
-                    "Answer submitted successfully"
-                );
+                    TotalWrong = wrong,
+                    Ready = ready,
+                    Pending = Math.Max(0, wrong - ready)
+                });
             }
             catch (Exception ex)
             {
-                return ApiResponse<bool>.ErrorResponse(
-                    "Error submitting answer",
-                    new List<string> { ex.Message }
-                );
-            }
-        }
-
-        public async Task<ApiResponse<bool>> SubmitExamAsync(SubmitExamDto dto)
-        {
-            try
-            {
-                var answers = dto.Answers.Select(a => new StudentAnswer
-                {
-                    AttemptId = dto.AttemptId,
-                    QuestionId = a.QuestionId,
-                    SelectedOptionId = a.SelectedOptionId
-                }).ToList();
-
-                await _attemptRepository.SubmitExamAsync(dto.AttemptId, answers);
-
-                return ApiResponse<bool>.SuccessResponse(true, "Nộp bài thành công");
-            }
-            catch (Exception ex)
-            {
-                return ApiResponse<bool>.ErrorResponse("Lỗi khi nộp bài", new List<string> { ex.Message });
+                return ApiResponse<FeedbackStatusDto>.ErrorResponse("Error reading feedback status", new List<string> { ex.Message });
             }
         }
 
@@ -822,7 +703,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                                 OptionId = o.OptionId,
                                 OptionText = o.OptionText,
                                 ImageUrl = o.ImageUrl,
-                                // Không gửi IsCorrect về máy khách để tránh gian lận
+                                // Never send IsCorrect to the client (anti-cheat)
                             }).ToList() ?? new List<AnswerOptionDto>()
                         });
                     }
@@ -851,7 +732,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 var student = await _context.Students.FirstOrDefaultAsync(s => s.UserId == userId);
                 if (student == null) return ApiResponse<StudentDashboardDto>.ErrorResponse("Không tìm thấy học sinh.");
 
-                // 1. Chương = ContentNode kiểu Chapter trong các CourseVersion học sinh đã ghi danh.
+                // 1. Chapters = Chapter-type ContentNodes in the CourseVersions the student is enrolled in.
                 var versionIds = await _context.StudentCourses
                     .Where(sc => sc.StudentId == student.StudentId)
                     .Select(sc => sc.CourseVersionId)
@@ -863,7 +744,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     .Select(n => new { n.NodeId, n.Title, Prefix = n.MaterializedPath + n.NodeId + "/" })
                     .ToListAsync();
 
-                // 2. Lấy lịch sử làm bài của học sinh
+                // 2. Load the student's attempt history
                 var attempts = await _context.ExerciseAttempts
                     .Include(a => a.Exercise).ThenInclude(e => e!.Node)
                     .Where(a => a.StudentId == student.StudentId && a.Status != AttemptStatus.InProgress)
@@ -949,12 +830,12 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 var exerciseName = attempt.Exercise?.ExerciseName ?? "Bài kiểm tra";
                 var switchedAt = DateTime.UtcNow;
 
-                // Lưu lịch sử vi phạm vào DB
+                // Persist the violation
                 var log = new TabSwitchLog { AttemptId = attemptId, SwitchedAt = switchedAt };
                 _context.TabSwitchLogs.Add(log);
                 await _context.SaveChangesAsync();
 
-                // Lấy số lần vi phạm
+                // Count how many times it has happened
                 var switchCount = await _context.TabSwitchLogs.CountAsync(l => l.AttemptId == attemptId);
 
                 var parents = attempt.Student?.ParentLinks
@@ -965,11 +846,11 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
                 if (!parents.Any())
                 {
-                    // Không có phụ huynh liên kết — vẫn báo success
+                    // No linked parents — still report success
                     return ApiResponse<bool>.SuccessResponse(true, "Không có phụ huynh liên kết.");
                 }
 
-                // Gửi email song song cho tất cả phụ huynh
+                // Email every linked parent in parallel
                 var emailTasks = parents.Select(p =>
                     _emailService.SendTabSwitchNotificationAsync(
                         toEmail: p.User!.Email,

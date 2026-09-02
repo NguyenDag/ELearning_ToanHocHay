@@ -1,4 +1,5 @@
-﻿using ELearning_ToanHocHay_Control.Models.DTOs.Exercise;
+﻿using ELearning_ToanHocHay_Control.Attributes;
+using ELearning_ToanHocHay_Control.Models.DTOs.Exercise;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -9,6 +10,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class ExercisesController : ControllerBase
     {
         private readonly IExerciseService _exerciseService;
@@ -20,9 +22,10 @@ namespace ELearning_ToanHocHay_Control.Controllers
 
         // ============================
         // POST: /api/exercises
-        // Tạo exercise
+        // Create an exercise
         // ============================
         [HttpPost]
+        [AuthorizeContentRole]
         public async Task<IActionResult> CreateExercise([FromBody] ExerciseRequestDto dto)
         {
             var result = await _exerciseService.CreateExerciseAsync(dto);
@@ -34,7 +37,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
 
         // ============================
         // GET: /api/exercises
-        // Lấy danh sách exercise
+        // List exercises
         // ============================
         [HttpGet]
         public async Task<IActionResult> GetAll()
@@ -48,7 +51,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
 
         // ============================
         // GET: /api/exercises/{id}
-        // Lấy chi tiết exercise
+        // Get exercise detail
         // ============================
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
@@ -62,9 +65,10 @@ namespace ELearning_ToanHocHay_Control.Controllers
 
         // ============================
         // PUT: /api/exercises/{id}
-        // Cập nhật exercise
+        // Update an exercise
         // ============================
         [HttpPut("{id}")]
+        [AuthorizeContentRole]
         public async Task<IActionResult> UpdateExercise(int id, [FromBody] ExerciseRequestDto dto)
         {
             var result = await _exerciseService.UpdateExerciseAsync(id, dto);
@@ -76,9 +80,10 @@ namespace ELearning_ToanHocHay_Control.Controllers
 
         // ============================
         // DELETE: /api/exercises/{id}
-        // Xóa exercise
+        // Delete an exercise
         // ============================
         [HttpDelete("{id}")]
+        [AuthorizeContentRole]
         public async Task<IActionResult> DeleteExercise(int id)
         {
             var result = await _exerciseService.DeleteExerciseAsync(id);
@@ -90,9 +95,10 @@ namespace ELearning_ToanHocHay_Control.Controllers
 
         // ============================
         // POST: /api/exercises/{id}/questions
-        // Thêm câu hỏi vào exercise
+        // Add questions to an exercise
         // ============================
         [HttpPost("{exerciseId}/questions")]
+        [AuthorizeContentRole]
         public async Task<IActionResult> AddQuestions(int exerciseId, [FromBody] AddQuestionsToExerciseDto dto)
         {
             var result = await _exerciseService.AddQuestionsToExerciseAsync(exerciseId, dto);
@@ -121,11 +127,13 @@ namespace ELearning_ToanHocHay_Control.Controllers
             => Ok(await _exerciseService.GetExerciseQuestionsAsync(id));*/
 
         [HttpDelete("{exerciseId}/questions/{questionId}")]
+        [AuthorizeContentRole]
         public async Task<IActionResult> RemoveQuestion(int exerciseId, int questionId)
             => Ok(await _exerciseService
                 .RemoveQuestionFromExerciseAsync(exerciseId, questionId));
 
         [HttpPut("{exerciseId}/questions/{questionId}")]
+        [AuthorizeContentRole]
         public async Task<IActionResult> UpdateQuestionScore(
             int exerciseId,
             int questionId,

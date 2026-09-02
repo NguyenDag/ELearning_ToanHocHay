@@ -11,6 +11,7 @@ namespace ELearning_ToanHocHay_Control.Services.Interfaces
 
         Task<ApiResponse<UserDto>> CreateUserAsync(CreateUserDto user);
         Task<ApiResponse<UserDto>> UpdateUserAsync(int id, UpdateUserDto updateUserDto);
+        Task<ApiResponse<UserDto>> UpdateProfileAsync(int userId, UpdateProfileDto dto);
         Task<ApiResponse<bool>> DeleteUserAsync(int userId);
     }
 }

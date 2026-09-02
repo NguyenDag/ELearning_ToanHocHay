@@ -19,6 +19,9 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         public int? SelectedOptionId { get; set; }
         public bool IsCorrect { get; set; } = false;
 
+        // Essay answers wait for a human to grade them.
+        public bool NeedsManualGrading { get; set; } = false;
+
         public double PointsEarned { get; set; } = 0;
 
         public DateTime AnsweredAt { get; set; } = DateTime.UtcNow;

@@ -1,11 +1,16 @@
+using ELearning_ToanHocHay_Control.Common;
 using ELearning_ToanHocHay_Control.Models.DTOs.Chatbot;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace ELearning_ToanHocHay_Control.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
+    [EnableRateLimiting("ai")]
     public class ChatbotController : ControllerBase
     {
         private readonly IAIService _aiService;
@@ -22,13 +27,14 @@ namespace ELearning_ToanHocHay_Control.Controllers
         {
             try
             {
+                request.UserId = User.GetUserId()?.ToString();
                 var result = await _aiService.SendChatbotMessageAsync(request);
                 return Ok(result);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in ChatbotController.Message");
-                return StatusCode(500, new { success = false, error = ex.Message });
+                return StatusCode(500, new { success = false, error = "Internal server error" });
             }
         }
 
@@ -37,13 +43,14 @@ namespace ELearning_ToanHocHay_Control.Controllers
         {
             try
             {
+                request.UserId = User.GetUserId()?.ToString();
                 var result = await _aiService.SendChatbotQuickReplyAsync(request);
                 return Ok(result);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in ChatbotController.QuickReply");
-                return StatusCode(500, new { success = false, error = ex.Message });
+                return StatusCode(500, new { success = false, error = "Internal server error" });
             }
         }
 
@@ -52,13 +59,14 @@ namespace ELearning_ToanHocHay_Control.Controllers
         {
             try
             {
+                request.UserId = User.GetUserId()?.ToString();
                 var result = await _aiService.SendChatbotTriggerAsync(request);
                 return Ok(result);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in ChatbotController.Trigger");
-                return StatusCode(500, new { success = false, error = ex.Message });
+                return StatusCode(500, new { success = false, error = "Internal server error" });
             }
         }
     }

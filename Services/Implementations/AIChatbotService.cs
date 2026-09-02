@@ -21,10 +21,18 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             _logger = logger;
 
             // Configure HttpClient to call Flask AI server
-            var baseUrl = configuration["AI:PythonServerUrl"] ?? "http://localhost:5000";
+            var baseUrl = configuration["AI:PythonServerUrl"] ?? "http://localhost:5001";
             _logger.LogInformation($"[AIService] Initializing with BaseUrl: {baseUrl}");
             _httpClient.BaseAddress = new Uri(baseUrl);
             _httpClient.Timeout = TimeSpan.FromSeconds(60);
+
+            // Shared secret C# <-> Flask (A1-06): Flask rejects requests without a matching header.
+            var internalKey = configuration["AI:InternalApiKey"]
+                              ?? Environment.GetEnvironmentVariable("INTERNAL_API_KEY");
+            if (!string.IsNullOrEmpty(internalKey))
+            {
+                _httpClient.DefaultRequestHeaders.Add("X-Internal-Api-Key", internalKey);
+            }
         }
 
         private JsonSerializerOptions GetJsonOptions()

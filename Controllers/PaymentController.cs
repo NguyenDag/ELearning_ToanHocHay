@@ -1,5 +1,9 @@
-﻿using ELearning_ToanHocHay_Control.Models.DTOs.Payment;
+using ELearning_ToanHocHay_Control.Attributes;
+using ELearning_ToanHocHay_Control.Common;
+using ELearning_ToanHocHay_Control.Data.Entities;
+using ELearning_ToanHocHay_Control.Models.DTOs.Payment;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -7,19 +11,23 @@ namespace ELearning_ToanHocHay_Control.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class PaymentController : ControllerBase
     {
         private readonly IPaymentService _service;
+        private readonly IResourceAccessService _access;
         private readonly ILogger<PaymentController> _logger;
 
-        public PaymentController(IPaymentService service, ILogger<PaymentController> logger)
+        public PaymentController(IPaymentService service, IResourceAccessService access, ILogger<PaymentController> logger)
         {
             _service = service;
+            _access = access;
             _logger = logger;
         }
 
-        // GET: api/payment
+        // GET: api/payment — all financial data, Finance/Admin only
         [HttpGet]
+        [AuthorizeUserType(UserType.FinanceManager, UserType.SystemAdmin)]
         public async Task<IActionResult> GetAll()
         {
             var response = await _service.GetAllAsync();
@@ -29,10 +37,13 @@ namespace ELearning_ToanHocHay_Control.Controllers
             return Ok(response);
         }
 
-        // GET: api/payment/5
+        // GET: api/payment/5 — payer / beneficiary / Finance / Admin
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetById(int id)
         {
+            if (!await _access.CanAccessPaymentAsync(User, id))
+                return this.Forbidden();
+
             var response = await _service.GetByIdAsync(id);
             if (!response.Success)
                 return NotFound(response);
@@ -40,8 +51,9 @@ namespace ELearning_ToanHocHay_Control.Controllers
             return Ok(response);
         }
 
-        // PUT: api/payment/update-status/5
+        // PUT: api/payment/update-status/5 — Finance/Admin only
         [HttpPut("update-status/{id:int}")]
+        [AuthorizeUserType(UserType.FinanceManager, UserType.SystemAdmin)]
         public async Task<IActionResult> UpdateStatus(int id, UpdatePaymentStatusDto dto)
         {
             var response = await _service.UpdateStatusAsync(id, dto);

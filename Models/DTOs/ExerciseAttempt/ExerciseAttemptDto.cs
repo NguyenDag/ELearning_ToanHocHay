@@ -26,15 +26,18 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs.ExerciseAttempt
         public string? AnswerText { get; set; }
         public int? SelectedOptionId { get; set; }
     }
-    public class SubmitExamDto
-    {
-        public int AttemptId { get; set; }
-        public List<SaveAnswerDto> Answers { get; set; } = new();
-    }
 
     public class CompleteExerciseDto
     {
         public int AttemptId { get; set; }
+    }
+
+    public class FeedbackStatusDto
+    {
+        public int TotalWrong { get; set; }
+        public int Ready { get; set; }
+        public int Pending { get; set; }
+        public bool IsComplete => Pending <= 0;
     }
 
     // Response DTOs
@@ -46,8 +49,8 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs.ExerciseAttempt
         public string ExerciseName { get; set; }
         public ExerciseType ExerciseType { get; set; }
         public DateTime StartTime { get; set; }
-        // Thời điểm PHẢI kết thúc (đếm giờ)
-        public DateTime PlannedEndTime { get; set; }
+        // Deadline for the countdown timer; null = no time limit.
+        public DateTime? PlannedEndTime { get; set; }
 
         // Thời điểm thực sự nộp bài (null nếu chưa submit)
         public DateTime? SubmittedAt { get; set; }
@@ -102,6 +105,10 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs.ExerciseAttempt
         public int WrongAnswers { get; set; }
         public int TotalQuestions { get; set; }
         public bool IsPassed { get; set; }
+
+        // True when at least one Essay answer is still awaiting manual grading.
+        public bool HasPendingManualGrading { get; set; }
+
         public List<AnswerDetailDto> AnswerDetails { get; set; } = new();
     }
 
@@ -113,6 +120,7 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs.ExerciseAttempt
         public string CorrectAnswer { get; set; }
         public bool IsAnswered { get; set; }
         public bool IsCorrect { get; set; }
+        public bool NeedsManualGrading { get; set; }
         public double PointsEarned { get; set; }
         public double MaxScores { get; set; }
         public string? Explanation { get; set; }

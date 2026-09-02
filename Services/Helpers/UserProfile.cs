@@ -27,7 +27,6 @@ namespace ELearning_ToanHocHay_Control.Services.Helpers
                 .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore());
 
             CreateMap<CreateUserDto, User>();
-            CreateMap<UpdateUserDto, User>();
 
             CreateMap<ExerciseDto, Exercise>();
             CreateMap<ExerciseAttemptDto, Exercise?>();

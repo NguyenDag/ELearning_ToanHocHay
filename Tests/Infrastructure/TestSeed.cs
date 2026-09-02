@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ELearning_ToanHocHay_Control.Tests.Infrastructure;
 
-/// <summary>Ids of the minimal "golden dataset" for the A1 authorization-matrix tests.</summary>
+/// <summary>Ids of the "golden dataset" used by the A1 / A2 integration tests.</summary>
 public record SeededIds
 {
     public int StudentAUserId { get; init; }
@@ -17,21 +17,96 @@ public record SeededIds
     public int FinanceUserId { get; init; }
     public int AdminUserId { get; init; }
 
-    public int ExerciseId { get; init; }
-    public int AttemptAId { get; init; }           // Student A's attempt
+    public int ExerciseId { get; init; }           // 4 graded questions (MC / TF / FillBlank / Essay)
+    public int MaxAttemptsExerciseId { get; init; } // MaxAttempts = 1
+    public int AttemptAId { get; init; }            // Student A's in-progress attempt on ExerciseId
     public int PackageId { get; init; }
-    public int SubscriptionAId { get; init; }      // Student A's subscription
+    public decimal PackagePrice { get; init; }
+    public int SubscriptionAId { get; init; }
     public int PaymentAId { get; init; }
+
+    public int BankId { get; init; }
+    public int McQuestionId { get; init; }
+    public int McCorrectOptionId { get; init; }
+    public int TfQuestionId { get; init; }
+    public int TfTrueOptionId { get; init; }
+    public int FillBlankQuestionId { get; init; }
+    public int EssayQuestionId { get; init; }
 }
 
 public static class TestSeed
 {
+    private static readonly SemaphoreSlim Gate = new(1, 1);
+
     public static async Task<SeededIds> SeedAsync(AppDbContext db)
     {
-        // Data already present (re-run) -> return the existing ids without re-seeding.
-        if (await db.Users.AnyAsync(u => u.Email == "student.a@test.local"))
-            return await ReadExistingAsync(db);
+        await Gate.WaitAsync();
+        try
+        {
+            if (await db.Users.AsNoTracking().AnyAsync(u => u.Email == "admin@test.local"))
+                return await ReadExistingAsync(db);
 
+            return await SeedCoreAsync(db);
+        }
+        finally
+        {
+            Gate.Release();
+        }
+    }
+
+    private static async Task<SeededIds> ReadExistingAsync(AppDbContext db)
+    {
+        int U(string email) => db.Users.AsNoTracking().Single(u => u.Email == email).UserId;
+
+        var studentAUserId = U("student.a@test.local");
+        var studentBUserId = U("student.b@test.local");
+        var studentA = await db.Students.AsNoTracking().SingleAsync(s => s.UserId == studentAUserId);
+        var studentB = await db.Students.AsNoTracking().SingleAsync(s => s.UserId == studentBUserId);
+        var graded = await db.Exercises.AsNoTracking().SingleAsync(e => e.ExerciseName == "Graded quiz");
+        var oneShot = await db.Exercises.AsNoTracking().SingleAsync(e => e.ExerciseName == "One-shot test");
+        var attemptA = await db.ExerciseAttempts.AsNoTracking().FirstAsync(a => a.StudentId == studentA.StudentId);
+        var package = await db.Packages.AsNoTracking().FirstAsync();
+        var bank = await db.QuestionBanks.AsNoTracking().FirstAsync();
+        var qs = await db.Questions.AsNoTracking().Where(q => q.BankId == bank.BankId).ToListAsync();
+        var mc = qs.Single(q => q.QuestionType == QuestionType.MultipleChoice);
+        var tf = qs.Single(q => q.QuestionType == QuestionType.TrueFalse);
+        var fb = qs.Single(q => q.QuestionType == QuestionType.FillBlank);
+        var essay = qs.Single(q => q.QuestionType == QuestionType.Essay);
+        var mcCorrect = await db.QuestionOptions.AsNoTracking().FirstAsync(o => o.QuestionId == mc.QuestionId && o.IsCorrect);
+        var tfTrue = await db.QuestionOptions.AsNoTracking().FirstAsync(o => o.QuestionId == tf.QuestionId && o.IsCorrect);
+        var subscriptionA = await db.Subscriptions.AsNoTracking().FirstAsync(s => s.StudentId == studentA.StudentId);
+        var paymentA = await db.Payments.AsNoTracking().FirstAsync(p => p.StudentId == studentA.StudentId);
+
+        return new SeededIds
+        {
+            StudentAUserId = studentAUserId,
+            StudentAId = studentA.StudentId,
+            StudentBUserId = studentBUserId,
+            StudentBId = studentB.StudentId,
+            ParentLinkedUserId = U("parent.linked@test.local"),
+            ParentUnlinkedUserId = U("parent.unlinked@test.local"),
+            ContentEditorUserId = U("editor@test.local"),
+            FinanceUserId = U("finance@test.local"),
+            AdminUserId = U("admin@test.local"),
+            ExerciseId = graded.ExerciseId,
+            MaxAttemptsExerciseId = oneShot.ExerciseId,
+            AttemptAId = attemptA.AttemptId,
+            PackageId = package.PackageId,
+            PackagePrice = package.Price,
+            SubscriptionAId = subscriptionA.SubscriptionId,
+            PaymentAId = paymentA.PaymentId,
+            BankId = bank.BankId,
+            McQuestionId = mc.QuestionId,
+            McCorrectOptionId = mcCorrect.OptionId,
+            TfQuestionId = tf.QuestionId,
+            TfTrueOptionId = tfTrue.OptionId,
+            FillBlankQuestionId = fb.QuestionId,
+            EssayQuestionId = essay.QuestionId
+        };
+    }
+
+    private static async Task<SeededIds> SeedCoreAsync(AppDbContext db)
+    {
         User NewUser(string email, UserType type) => new()
         {
             Email = email,
@@ -72,25 +147,78 @@ public static class TestSeed
             IsPrimaryGuardian = true
         });
 
-        var package = new Package
+        // --- Question bank (Subject "MATH" + GradeLevel "G6" come from the InitialCreate seed) ---
+        var subject = await db.Subjects.SingleAsync(s => s.Code == "MATH");
+        var grade = await db.GradeLevels.SingleAsync(g => g.Code == "G6");
+
+        var bank = new QuestionBank
         {
-            UserId = adminUser.UserId,
-            PackageName = "Gói tiêu chuẩn",
-            Tier = PackageTier.Standard,
-            Price = 199000,
-            DurationDays = 30
+            BankName = "Grade 6 Math bank",
+            SubjectId = subject.SubjectId,
+            GradeLevelId = grade.GradeLevelId,
+            CreatedBy = editorUser.UserId,
+            IsActive = true
         };
-        var exercise = new Exercise
+        db.QuestionBanks.Add(bank);
+        await db.SaveChangesAsync();
+
+        Question NewQuestion(QuestionType type, string text, string? correct) => new()
         {
-            ExerciseName = "Bài kiểm tra thử",
-            ExerciseType = ExerciseType.Quiz,
-            Status = ExerciseStatus.Published,
+            BankId = bank.BankId,
+            SubjectId = subject.SubjectId,
+            QuestionText = text,
+            QuestionType = type,
+            DifficultyLevel = DifficultyLevel.Easy,
+            CorrectAnswer = correct,
+            Status = QuestionStatus.Approved,
             IsActive = true,
             CreatedBy = editorUser.UserId
         };
-        db.Packages.Add(package);
-        db.Exercises.Add(exercise);
+
+        var mc = NewQuestion(QuestionType.MultipleChoice, "2 + 2 = ?", null);
+        var tf = NewQuestion(QuestionType.TrueFalse, "Is 3 an odd number?", "true");
+        var fb = NewQuestion(QuestionType.FillBlank, "Half of 1 = ?", "1/2");
+        var essay = NewQuestion(QuestionType.Essay, "Explain why 0 is even.", null);
+        db.Questions.AddRange(mc, tf, fb, essay);
         await db.SaveChangesAsync();
+
+        var mcA = new QuestionOption { QuestionId = mc.QuestionId, OptionText = "4", IsCorrect = true, OrderIndex = 1 };
+        var mcB = new QuestionOption { QuestionId = mc.QuestionId, OptionText = "5", IsCorrect = false, OrderIndex = 2 };
+        var tfTrue = new QuestionOption { QuestionId = tf.QuestionId, OptionText = "True", IsCorrect = true, OrderIndex = 1 };
+        var tfFalse = new QuestionOption { QuestionId = tf.QuestionId, OptionText = "False", IsCorrect = false, OrderIndex = 2 };
+        db.QuestionOptions.AddRange(mcA, mcB, tfTrue, tfFalse);
+        await db.SaveChangesAsync();
+
+        // --- Exercises ---
+        var exercise = new Exercise
+        {
+            ExerciseName = "Graded quiz",
+            ExerciseType = ExerciseType.Quiz,
+            Status = ExerciseStatus.Published,
+            IsActive = true,
+            TotalScores = 4,
+            PassingScore = 2,
+            TotalQuestions = 4,
+            CreatedBy = editorUser.UserId
+        };
+        var maxAttemptsExercise = new Exercise
+        {
+            ExerciseName = "One-shot test",
+            ExerciseType = ExerciseType.Test,
+            Status = ExerciseStatus.Published,
+            IsActive = true,
+            TotalScores = 1,
+            MaxAttempts = 1,
+            CreatedBy = editorUser.UserId
+        };
+        db.Exercises.AddRange(exercise, maxAttemptsExercise);
+        await db.SaveChangesAsync();
+
+        db.ExerciseQuestions.AddRange(
+            new ExerciseQuestion { ExerciseId = exercise.ExerciseId, QuestionId = mc.QuestionId, Score = 1, OrderIndex = 1 },
+            new ExerciseQuestion { ExerciseId = exercise.ExerciseId, QuestionId = tf.QuestionId, Score = 1, OrderIndex = 2 },
+            new ExerciseQuestion { ExerciseId = exercise.ExerciseId, QuestionId = fb.QuestionId, Score = 1, OrderIndex = 3 },
+            new ExerciseQuestion { ExerciseId = exercise.ExerciseId, QuestionId = essay.QuestionId, Score = 1, OrderIndex = 4 });
 
         var attemptA = new ExerciseAttempt
         {
@@ -98,9 +226,22 @@ public static class TestSeed
             ExerciseId = exercise.ExerciseId,
             StartTime = DateTime.UtcNow,
             PlannedEndTime = DateTime.UtcNow.AddMinutes(30),
+            MaxScore = 4,
             Status = AttemptStatus.InProgress
         };
         db.ExerciseAttempts.Add(attemptA);
+
+        // --- Package / payment / subscription ---
+        var package = new Package
+        {
+            UserId = adminUser.UserId,
+            PackageName = "Standard",
+            Tier = PackageTier.Standard,
+            Price = 199000,
+            DurationDays = 30
+        };
+        db.Packages.Add(package);
+        await db.SaveChangesAsync();
 
         var paymentA = new Payment
         {
@@ -138,43 +279,19 @@ public static class TestSeed
             FinanceUserId = financeUser.UserId,
             AdminUserId = adminUser.UserId,
             ExerciseId = exercise.ExerciseId,
+            MaxAttemptsExerciseId = maxAttemptsExercise.ExerciseId,
             AttemptAId = attemptA.AttemptId,
             PackageId = package.PackageId,
+            PackagePrice = package.Price,
             SubscriptionAId = subscriptionA.SubscriptionId,
-            PaymentAId = paymentA.PaymentId
-        };
-    }
-
-    private static async Task<SeededIds> ReadExistingAsync(AppDbContext db)
-    {
-        int UserId(string email) => db.Users.Single(u => u.Email == email).UserId;
-
-        var studentAUserId = UserId("student.a@test.local");
-        var studentBUserId = UserId("student.b@test.local");
-        var studentA = await db.Students.SingleAsync(s => s.UserId == studentAUserId);
-        var studentB = await db.Students.SingleAsync(s => s.UserId == studentBUserId);
-        var exercise = await db.Exercises.FirstAsync();
-        var attemptA = await db.ExerciseAttempts.FirstAsync(a => a.StudentId == studentA.StudentId);
-        var package = await db.Packages.FirstAsync();
-        var subscriptionA = await db.Subscriptions.FirstAsync(s => s.StudentId == studentA.StudentId);
-        var paymentA = await db.Payments.FirstAsync(p => p.StudentId == studentA.StudentId);
-
-        return new SeededIds
-        {
-            StudentAUserId = studentAUserId,
-            StudentAId = studentA.StudentId,
-            StudentBUserId = studentBUserId,
-            StudentBId = studentB.StudentId,
-            ParentLinkedUserId = UserId("parent.linked@test.local"),
-            ParentUnlinkedUserId = UserId("parent.unlinked@test.local"),
-            ContentEditorUserId = UserId("editor@test.local"),
-            FinanceUserId = UserId("finance@test.local"),
-            AdminUserId = UserId("admin@test.local"),
-            ExerciseId = exercise.ExerciseId,
-            AttemptAId = attemptA.AttemptId,
-            PackageId = package.PackageId,
-            SubscriptionAId = subscriptionA.SubscriptionId,
-            PaymentAId = paymentA.PaymentId
+            PaymentAId = paymentA.PaymentId,
+            BankId = bank.BankId,
+            McQuestionId = mc.QuestionId,
+            McCorrectOptionId = mcA.OptionId,
+            TfQuestionId = tf.QuestionId,
+            TfTrueOptionId = tfTrue.OptionId,
+            FillBlankQuestionId = fb.QuestionId,
+            EssayQuestionId = essay.QuestionId
         };
     }
 }

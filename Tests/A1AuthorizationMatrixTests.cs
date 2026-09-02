@@ -10,7 +10,8 @@ namespace ELearning_ToanHocHay_Control.Tests;
 /// Authorization-matrix tests for group A1 (the P0 Definition of Done).
 /// Each test is named after the finding code in docs/Ra-soat-API-va-ke-hoach-kiem-soat.md.
 /// </summary>
-public class A1AuthorizationMatrixTests : IClassFixture<A1TestFactory>
+[Collection(IntegrationCollection.Name)]
+public class A1AuthorizationMatrixTests
 {
     private readonly A1TestFactory _f;
     private SeededIds Id => _f.Ids;

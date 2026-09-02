@@ -66,16 +66,20 @@ namespace ELearning_ToanHocHay_Control.Controllers
             if (!await _access.CanAccessStudentAsync(User, dto.StudentId))
                 return this.Forbidden("You cannot create a subscription for this student");
 
-            var result = await _subscriptionPaymentService.CreatePendingAsync(dto);
+            var payerId = User.GetUserId();
+            if (payerId == null) return this.Forbidden();
+
+            var result = await _subscriptionPaymentService.CreatePendingAsync(dto, payerId.Value);
 
             if (!result.Success)
                 return BadRequest(result);
 
-            var qrUrl = _sePayService.GenerateQrUrl(result.Data, dto.AmountPaid);
+            var qrUrl = _sePayService.GenerateQrUrl(result.Data.SubscriptionId, result.Data.Amount);
 
             return Ok(new
             {
-                subscriptionId = result.Data,
+                subscriptionId = result.Data.SubscriptionId,
+                amount = result.Data.Amount,
                 qrUrl
             });
         }

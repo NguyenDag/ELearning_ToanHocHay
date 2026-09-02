@@ -24,7 +24,9 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         public int ExerciseId { get; set; }
 
         public DateTime StartTime { get; set; } = DateTime.UtcNow;
-        public DateTime PlannedEndTime { get; set; }
+
+        // Null = no time limit (Practice / random exercises without a duration).
+        public DateTime? PlannedEndTime { get; set; }
         public DateTime? SubmittedAt { get; set; }
 
         public AttemptStatus Status { get; set; } = AttemptStatus.InProgress;

@@ -30,7 +30,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             _context = context;
         }
 
-        public async Task<ApiResponse<int>> CreatePendingAsync(CreateSubscriptionDto dto)
+        public async Task<ApiResponse<CreatePendingResultDto>> CreatePendingAsync(CreateSubscriptionDto dto, int paidByUserId)
         {
             await _unitOfWork.BeginTransactionAsync();
 
@@ -39,29 +39,33 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 var package = await _packageRepository.GetByIdAsync(dto.PackageId);
                 if (package == null)
                 {
-                    return ApiResponse<int>.ErrorResponse("Gói học không tồn tại");
+                    return ApiResponse<CreatePendingResultDto>.ErrorResponse("Package not found");
                 }
 
-                // 1. Tạo payment trước
+                // Price is decided by the server, never by the client (A2-02).
+                var amount = package.Price;
+
+                // 1. Create the payment first
                 var payment = new Payment
                 {
+                    PaidByUserId = paidByUserId,
                     StudentId = dto.StudentId,
-                    Amount = dto.AmountPaid,
+                    Amount = amount,
                     PaymentMethod = PaymentMethod.BankTransfer,
                     Status = PaymentStatus.Pending,
-                    Notes = "Thanh toán SePay"
+                    Notes = "SePay payment"
                 };
 
                 _context.Payments.Add(payment);
                 await _context.SaveChangesAsync();
 
-                // 2. Tạo subscription pending
+                // 2. Create the pending subscription
                 var subscription = new Subscription
                 {
                     StudentId = dto.StudentId,
                     PackageId = dto.PackageId,
                     Payment = payment,
-                    AmountPaid = dto.AmountPaid,
+                    AmountPaid = amount,
                     Status = SubscriptionStatus.Pending
                 };
 
@@ -70,8 +74,13 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
                 await _unitOfWork.CommitAsync();
 
-                return ApiResponse<int>
-                    .SuccessResponse(subscription.SubscriptionId, "Tạo subscription chờ thanh toán");
+                return ApiResponse<CreatePendingResultDto>.SuccessResponse(
+                    new CreatePendingResultDto
+                    {
+                        SubscriptionId = subscription.SubscriptionId,
+                        Amount = amount
+                    },
+                    "Pending subscription created");
             }
             catch
             {

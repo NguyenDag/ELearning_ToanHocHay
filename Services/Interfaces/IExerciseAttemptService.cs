@@ -12,23 +12,21 @@ namespace ELearning_ToanHocHay_Control.Services.Interfaces
         // Bắt đầu làm bài random
         Task<ApiResponse<ExerciseAttemptDto>> StartRandomExerciseAsync(StartRandomExerciseDto dto);
 
-        // Lưu câu trả lời (Bản cũ)
-        Task<ApiResponse<bool>> SubmitAnswerAsync(SaveAnswerDto dto);
-
-        // Lưu câu trả lời (Bản mới)
+        // Autosave a single answer
         Task<ApiResponse<bool>> SaveAnswerAsync(SaveAnswerDto dto);
 
-        // Hoàn thành bài tập và tính điểm
+        // Finalise an attempt and compute the score
         Task<ApiResponse<ExerciseResultDto>> CompleteExerciseAsync(CompleteExerciseDto dto);
 
-        // Xem lại bài làm
+        // View a completed attempt
         Task<ApiResponse<ExerciseResultDto>> GetExerciseResultAsync(int attemptId);
 
-        // Lấy lịch sử làm bài của học sinh
+        // A student's attempt history
         Task<ApiResponse<List<ExerciseResultDto>>> GetStudentHistoryAsync(int studentId);
 
-        // Nộp toàn bộ câu hỏi
-        Task<ApiResponse<bool>> SubmitExamAsync(SubmitExamDto dto);
+        // AI feedback generation progress for an attempt
+        Task<ApiResponse<FeedbackStatusDto>> GetFeedbackStatusAsync(int attemptId);
+
         Task<ApiResponse<StudentDashboardDto>> GetDashboardStatsAsync(int userId);
 
         // Báo cáo chuyển tab

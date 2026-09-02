@@ -174,15 +174,16 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     );
                 }
 
-                // Update info
-                if (!string.IsNullOrEmpty(updateUserDto.FullName))
+                // Patch semantics: only apply fields that were sent.
+                // Password / UserType / IsActive are NOT editable here (A2-01).
+                if (!string.IsNullOrWhiteSpace(updateUserDto.FullName))
                     user.FullName = updateUserDto.FullName;
-                user.PasswordHash = updateUserDto.Password;
-                user.Phone = updateUserDto.Phone;
-                user.Dob = updateUserDto.Dob;
-                user.AvatarUrl = updateUserDto.AvatarUrl;
-                user.UserType = updateUserDto.UserType;
-                user.IsActive = updateUserDto.IsActive;
+                if (updateUserDto.Phone != null)
+                    user.Phone = updateUserDto.Phone;
+                if (updateUserDto.Dob.HasValue)
+                    user.Dob = updateUserDto.Dob;
+                if (updateUserDto.AvatarUrl != null)
+                    user.AvatarUrl = updateUserDto.AvatarUrl;
                 user.UpdatedAt = DateTime.UtcNow;
 
                 var updatedUser = await _userRepository.UpdateUserAsync(user);
@@ -206,6 +207,49 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     "Error updating user",
                     new List<string> { ex.Message }
                 );
+            }
+        }
+
+        public async Task<ApiResponse<UserDto>> UpdateProfileAsync(int userId, UpdateProfileDto dto)
+        {
+            try
+            {
+                // GetByIdAsync tracks the User together with its Student navigation.
+                var user = await _userRepository.GetByIdAsync(userId);
+                if (user == null)
+                    return ApiResponse<UserDto>.ErrorResponse(
+                        "User not found",
+                        new List<string> { $"No user found with ID: {userId}" });
+
+                var changed = false;
+
+                if (!string.IsNullOrWhiteSpace(dto.FullName))
+                {
+                    user.FullName = dto.FullName;
+                    changed = true;
+                }
+
+                if (dto.SchoolName != null && user.Student != null)
+                {
+                    user.Student.SchoolName = dto.SchoolName;
+                    changed = true;
+                }
+
+                if (changed)
+                {
+                    user.UpdatedAt = DateTime.UtcNow;
+                    await _userRepository.UpdateUserAsync(user);
+                }
+
+                return ApiResponse<UserDto>.SuccessResponse(
+                    _mapper.Map<UserDto>(user),
+                    "Profile updated successfully");
+            }
+            catch (Exception ex)
+            {
+                return ApiResponse<UserDto>.ErrorResponse(
+                    "Error updating profile",
+                    new List<string> { ex.Message });
             }
         }
     }

@@ -44,10 +44,9 @@ public class A1TestFactory : WebApplicationFactory<Program>, IAsyncLifetime
         Environment.SetEnvironmentVariable("JwtSettings__Audience", "test-audience");
         Environment.SetEnvironmentVariable("JwtSettings__ExpirationMinutes", "60");
 
-        // Touching Services -> host build -> Program.Main runs the migration.
+        // Touching Services builds the host, which runs Program.Main -> db.Database.Migrate().
         using var scope = Services.CreateScope();
         var ctx = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        await ctx.Database.MigrateAsync();
         Ids = await TestSeed.SeedAsync(ctx);
     }
 
@@ -80,6 +79,14 @@ public class A1TestFactory : WebApplicationFactory<Program>, IAsyncLifetime
             client.DefaultRequestHeaders.Authorization =
                 new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", CreateToken(uid));
         return client;
+    }
+
+    /// <summary>Runs a read against a fresh <see cref="AppDbContext"/> scope.</summary>
+    public async Task<T> QueryDbAsync<T>(Func<AppDbContext, Task<T>> query)
+    {
+        using var scope = Services.CreateScope();
+        var ctx = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        return await query(ctx);
     }
 
     async Task IAsyncLifetime.DisposeAsync()

@@ -110,20 +110,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
             if (!User.IsSystemAdmin() && User.GetUserId() != id)
                 return this.Forbidden();
 
-            // Load the current user first.
-            var userResponse = await _userService.GetByIdAsync(id);
-            if (!userResponse.Success || userResponse.Data == null)
-                return BadRequest("User not found");
-
-            // UpdateUserDto requires a Password value; pass an empty string
-            // (UserService decides how to treat it).
-            var updateDto = new UpdateUserDto
-            {
-                FullName = model.FullName,
-                Password = ""
-            };
-
-            var response = await _userService.UpdateUserAsync(id, updateDto);
+            var response = await _userService.UpdateProfileAsync(id, model);
             if (!response.Success) return BadRequest(response);
 
             return Ok(response);

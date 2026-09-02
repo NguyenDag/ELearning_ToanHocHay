@@ -67,25 +67,6 @@ namespace ELearning_ToanHocHay_Control.Controllers
         }
 
         /// <summary>
-        /// Submit an answer for a single question.
-        /// Legacy endpoint; use /save-answer to persist a student's answer.
-        /// </summary>
-        [HttpPost("submit-answer")]
-        public async Task<ActionResult<ApiResponse<bool>>> SubmitAnswer(
-            [FromBody] SaveAnswerDto dto)
-        {
-            if (!await _access.CanModifyAttemptAsync(User, dto.AttemptId))
-                return this.Forbidden();
-
-            var response = await _attemptService.SubmitAnswerAsync(dto);
-
-            if (!response.Success)
-                return BadRequest(response);
-
-            return Ok(response);
-        }
-
-        /// <summary>
         /// Auto-save a single answer.
         /// </summary>
         [HttpPost("save-answer")]
@@ -104,31 +85,8 @@ namespace ELearning_ToanHocHay_Control.Controllers
 
 
         /// <summary>
-        /// Submit the whole exam in a single request.
-        /// </summary>
-        [HttpPost("submit")]
-        public async Task<ActionResult<ApiResponse<bool>>> SubmitExam(
-            [FromBody] SubmitExamDto dto)
-        {
-            if (dto == null || dto.AttemptId <= 0 || dto.Answers == null || !dto.Answers.Any())
-            {
-                return BadRequest(ApiResponse<bool>.ErrorResponse("Invalid submission payload"));
-            }
-
-            if (!await _access.CanModifyAttemptAsync(User, dto.AttemptId))
-                return this.Forbidden();
-
-            var response = await _attemptService.SubmitExamAsync(dto);
-
-            if (!response.Success)
-                return BadRequest(response);
-
-            return Ok(response);
-        }
-
-
-        /// <summary>
-        /// Complete an attempt and compute the score.
+        /// Complete an attempt and compute the score. AI feedback is generated in the
+        /// background — poll <c>{attemptId}/feedback-status</c> or re-fetch <c>{attemptId}/result</c>.
         /// </summary>
         [HttpPost("complete")]
         public async Task<ActionResult<ApiResponse<ExerciseResultDto>>> CompleteExercise(
@@ -191,6 +149,23 @@ namespace ELearning_ToanHocHay_Control.Controllers
                 return this.Forbidden();
 
             var response = await _attemptService.ReportTabSwitchAsync(attemptId);
+
+            if (!response.Success)
+                return BadRequest(response);
+
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// AI feedback generation progress for an attempt.
+        /// </summary>
+        [HttpGet("{attemptId}/feedback-status")]
+        public async Task<ActionResult<ApiResponse<FeedbackStatusDto>>> GetFeedbackStatus(int attemptId)
+        {
+            if (!await _access.CanViewAttemptAsync(User, attemptId))
+                return this.Forbidden();
+
+            var response = await _attemptService.GetFeedbackStatusAsync(attemptId);
 
             if (!response.Success)
                 return BadRequest(response);

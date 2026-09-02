@@ -271,6 +271,10 @@ namespace ELearning_ToanHocHay_Control
             services.AddSingleton<IBackgroundEmailService, BackgroundEmailService>();
             services.AddHostedService<BackgroundEmailService>(provider =>
                 (BackgroundEmailService)provider.GetRequiredService<IBackgroundEmailService>());
+
+            services.AddSingleton<IAiFeedbackQueue, AiFeedbackBackgroundService>();
+            services.AddHostedService<AiFeedbackBackgroundService>(provider =>
+                (AiFeedbackBackgroundService)provider.GetRequiredService<IAiFeedbackQueue>());
         }
 
         private static void ConfigureSwagger(IServiceCollection services)

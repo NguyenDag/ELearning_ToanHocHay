@@ -30,14 +30,15 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs
         public UserType UserType { get; set; }
     }
 
+    /// <summary>
+    /// Patch semantics: only non-null fields are applied.
+    /// Password is changed via /api/auth/change-password; UserType / IsActive via admin endpoints only.
+    /// </summary>
     public class UpdateUserDto
     {
-        public required string Password { get; set; }
-        public required string FullName { get; set; }
+        public string? FullName { get; set; }
         public string? Phone { get; set; }
         public DateOnly? Dob { get; set; }
         public string? AvatarUrl { get; set; }
-        public UserType UserType { get; set; }
-        public bool IsActive { get; set; }
     }
 }

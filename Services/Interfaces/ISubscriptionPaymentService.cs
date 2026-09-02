@@ -5,6 +5,6 @@ namespace ELearning_ToanHocHay_Control.Services.Interfaces
 {
     public interface ISubscriptionPaymentService
     {
-        Task<ApiResponse<int>> CreatePendingAsync(CreateSubscriptionDto dto);
+        Task<ApiResponse<CreatePendingResultDto>> CreatePendingAsync(CreateSubscriptionDto dto, int paidByUserId);
     }
 }

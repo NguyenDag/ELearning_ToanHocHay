@@ -9,6 +9,9 @@ namespace ELearning_ToanHocHay_Control.Repositories.Interfaces
         Task<List<ContentNode>> GetNodesByVersionAsync(int courseVersionId);
         Task<ContentNode?> GetNodeAsync(int nodeId);
         Task<ContentNode?> GetNodeWithDetailAsync(int nodeId);
+
+        /// <summary>Node + details + CourseVersion + Course — for the consumption gate.</summary>
+        Task<ContentNode?> GetNodeForConsumptionAsync(int nodeId);
         Task<List<ContentNode>> GetChildrenAsync(int courseVersionId, int? parentNodeId);
         Task<bool> HasChildrenAsync(int nodeId);
         Task<ContentNode> AddNodeAsync(ContentNode node);

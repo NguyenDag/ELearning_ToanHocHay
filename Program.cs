@@ -248,6 +248,7 @@ namespace ELearning_ToanHocHay_Control
             services.AddScoped<ICatalogRepository, CatalogRepository>();
             services.AddScoped<ICourseRepository, CourseRepository>();
             services.AddScoped<IContentRepository, ContentRepository>();
+            services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
 
             // Services
             services.AddScoped<IAuthService, AuthService>();
@@ -276,6 +277,9 @@ namespace ELearning_ToanHocHay_Control
             services.AddScoped<ICatalogService, CatalogService>();
             services.AddScoped<ICourseService, CourseService>();
             services.AddScoped<IContentAuthoringService, ContentAuthoringService>();
+            services.AddScoped<IContentAccessService, ContentAccessService>();
+            services.AddScoped<IEnrollmentService, EnrollmentService>();
+            services.AddScoped<ILearnService, LearnService>();
 
             // Background Services
             services.AddSingleton<IBackgroundEmailService, BackgroundEmailService>();

@@ -40,6 +40,16 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
                 .Include(n => n.FlashcardDecks).ThenInclude(d => d.Cards)
                 .FirstOrDefaultAsync(n => n.NodeId == nodeId);
 
+        public Task<ContentNode?> GetNodeForConsumptionAsync(int nodeId)
+            => _context.ContentNodes
+                .AsNoTracking()
+                .Include(n => n.LessonDetail)
+                .Include(n => n.Blocks)
+                .Include(n => n.Resources)
+                .Include(n => n.FlashcardDecks).ThenInclude(d => d.Cards)
+                .Include(n => n.CourseVersion).ThenInclude(v => v!.Course)
+                .FirstOrDefaultAsync(n => n.NodeId == nodeId);
+
         public async Task<List<ContentNode>> GetChildrenAsync(int courseVersionId, int? parentNodeId)
             => await _context.ContentNodes
                 .Where(n => n.CourseVersionId == courseVersionId && n.ParentNodeId == parentNodeId)

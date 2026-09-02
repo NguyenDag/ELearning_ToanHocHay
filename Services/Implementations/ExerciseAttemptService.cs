@@ -488,6 +488,15 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     return ApiResponse<ExerciseAttemptDto>.ErrorResponse("This exercise is not available.");
                 }
 
+                // A2-08: enforce the access tier (a free exercise is always allowed).
+                if (!exercise.IsFree && exercise.RequiredTier != AccessTier.Free)
+                {
+                    var studentTier = await GetStudentTierAsync(dto.StudentId);
+                    if ((int)studentTier < (int)exercise.RequiredTier)
+                        return ApiResponse<ExerciseAttemptDto>.ErrorResponse(
+                            $"This exercise requires the {exercise.RequiredTier} package");
+                }
+
                 // A2-08: enforce MaxAttempts (null = unlimited).
                 if (exercise.MaxAttempts.HasValue)
                 {
@@ -805,6 +814,32 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 return ApiResponse<StudentDashboardDto>.ErrorResponse(ex.Message);
             }
         }
+        /// <summary>Current access tier of a student, derived from their active subscription (default Free).</summary>
+        private async Task<AccessTier> GetStudentTierAsync(int studentId)
+        {
+            var now = DateTime.UtcNow;
+            var tier = await _context.Subscriptions
+                .Where(s => s.StudentId == studentId
+                            && s.Status == SubscriptionStatus.Active
+                            && s.StartDate <= now && s.EndDate > now)
+                .Include(s => s.Package)
+                .Select(s => (PackageTier?)s.Package!.Tier)
+                .OrderByDescending(t => t)
+                .FirstOrDefaultAsync();
+
+            return tier switch
+            {
+                PackageTier.Premium => AccessTier.Premium,
+                PackageTier.Standard => AccessTier.Standard,
+                _ => AccessTier.Free
+            };
+        }
+
+        // Ignore repeat tab-switch reports fired within this window (browsers can fire several).
+        private static readonly TimeSpan TabSwitchDebounce = TimeSpan.FromSeconds(15);
+        // Stop emailing parents after this many switches in one attempt (log still records them all).
+        private const int TabSwitchEmailCap = 5;
+
         public async Task<ApiResponse<bool>> ReportTabSwitchAsync(int attemptId)
         {
             try
@@ -830,6 +865,16 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 var exerciseName = attempt.Exercise?.ExerciseName ?? "Bài kiểm tra";
                 var switchedAt = DateTime.UtcNow;
 
+                // Debounce: swallow bursts of reports for the same attempt.
+                var lastSwitch = await _context.TabSwitchLogs
+                    .Where(l => l.AttemptId == attemptId)
+                    .OrderByDescending(l => l.SwitchedAt)
+                    .Select(l => (DateTime?)l.SwitchedAt)
+                    .FirstOrDefaultAsync();
+
+                if (lastSwitch.HasValue && switchedAt - lastSwitch.Value < TabSwitchDebounce)
+                    return ApiResponse<bool>.SuccessResponse(true, "Đã ghi nhận (bỏ qua báo cáo trùng).");
+
                 // Persist the violation
                 var log = new TabSwitchLog { AttemptId = attemptId, SwitchedAt = switchedAt };
                 _context.TabSwitchLogs.Add(log);
@@ -837,6 +882,10 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
                 // Count how many times it has happened
                 var switchCount = await _context.TabSwitchLogs.CountAsync(l => l.AttemptId == attemptId);
+
+                // Stop notifying parents once the cap is reached (the log still grows).
+                if (switchCount > TabSwitchEmailCap)
+                    return ApiResponse<bool>.SuccessResponse(true, "Đã ghi nhận (đã đạt giới hạn gửi email).");
 
                 var parents = attempt.Student?.ParentLinks
                     ?.Where(sp => sp.Status == LinkStatus.Active)

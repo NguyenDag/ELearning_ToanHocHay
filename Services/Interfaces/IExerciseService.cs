@@ -15,6 +15,7 @@ namespace ELearning_ToanHocHay_Control.Services.Interfaces
         // A3/P2 — publish workflow + question listing
         Task<ApiResponse<ExerciseDto>> SetPublishedAsync(int exerciseId, bool published);
         Task<ApiResponse<ExerciseDetailDto>> GetForEditAsync(int exerciseId);
+        Task<ApiResponse<List<QuestionInExerciseDto>>> GetExerciseQuestionsAsync(int exerciseId);
 
         Task<ApiResponse<IEnumerable<ExerciseDto>>> GetByLessonIdAsync(int lessonId);
         Task<ApiResponse<IEnumerable<ExerciseDto>>> GetByChapterIdAsync(int chapterId);

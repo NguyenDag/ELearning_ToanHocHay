@@ -149,9 +149,13 @@ namespace ELearning_ToanHocHay_Control.Controllers
         }
 
         // =================== QUESTIONS ===================
-        /*[HttpGet("{id}/questions")]
+        [HttpGet("{id}/questions")]
+        [AuthorizeContentRole]
         public async Task<IActionResult> GetQuestions(int id)
-            => Ok(await _exerciseService.GetExerciseQuestionsAsync(id));*/
+        {
+            var result = await _exerciseService.GetExerciseQuestionsAsync(id);
+            return result.Success ? Ok(result) : NotFound(result);
+        }
 
         [HttpDelete("{exerciseId}/questions/{questionId}")]
         [AuthorizeContentRole]

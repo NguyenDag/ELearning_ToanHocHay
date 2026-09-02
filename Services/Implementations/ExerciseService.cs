@@ -298,5 +298,37 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         // A3/P2 — full exercise (with answer keys) for the editor
         public Task<ApiResponse<ExerciseDetailDto>> GetForEditAsync(int exerciseId)
             => GetByIdAsync(exerciseId);
+
+        // A3/P2 — the questions attached to an exercise, in order
+        public async Task<ApiResponse<List<QuestionInExerciseDto>>> GetExerciseQuestionsAsync(int exerciseId)
+        {
+            if (await _exerciseRepository.GetExerciseByIdAsync(exerciseId) == null)
+                return ApiResponse<List<QuestionInExerciseDto>>.ErrorResponse("Exercise not found");
+
+            var rows = await _exerciseRepository.GetExerciseQuestionsAsync(exerciseId);
+            var dtos = rows
+                .Where(eq => eq.Question != null)
+                .Select(eq => new QuestionInExerciseDto
+                {
+                    QuestionId = eq.QuestionId,
+                    OrderIndex = eq.OrderIndex,
+                    Score = eq.Score,
+                    QuestionText = eq.Question!.QuestionText,
+                    QuestionImageUrl = eq.Question.QuestionImageUrl,
+                    QuestionType = eq.Question.QuestionType,
+                    DifficultyLevel = eq.Question.DifficultyLevel,
+                    Options = eq.Question.QuestionOptions?
+                        .OrderBy(o => o.OrderIndex)
+                        .Select(o => new QuestionOptionDto
+                        {
+                            OptionId = o.OptionId,
+                            OptionText = o.OptionText,
+                            IsCorrect = o.IsCorrect
+                        }).ToList() ?? new List<QuestionOptionDto>()
+                })
+                .ToList();
+
+            return ApiResponse<List<QuestionInExerciseDto>>.SuccessResponse(dtos);
+        }
     }
 }

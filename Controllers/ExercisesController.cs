@@ -1,4 +1,5 @@
 ﻿using ELearning_ToanHocHay_Control.Attributes;
+using ELearning_ToanHocHay_Control.Common;
 using ELearning_ToanHocHay_Control.Models.DTOs.Exercise;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -28,7 +29,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         [AuthorizeContentRole]
         public async Task<IActionResult> CreateExercise([FromBody] ExerciseRequestDto dto)
         {
-            var result = await _exerciseService.CreateExerciseAsync(dto);
+            var result = await _exerciseService.CreateExerciseAsync(dto, User.GetUserId()!.Value);
             if (!result.Success)
                 return BadRequest(result);
 
@@ -120,6 +121,32 @@ namespace ELearning_ToanHocHay_Control.Controllers
         [HttpGet("by-topic/{topicId}")]
         public async Task<IActionResult> GetByTopic(int topicId)
             => Ok(await _exerciseService.GetByTopicIdAsync(topicId));
+
+        // =================== PUBLISH WORKFLOW (A3/P2) ===================
+        [HttpPost("{id}/publish")]
+        [AuthorizeContentRole]
+        public async Task<IActionResult> Publish(int id)
+        {
+            var result = await _exerciseService.SetPublishedAsync(id, true);
+            return result.Success ? Ok(result) : BadRequest(result);
+        }
+
+        [HttpPost("{id}/unpublish")]
+        [AuthorizeContentRole]
+        public async Task<IActionResult> Unpublish(int id)
+        {
+            var result = await _exerciseService.SetPublishedAsync(id, false);
+            return result.Success ? Ok(result) : BadRequest(result);
+        }
+
+        // Full exercise incl. answer keys — for the editor (A3/P2)
+        [HttpGet("{id}/for-edit")]
+        [AuthorizeContentRole]
+        public async Task<IActionResult> GetForEdit(int id)
+        {
+            var result = await _exerciseService.GetForEditAsync(id);
+            return result.Success ? Ok(result) : NotFound(result);
+        }
 
         // =================== QUESTIONS ===================
         /*[HttpGet("{id}/questions")]

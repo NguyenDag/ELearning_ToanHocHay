@@ -54,7 +54,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 : ApiResponse<bool>.ErrorResponse("Failed to add questions");
         }
 
-        public async Task<ApiResponse<ExerciseDto>> CreateExerciseAsync(ExerciseRequestDto exercise)
+        public async Task<ApiResponse<ExerciseDto>> CreateExerciseAsync(ExerciseRequestDto exercise, int createdBy)
         {
             try
             {
@@ -70,7 +70,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     TotalScores = exercise.TotalScores,
                     PassingScore = exercise.PassingScore,
                     Status = exercise.Status,
-                    CreatedBy = 3, // Use UserId in session for CreatedBy
+                    CreatedBy = createdBy, // A2-13 — from the caller's token
                     CreatedAt = DateTime.UtcNow,
                 };
                 await _exerciseRepository.CreateExerciseAsync(_exercise);
@@ -265,5 +265,38 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 ? ApiResponse<bool>.SuccessResponse(true, "Score updated")
                 : ApiResponse<bool>.ErrorResponse("Question not found");
         }
+
+        // A3/P2 — publish / unpublish
+        public async Task<ApiResponse<ExerciseDto>> SetPublishedAsync(int exerciseId, bool published)
+        {
+            var exercise = await _exerciseRepository.GetExerciseByIdAsync(exerciseId);
+            if (exercise == null)
+                return ApiResponse<ExerciseDto>.ErrorResponse("Exercise not found");
+
+            if (published)
+            {
+                var withQuestions = await _exerciseRepository.GetExerciseWithQuestionsAsync(exerciseId);
+                var count = withQuestions?.ExerciseQuestions?.Count ?? 0;
+                if (count == 0)
+                    return ApiResponse<ExerciseDto>.ErrorResponse("Add at least one question before publishing");
+
+                exercise.Status = ExerciseStatus.Published;
+                exercise.IsActive = true;
+            }
+            else
+            {
+                exercise.Status = ExerciseStatus.Draft;
+                exercise.IsActive = false;
+            }
+
+            await _exerciseRepository.UpdateExerciseAsync(exercise);
+            return ApiResponse<ExerciseDto>.SuccessResponse(
+                _mapper.Map<ExerciseDto>(exercise),
+                published ? "Exercise published" : "Exercise unpublished");
+        }
+
+        // A3/P2 — full exercise (with answer keys) for the editor
+        public Task<ApiResponse<ExerciseDetailDto>> GetForEditAsync(int exerciseId)
+            => GetByIdAsync(exerciseId);
     }
 }

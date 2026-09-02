@@ -1,4 +1,5 @@
 using ELearning_ToanHocHay_Control.Attributes;
+using ELearning_ToanHocHay_Control.Common;
 using ELearning_ToanHocHay_Control.Models.DTOs.Question;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -26,7 +27,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var result = await _questionService.CreateQuestionsAsync(requests);
+            var result = await _questionService.CreateQuestionsAsync(requests, User.GetUserId()!.Value);
 
             if (result.Success)
                 return Ok(result);

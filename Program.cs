@@ -244,6 +244,9 @@ namespace ELearning_ToanHocHay_Control
             services.AddScoped<IParentLinkRepository, ParentLinkRepository>();
             services.AddScoped<IParentRepository, ParentRepository>();
 
+            // A3/P2 — content layer
+            services.AddScoped<ICatalogRepository, CatalogRepository>();
+
             // Services
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IUserService, UserService>();
@@ -266,6 +269,9 @@ namespace ELearning_ToanHocHay_Control
             services.AddScoped<ICoreDashboardService, CoreDashboardService>();
             services.AddScoped<IParentService, ParentService>();
             services.AddScoped<IResourceAccessService, ResourceAccessService>();
+
+            // A3/P2 — content layer
+            services.AddScoped<ICatalogService, CatalogService>();
 
             // Background Services
             services.AddSingleton<IBackgroundEmailService, BackgroundEmailService>();

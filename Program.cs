@@ -246,6 +246,7 @@ namespace ELearning_ToanHocHay_Control
 
             // A3/P2 — content layer
             services.AddScoped<ICatalogRepository, CatalogRepository>();
+            services.AddScoped<ICourseRepository, CourseRepository>();
 
             // Services
             services.AddScoped<IAuthService, AuthService>();
@@ -272,6 +273,7 @@ namespace ELearning_ToanHocHay_Control
 
             // A3/P2 — content layer
             services.AddScoped<ICatalogService, CatalogService>();
+            services.AddScoped<ICourseService, CourseService>();
 
             // Background Services
             services.AddSingleton<IBackgroundEmailService, BackgroundEmailService>();

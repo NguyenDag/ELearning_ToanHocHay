@@ -280,6 +280,7 @@ namespace ELearning_ToanHocHay_Control
             services.AddScoped<IContentAccessService, ContentAccessService>();
             services.AddScoped<IEnrollmentService, EnrollmentService>();
             services.AddScoped<ILearnService, LearnService>();
+            services.AddScoped<IQuestionBankService, QuestionBankService>();
 
             // Background Services
             services.AddSingleton<IBackgroundEmailService, BackgroundEmailService>();

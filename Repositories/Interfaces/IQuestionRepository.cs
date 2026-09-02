@@ -9,5 +9,12 @@ namespace ELearning_ToanHocHay_Control.Repositories.Interfaces
 
         Task<Question> CreateAsync(Question question);
         Task<List<Question>> CreateMultipleAsync(List<Question> questions);
+
+        // A3/P2 — question bank management
+        Task<(List<Question> Items, int Total)> GetByBankAsync(
+            int bankId, QuestionStatus? status, string? search, int page, int pageSize);
+        Task SaveAsync();
+        Task DeleteAsync(Question question);
+        Task<bool> IsUsedInAttemptsAsync(int questionId);
     }
 }

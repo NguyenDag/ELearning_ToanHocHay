@@ -75,6 +75,15 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             };
             await _repo.AddCourseAsync(course);
 
+            // Start every course with an empty Draft v1 so authors can begin immediately.
+            await _repo.AddVersionAsync(new CourseVersion
+            {
+                CourseId = course.CourseId,
+                VersionNumber = 1,
+                State = VersionState.Draft,
+                CreatedAt = DateTime.UtcNow
+            });
+
             var full = await _repo.GetCourseAsync(course.CourseId, withVersions: true);
             return ApiResponse<CourseDto>.SuccessResponse(Map(full!, includeVersions: true), "Course created");
         }

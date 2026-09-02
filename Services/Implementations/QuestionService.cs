@@ -76,7 +76,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             DifficultyLevel = dto.DifficultyLevel,
             CorrectAnswer = dto.CorrectAnswer,
             Explanation = dto.Explanation,
-            Status = QuestionStatus.PendingReview,
+            Status = QuestionStatus.Draft, // author submits it for review explicitly
             CreatedBy = createdBy, // A2-13 — from the caller's token
             CreatedAt = DateTime.UtcNow,
             QuestionOptions = dto.Options?.Select(o => new QuestionOption

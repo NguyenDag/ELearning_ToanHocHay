@@ -103,7 +103,7 @@ public class P3P4RemainingTests
         var res = await _f.ClientFor(userId).GetAsync($"/api/students/{studentId}/dashboard/overview");
         res.StatusCode.Should().Be(HttpStatusCode.OK, await res.Content.ReadAsStringAsync());
 
-        var stats = (await Root(res)).GetProperty("Stats");
+        var stats = (await Root(res)).GetProperty("Data").GetProperty("Stats");
         stats.GetProperty("WeeklyExercisesCompleted").GetInt32().Should().Be(3);
         var cmp = stats.GetProperty("WeekComparison");
         cmp.GetProperty("ExerciseCountChange").GetInt32().Should().Be(1);  // 3 this week - 2 last week

@@ -1,6 +1,7 @@
 using ELearning_ToanHocHay_Control.Attributes;
 using ELearning_ToanHocHay_Control.Common;
 using ELearning_ToanHocHay_Control.Data.Entities;
+using ELearning_ToanHocHay_Control.Models.DTOs;
 using ELearning_ToanHocHay_Control.Models.DTOs.Catalog;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -30,16 +31,16 @@ namespace ELearning_ToanHocHay_Control.Controllers
         [HttpGet("subjects")]
         [AllowAnonymous]
         public async Task<IActionResult> GetSubjects([FromQuery] bool includeInactive = false)
-            => Ok(await _catalog.GetSubjectsAsync(includeInactive && CanSeeInactive));
+            => (await _catalog.GetSubjectsAsync(includeInactive && CanSeeInactive)).ToActionResult();
 
         [HttpGet("subjects/{id:int}")]
         [AllowAnonymous]
         public async Task<IActionResult> GetSubject(int id)
         {
             var r = await _catalog.GetSubjectAsync(id);
-            if (!r.Success) return NotFound(r);
-            if (!r.Data!.IsActive && !CanSeeInactive) return NotFound(r);
-            return Ok(r);
+            if (!r.Success || (!r.Data!.IsActive && !CanSeeInactive))
+                return ApiResponse<object>.NotFound(r.Message ?? "Không tìm thấy").ToActionResult();
+            return r.ToActionResult();
         }
 
         [HttpPost("subjects")]
@@ -62,16 +63,16 @@ namespace ELearning_ToanHocHay_Control.Controllers
         [HttpGet("grade-levels")]
         [AllowAnonymous]
         public async Task<IActionResult> GetGradeLevels([FromQuery] bool includeInactive = false)
-            => Ok(await _catalog.GetGradeLevelsAsync(includeInactive && CanSeeInactive));
+            => (await _catalog.GetGradeLevelsAsync(includeInactive && CanSeeInactive)).ToActionResult();
 
         [HttpGet("grade-levels/{id:int}")]
         [AllowAnonymous]
         public async Task<IActionResult> GetGradeLevel(int id)
         {
             var r = await _catalog.GetGradeLevelAsync(id);
-            if (!r.Success) return NotFound(r);
-            if (!r.Data!.IsActive && !CanSeeInactive) return NotFound(r);
-            return Ok(r);
+            if (!r.Success || (!r.Data!.IsActive && !CanSeeInactive))
+                return ApiResponse<object>.NotFound(r.Message ?? "Không tìm thấy").ToActionResult();
+            return r.ToActionResult();
         }
 
         [HttpPost("grade-levels")]
@@ -94,16 +95,16 @@ namespace ELearning_ToanHocHay_Control.Controllers
         [HttpGet("frameworks")]
         [AllowAnonymous]
         public async Task<IActionResult> GetFrameworks([FromQuery] bool includeInactive = false)
-            => Ok(await _catalog.GetFrameworksAsync(includeInactive && CanSeeInactive));
+            => (await _catalog.GetFrameworksAsync(includeInactive && CanSeeInactive)).ToActionResult();
 
         [HttpGet("frameworks/{id:int}")]
         [AllowAnonymous]
         public async Task<IActionResult> GetFramework(int id)
         {
             var r = await _catalog.GetFrameworkAsync(id);
-            if (!r.Success) return NotFound(r);
-            if (!r.Data!.IsActive && !CanSeeInactive) return NotFound(r);
-            return Ok(r);
+            if (!r.Success || (!r.Data!.IsActive && !CanSeeInactive))
+                return ApiResponse<object>.NotFound(r.Message ?? "Không tìm thấy").ToActionResult();
+            return r.ToActionResult();
         }
 
         [HttpPost("frameworks")]

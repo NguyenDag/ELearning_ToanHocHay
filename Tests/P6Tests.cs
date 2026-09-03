@@ -46,8 +46,8 @@ public class P6Tests
         }
 
         var quota = await Root(await client.GetAsync("/api/ai-hints/quota"));
-        quota.GetProperty("Used").GetInt32().Should().Be(3);
-        quota.GetProperty("Remaining").GetInt32().Should().Be(0);
+        quota.GetProperty("Data").GetProperty("Used").GetInt32().Should().Be(3);
+        quota.GetProperty("Data").GetProperty("Remaining").GetInt32().Should().Be(0);
 
         (await client.PostAsJsonAsync("/api/ai-hints", body))
             .StatusCode.Should().Be(HttpStatusCode.TooManyRequests);
@@ -68,7 +68,7 @@ public class P6Tests
                 .StatusCode.Should().NotBe(HttpStatusCode.TooManyRequests);
 
         (await Root(await client.GetAsync("/api/ai-hints/quota")))
-            .GetProperty("Unlimited").GetBoolean().Should().BeTrue();
+            .GetProperty("Data").GetProperty("Unlimited").GetBoolean().Should().BeTrue();
 
         await SetSubscriptionAsync(SubscriptionStatus.Pending);
     }

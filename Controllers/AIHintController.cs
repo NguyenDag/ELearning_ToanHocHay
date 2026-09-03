@@ -35,7 +35,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
             if (studentId == null) return this.Forbidden("Only students have an AI hint quota");
 
             var q = await _quota.PeekHintAsync(studentId.Value);
-            return Ok(new { q.Used, q.Limit, q.Unlimited, q.Remaining });
+            return Ok(ApiResponse<object>.SuccessResponse(new { q.Used, q.Limit, q.Unlimited, q.Remaining }));
         }
 
         [HttpGet("by-attempt/{attemptId:int}")]

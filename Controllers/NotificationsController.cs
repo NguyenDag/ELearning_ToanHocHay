@@ -24,11 +24,11 @@ namespace ELearning_ToanHocHay_Control.Controllers
         [HttpGet]
         public async Task<IActionResult> GetMine(
             [FromQuery] bool unreadOnly = false, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
-            => Ok(await _notifications.GetMineAsync(Uid, unreadOnly, page, pageSize));
+            => (await _notifications.GetMineAsync(Uid, unreadOnly, page, pageSize)).ToActionResult();
 
         [HttpGet("unread-count")]
         public async Task<IActionResult> UnreadCount()
-            => Ok(await _notifications.GetUnreadCountAsync(Uid));
+            => (await _notifications.GetUnreadCountAsync(Uid)).ToActionResult();
 
         [HttpPost("{id:int}/read")]
         public async Task<IActionResult> MarkRead(int id)
@@ -39,11 +39,11 @@ namespace ELearning_ToanHocHay_Control.Controllers
 
         [HttpPost("read-all")]
         public async Task<IActionResult> MarkAllRead()
-            => Ok(await _notifications.MarkAllReadAsync(Uid));
+            => (await _notifications.MarkAllReadAsync(Uid)).ToActionResult();
 
         [HttpGet("preferences")]
         public async Task<IActionResult> GetPreferences()
-            => Ok(await _notifications.GetPreferencesAsync(Uid));
+            => (await _notifications.GetPreferencesAsync(Uid)).ToActionResult();
 
         [HttpPut("preferences")]
         public async Task<IActionResult> SetPreference([FromBody] SetNotificationPreferenceDto dto)

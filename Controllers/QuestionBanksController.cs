@@ -27,7 +27,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         [HttpGet]
         public async Task<IActionResult> GetBanks(
             [FromQuery] int? subjectId, [FromQuery] int? gradeLevelId, [FromQuery] bool includeInactive = true)
-            => Ok(await _service.GetBanksAsync(subjectId, gradeLevelId, includeInactive));
+            => (await _service.GetBanksAsync(subjectId, gradeLevelId, includeInactive)).ToActionResult();
 
         [HttpGet("{bankId:int}")]
         public async Task<IActionResult> GetBank(int bankId)

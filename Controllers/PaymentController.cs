@@ -40,7 +40,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         {
             var userId = User.GetUserId();
             if (userId == null) return Unauthorized();
-            return Ok(await _service.GetMyPaymentsAsync(userId.Value, page, pageSize));
+            return (await _service.GetMyPaymentsAsync(userId.Value, page, pageSize)).ToActionResult();
         }
 
         // GET: api/payment/5 — payer / beneficiary / Finance / Admin

@@ -2,6 +2,7 @@ using ELearning_ToanHocHay_Control.Common;
 using ELearning_ToanHocHay_Control.Attributes;
 using ELearning_ToanHocHay_Control.Data.Entities;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
+using ELearning_ToanHocHay_Control.Models.DTOs;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ELearning_ToanHocHay_Control.Controllers
@@ -23,7 +24,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> RunLifecycle()
         {
             var result = await _lifecycle.RunSweepAsync();
-            return Ok(new { expiredActive = result.ExpiredActive, releasedPending = result.ReleasedPending });
+            return Ok(ApiResponse<object>.SuccessResponse(new { result.ExpiredActive, result.ReleasedPending }));
         }
 
         [HttpGet("subscriptions/reconciliation")]

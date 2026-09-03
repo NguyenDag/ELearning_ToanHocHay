@@ -1,4 +1,5 @@
 using ELearning_ToanHocHay_Control.Common;
+using ELearning_ToanHocHay_Control.Models.DTOs;
 using ELearning_ToanHocHay_Control.Models.DTOs.Content;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -37,7 +38,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
             var studentId = User.GetStudentId();
             if (studentId == null) return this.Forbidden("Only students track lesson progress");
 
-            return Ok(await _progress.GetVersionProgressAsync(studentId.Value, courseVersionId));
+            return (await _progress.GetVersionProgressAsync(studentId.Value, courseVersionId)).ToActionResult();
         }
 
         [HttpGet("students/{studentId:int}/heatmap")]
@@ -46,7 +47,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
             if (!await _access.CanAccessStudentAsync(User, studentId))
                 return this.Forbidden();
 
-            return Ok(await _progress.GetHeatmapAsync(studentId, days));
+            return Ok(ApiResponse<object>.SuccessResponse(await _progress.GetHeatmapAsync(studentId, days)));
         }
     }
 }

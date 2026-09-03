@@ -31,7 +31,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         // ---------------- SystemConfig (P6/P7) ----------------
         [HttpGet("config")]
         public async Task<IActionResult> GetConfig([FromQuery] string? group)
-            => Ok(await _config.GetAllAsync(group));
+            => (await _config.GetAllAsync(group)).ToActionResult();
 
         [HttpPut("config/{key}")]
         public async Task<IActionResult> SetConfig(string key, [FromBody] Models.DTOs.SetConfigDto dto)
@@ -71,6 +71,6 @@ namespace ELearning_ToanHocHay_Control.Controllers
             [FromQuery] int? userId,
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 50)
-            => Ok(await _admin.GetAuditLogsAsync(entityType, entityId, userId, page, pageSize));
+            => (await _admin.GetAuditLogsAsync(entityType, entityId, userId, page, pageSize)).ToActionResult();
     }
 }

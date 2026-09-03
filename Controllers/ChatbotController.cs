@@ -1,6 +1,7 @@
 using ELearning_ToanHocHay_Control.Attributes;
 using ELearning_ToanHocHay_Control.Common;
 using ELearning_ToanHocHay_Control.Data.Entities;
+using ELearning_ToanHocHay_Control.Models.DTOs;
 using ELearning_ToanHocHay_Control.Models.DTOs.Chatbot;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -48,7 +49,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
             try
             {
                 request.UserId = Uid.ToString();
-                return Ok(await _aiService.SendChatbotTriggerAsync(request));
+                return Ok(ApiResponse<object>.SuccessResponse(await _aiService.SendChatbotTriggerAsync(request)));
             }
             catch (Exception ex)
             {
@@ -59,7 +60,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
 
         [HttpGet("conversations")]
         public async Task<IActionResult> Conversations()
-            => Ok(await _chat.GetMyConversationsAsync(Uid));
+            => (await _chat.GetMyConversationsAsync(Uid)).ToActionResult();
 
         [HttpGet("conversations/{id:int}/messages")]
         public async Task<IActionResult> Messages(int id)
@@ -81,7 +82,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         // ---------------- escalation ----------------
         [HttpPost("request-human")]
         public async Task<IActionResult> RequestHuman()
-            => Ok(await _chat.RequestHumanAsync(Uid));
+            => (await _chat.RequestHumanAsync(Uid)).ToActionResult();
 
         [HttpPost("conversations/{id:int}/close")]
         public async Task<IActionResult> Close(int id)
@@ -95,7 +96,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         [HttpGet("staff/queue")]
         [AuthorizeUserType(UserType.SupportStaff, UserType.SystemAdmin)]
         public async Task<IActionResult> Queue()
-            => Ok(await _chat.GetQueueAsync());
+            => (await _chat.GetQueueAsync()).ToActionResult();
 
         [HttpPost("staff/conversations/{id:int}/assign")]
         [AuthorizeUserType(UserType.SupportStaff, UserType.SystemAdmin)]

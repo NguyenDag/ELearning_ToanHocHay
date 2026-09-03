@@ -1,6 +1,6 @@
 ﻿using ELearning_ToanHocHay_Control.Common;
 using ELearning_ToanHocHay_Control.Models.DTOs;
-using ELearning_ToanHocHay_Control.Services.Implementations;
+using ELearning_ToanHocHay_Control.Models.DTOs.Subscription;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -33,15 +33,9 @@ namespace ELearning_ToanHocHay_Control.Controllers
 
             var info = await _subscriptionService.GetActiveSubscriptionInfoAsync(studentId);
 
-            // Always return 200 — Free is a valid state, not an error
-            return Ok(new
-            {
-                success = true,
-                data = info,
-                message = info.IsActive
-                    ? $"Đang dùng gói {info.PackageName}"
-                    : "Đang dùng gói Free"
-            });
+            // Always 200 — Free is a valid state, not an error.
+            return Ok(ApiResponse<SubscriptionInfoDto>.SuccessResponse(info,
+                info.IsActive ? $"Đang dùng gói {info.PackageName}" : "Đang dùng gói Free"));
         }
     }
 }

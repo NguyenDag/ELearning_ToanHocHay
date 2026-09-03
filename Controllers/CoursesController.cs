@@ -33,7 +33,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
             [FromQuery] int? subjectId, [FromQuery] int? gradeLevelId, [FromQuery] bool includeUnpublished = false)
         {
             var publishedOnly = !(includeUnpublished && IsContentRole);
-            return Ok(await _courses.GetCoursesAsync(subjectId, gradeLevelId, publishedOnly));
+            return (await _courses.GetCoursesAsync(subjectId, gradeLevelId, publishedOnly)).ToActionResult();
         }
 
         [HttpGet("{id:int}")]

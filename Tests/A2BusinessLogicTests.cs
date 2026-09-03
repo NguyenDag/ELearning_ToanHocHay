@@ -75,10 +75,10 @@ public class A2BusinessLogicTests
         res.StatusCode.Should().Be(HttpStatusCode.OK, await res.Content.ReadAsStringAsync());
 
         var root = await Root(res);
-        root.GetProperty("amount").GetDecimal().Should().Be(Id.PackagePrice);
-        root.GetProperty("qrUrl").GetString().Should().Contain($"amount={(long)Id.PackagePrice}");
+        root.GetProperty("Data").GetProperty("amount").GetDecimal().Should().Be(Id.PackagePrice);
+        root.GetProperty("Data").GetProperty("qrUrl").GetString().Should().Contain($"amount={(long)Id.PackagePrice}");
 
-        var subId = root.GetProperty("subscriptionId").GetInt32();
+        var subId = root.GetProperty("Data").GetProperty("subscriptionId").GetInt32();
         var (payAmount, subAmount) = await _f.QueryDbAsync(async db =>
         {
             var sub = await db.Subscriptions.AsNoTracking().Include(s => s.Payment).SingleAsync(s => s.SubscriptionId == subId);

@@ -22,20 +22,10 @@ namespace ELearning_ToanHocHay_Control.Controllers
         [HttpGet("dashboard-stats")]
         public async Task<IActionResult> GetDashboardStats()
         {
-            // 1. Lấy UserId từ Token của người dùng đang đăng nhập
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null) return Unauthorized();
+            var userId = User.GetUserId();
+            if (userId == null) return Unauthorized(ApiResponse<object>.ErrorResponse("Token không hợp lệ"));
 
-            int userId = int.Parse(userIdClaim.Value);
-
-            // 2. Gọi Service để lấy dữ liệu thống kê
-            var result = await _attemptService.GetDashboardStatsAsync(userId);
-
-            if (result.Success)
-            {
-                return Ok(result);
-            }
-            return BadRequest(result);
+            return (await _attemptService.GetDashboardStatsAsync(userId.Value)).ToActionResult();
         }
     }
 }

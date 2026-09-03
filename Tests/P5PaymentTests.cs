@@ -40,7 +40,7 @@ public class P5PaymentTests
             .PostAsJsonAsync("/api/subscriptions", new { StudentId = Id.StudentAId, PackageId = Id.PackageId });
         res.StatusCode.Should().Be(HttpStatusCode.OK, await res.Content.ReadAsStringAsync());
         var root = await Root(res);
-        return (root.GetProperty("subscriptionId").GetInt32(), (long)root.GetProperty("amount").GetDecimal());
+        return (root.GetProperty("Data").GetProperty("subscriptionId").GetInt32(), (long)root.GetProperty("Data").GetProperty("amount").GetDecimal());
     }
 
     private static object Ipn(int subId, long amount, string reference, string type = "in")
@@ -62,7 +62,7 @@ public class P5PaymentTests
 
         var res = await IpnClient().PostAsJsonAsync("/api/sepay/ipn", Ipn(subId, amount, reference));
         res.StatusCode.Should().Be(HttpStatusCode.OK, await res.Content.ReadAsStringAsync());
-        (await Root(res)).GetProperty("outcome").GetString().Should().Be("Processed");
+        (await Root(res)).GetProperty("Data").GetProperty("outcome").GetString().Should().Be("Processed");
 
         var sub = await _f.QueryDbAsync(db => db.Subscriptions.Include(s => s.Payment)
             .SingleAsync(s => s.SubscriptionId == subId));
@@ -84,11 +84,11 @@ public class P5PaymentTests
         var reference = $"REF-{Guid.NewGuid():N}";
 
         var first = await IpnClient().PostAsJsonAsync("/api/sepay/ipn", Ipn(subId, amount, reference));
-        (await Root(first)).GetProperty("outcome").GetString().Should().Be("Processed");
+        (await Root(first)).GetProperty("Data").GetProperty("outcome").GetString().Should().Be("Processed");
 
         var second = await IpnClient().PostAsJsonAsync("/api/sepay/ipn", Ipn(subId, amount, reference));
         second.StatusCode.Should().Be(HttpStatusCode.OK);
-        (await Root(second)).GetProperty("outcome").GetString().Should().Be("Duplicate");
+        (await Root(second)).GetProperty("Data").GetProperty("outcome").GetString().Should().Be("Duplicate");
 
         var logCount = await _f.QueryDbAsync(db => db.SePayIpnLogs.CountAsync(l => l.ReferenceCode == reference));
         logCount.Should().Be(1);
@@ -102,7 +102,7 @@ public class P5PaymentTests
 
         var res = await IpnClient().PostAsJsonAsync("/api/sepay/ipn",
             Ipn(subId, amount - 50_000, $"REF-{Guid.NewGuid():N}"));
-        (await Root(res)).GetProperty("outcome").GetString().Should().Be("AmountMismatch");
+        (await Root(res)).GetProperty("Data").GetProperty("outcome").GetString().Should().Be("AmountMismatch");
 
         var status = await _f.QueryDbAsync(db => db.Subscriptions.AsNoTracking()
             .Where(s => s.SubscriptionId == subId).Select(s => s.Status).SingleAsync());
@@ -117,12 +117,12 @@ public class P5PaymentTests
         var outRes = await IpnClient().PostAsJsonAsync("/api/sepay/ipn",
             Ipn(1, 1000, $"REF-{Guid.NewGuid():N}", type: "out"));
         outRes.StatusCode.Should().Be(HttpStatusCode.OK);
-        (await Root(outRes)).GetProperty("outcome").GetString().Should().Be("Ignored");
+        (await Root(outRes)).GetProperty("Data").GetProperty("outcome").GetString().Should().Be("Ignored");
 
         var unknownRes = await IpnClient().PostAsJsonAsync("/api/sepay/ipn",
             Ipn(999_999, 1000, $"REF-{Guid.NewGuid():N}"));
         unknownRes.StatusCode.Should().Be(HttpStatusCode.OK);
-        (await Root(unknownRes)).GetProperty("message").GetString().Should().Contain("not found");
+        (await Root(unknownRes)).GetProperty("Message").GetString().Should().Contain("not found");
     }
 
     [SkippableFact]

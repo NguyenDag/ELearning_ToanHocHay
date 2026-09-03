@@ -30,20 +30,20 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> GetById(int id)
         {
             if (!CanAccess(id)) return this.Forbidden();
-            return Ok(await _service.GetByIdAsync(id));
+            return (await _service.GetByIdAsync(id)).ToActionResult();
         }
 
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Update(int id, UpdateParentDto dto)
         {
             if (!CanAccess(id)) return this.Forbidden();
-            return Ok(await _service.UpdateAsync(id, dto));
+            return (await _service.UpdateAsync(id, dto)).ToActionResult();
         }
 
         [HttpDelete("{id:int}")]
         [AuthorizeUserType(UserType.SystemAdmin)]
         public async Task<IActionResult> Delete(int id)
-            => Ok(await _service.DeleteAsync(id));
+            => (await _service.DeleteAsync(id)).ToActionResult();
 
         // ---------------- P6 — parent ⇄ child linking ----------------
 
@@ -70,7 +70,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> GetChildren(int id)
         {
             if (!CanAccess(id)) return this.Forbidden();
-            return Ok(await _links.GetLinksAsync(id));
+            return (await _links.GetLinksAsync(id)).ToActionResult();
         }
 
         [HttpDelete("{id:int}/children/{studentId:int}")]
@@ -85,7 +85,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> ChildrenOverview(int id)
         {
             if (!CanAccess(id)) return this.Forbidden();
-            return Ok(await _links.GetChildrenOverviewAsync(id));
+            return (await _links.GetChildrenOverviewAsync(id)).ToActionResult();
         }
     }
 }

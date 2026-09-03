@@ -507,6 +507,23 @@ soát: tổng `Payment.Completed` == tổng subscription `Active` hợp lệ.
 Không gọi AI vượt hạn mức gói. Phụ huynh liên kết/huỷ liên kết phản ánh tức thì vào quyền
 truy cập. Thông báo sinh đúng luật (test rule engine xanh).
 
+**Trạng thái triển khai (cập nhật)** — nhánh `feat/p6-ai-parent-notifications`, migration `P6_AiUsage` + `P6_Notifications`, test `P6Tests` (8):
+
+| Hạng mục P6 | Trạng thái | Ghi chú |
+|---|---|---|
+| Giới hạn AI hint theo gói + bảng đếm/ngày | ✅ | `AiUsageDaily` + `AiQuotaService`; `AIHintController` consume 1 lượt / hint AI, vượt → 429; `GET /api/aihint/quota`; Free → `AI:FreeDailyHintLimit` (3), `UnlimitedAiHint` → không chặn |
+| Log chi phí AI | ✅ (một phần) | `AiUsageDaily.HintCount/FeedbackCount/ChatCount`; chưa quy đổi tiền |
+| Shared secret C# ↔ Python | ✅ (đã có từ A1) | `AIService` gửi header `X-Internal-Api-Key`; docker-compose bỏ publish port 5001 (kiểm lại) |
+| Chatbot lưu `ChatConversation` / `ChatMessage` phía C# | ✅ | `ChatService`; AI down → lưu message `System` "chưa phản hồi", vẫn 200 |
+| Health check AI + xử lý Python restart | ✅ | `IAIService.IsHealthyAsync`; `GET /api/chatbot/health` (503 khi down); mọi call AI bọc try/catch, không vỡ luồng |
+| Phụ huynh: mã liên kết con / `ParentInvite` / children overview | ✅ | `POST /api/parent/{id}/invites`, `POST /api/parent/link` (invite token hoặc `ConnectionCode`), `GET /api/parent/{id}/children[/overview]`, `DELETE .../children/{studentId}` (revoke) |
+| revoke → mất quyền tức thì | ✅ | `Status = Revoked`; `ExistsActiveAsync` chỉ tính `Active` |
+| `Notification` + rule engine (chuyển tab, điểm < 5, nghỉ 3 ngày) | ✅ | `NotificationRuleEngine`; hook ở `CompleteExerciseAsync` (low-score) + `ReportTabSwitchAsync` (tab-switch); inactivity chạy trên timer bảo trì + `POST /api/admin/notifications/run-inactivity-check` |
+| `Audience` Student/Parent/Both + fan-out đúng người nhận | ✅ | student user + parent user (link Active) |
+| Tuỳ chọn nhận thông báo | ✅ | `NotificationPreference` (opt-out theo rule); `GET/PUT /api/notifications/preferences` |
+| Email chuyển-tab → hàng đợi nền | ✅ | `IBackgroundEmailService.QueueTabSwitchEmail` — không còn `await` trong request |
+| **Còn lại** | ⏳ | `ChatConversation` chưa có luồng escalate sang nhân viên (`WaitingAgent`/staff); rule engine chưa có cấu hình ngưỡng động (SystemConfig); AI feedback không bị gate (chỉ đếm) — theo thiết kế |
+
 ---
 
 ### P7 — Vận hành & chất lượng

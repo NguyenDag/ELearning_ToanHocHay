@@ -71,6 +71,19 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
+                // P3 — pessimistic lock: only one concurrent /complete grades an attempt.
+                // The row stays locked for the rest of this transaction.
+                var claimed = await _context.Database.ExecuteSqlRawAsync(
+                    "UPDATE \"ExerciseAttempt\" SET \"Status\" = \"Status\" " +
+                    "WHERE \"AttemptId\" = {0} AND \"Status\" = 'InProgress'", dto.AttemptId);
+                if (claimed == 0)
+                {
+                    await transaction.RollbackAsync();
+                    return ApiResponse<ExerciseResultDto>.ErrorResponse(
+                        "Attempt already completed",
+                        new List<string> { "This attempt has already been completed or does not exist" });
+                }
+
                 // 1. Load the attempt and validate it
                 var attempt = await _attemptRepository.GetAttemptWithDetailsAsync(dto.AttemptId);
 
@@ -811,13 +824,20 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
                 stats.CompletedChapters = stats.Chapters.Count(x => x.ProgressPercentage == 100);
 
+                // P4 — roll every attempt up to its chapter for the chart.
+                int? ChapterOf(string? path) => allChapters
+                    .Where(ch => path != null && (path == ch.Prefix || path.StartsWith(ch.Prefix)))
+                    .Select(ch => (int?)ch.NodeId).FirstOrDefault();
+
                 stats.ChartData = attempts
-                    .Where(a => a.Exercise?.NodeId != null)
-                    .GroupBy(a => a.Exercise!.NodeId!.Value)
+                    .Where(a => a.Exercise?.Node != null)
+                    .Select(a => new { ChapterId = ChapterOf(a.Exercise!.Node!.MaterializedPath), a.TotalScore })
+                    .Where(x => x.ChapterId != null)
+                    .GroupBy(x => x.ChapterId!.Value)
                     .Select(g => new ScoreChartItemDto
                     {
-                        ChapterName = stats.Chapters.FirstOrDefault(c => c.ChapterId == g.Key)?.ChapterName ?? "Node " + g.Key,
-                        AvgScore = Math.Round(g.Average(a => a.TotalScore), 1)
+                        ChapterName = stats.Chapters.FirstOrDefault(c => c.ChapterId == g.Key)?.ChapterName ?? "Chương " + g.Key,
+                        AvgScore = Math.Round(g.Average(x => x.TotalScore), 1)
                     }).ToList();
 
                 stats.RecentAttempts = attempts.OrderByDescending(a => a.StartTime).Take(5).Select(a => new ExerciseAttemptDto

@@ -43,7 +43,8 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
                 // Custom claims
                 new Claim(CustomJwtClaims.UserId, user.UserId.ToString()),
-                new Claim(CustomJwtClaims.UserType, user.UserType.ToString())
+                new Claim(CustomJwtClaims.UserType, user.UserType.ToString()),
+                new Claim(CustomJwtClaims.SecurityStamp, user.SecurityStamp ?? "")
             };
 
             // StudentId (CHỈ THÊM KHI LÀ STUDENT)

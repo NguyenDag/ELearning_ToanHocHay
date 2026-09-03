@@ -106,4 +106,39 @@ public class P7Tests
             && l.NewValueJson != null && l.NewValueJson.Contains("LockedAt")));
         audited.Should().BeTrue();
     }
+
+    [SkippableFact]
+    public async Task Locking_a_user_invalidates_their_in_flight_access_token()
+    {
+        RequireDocker();
+
+        var pwd = "Password123!";
+        var email = $"p7-sstamp-{Guid.NewGuid():N}@test.local";
+        var userId = await _f.QueryDbAsync(async db =>
+        {
+            var u = new User
+            {
+                Email = email, PasswordHash = BCrypt.Net.BCrypt.HashPassword(pwd), FullName = "P7 sstamp",
+                UserType = UserType.Student, IsEmailConfirmed = true, IsActive = true, CreatedAt = DateTime.UtcNow
+            };
+            db.Users.Add(u);
+            await db.SaveChangesAsync();
+            db.Students.Add(new Student { UserId = u.UserId });
+            await db.SaveChangesAsync();
+            return u.UserId;
+        });
+
+        var anon = _f.CreateClient();
+        var login = await anon.PostAsJsonAsync("/api/auth/login", new { Email = email, Password = pwd });
+        var access = (await Root(login)).GetProperty("Data").GetProperty("Token").GetString()!;
+
+        var client = _f.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", access);
+        (await client.GetAsync("/api/auth/me")).StatusCode.Should().Be(HttpStatusCode.OK);
+
+        (await _f.ClientFor(Id.AdminUserId).PostAsJsonAsync($"/api/admin/users/{userId}/lock", new { Reason = "x" }))
+            .StatusCode.Should().Be(HttpStatusCode.OK);
+
+        (await client.GetAsync("/api/auth/me")).StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
 }

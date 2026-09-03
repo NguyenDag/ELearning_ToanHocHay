@@ -68,5 +68,14 @@ namespace ELearning_ToanHocHay_Control.Controllers
 
             return Ok(response);
         }
+
+        // POST: api/payment/5/refund — Finance/Admin only
+        [HttpPost("{id:int}/refund")]
+        [AuthorizeUserType(UserType.FinanceManager, UserType.SystemAdmin)]
+        public async Task<IActionResult> Refund(int id, [FromBody] RefundPaymentDto dto)
+        {
+            var response = await _service.RefundAsync(id, dto);
+            return response.Success ? Ok(response) : BadRequest(response);
+        }
     }
 }

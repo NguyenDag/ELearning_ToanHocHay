@@ -164,7 +164,10 @@ có controller/service nào:
 | QuestionBank CRUD + Question CRUD + workflow duyệt câu hỏi | ✅ | `QuestionBanksController` (Draft→PendingReview→Approved/Rejected) |
 | Exercise publish/unpublish + lấy đề kèm đáp án + list câu hỏi của đề | ✅ | `ExercisesController` `{id}/publish`, `{id}/unpublish`, `{id}/for-edit`, `{id}/questions` |
 | A2-13 — `CreatedBy` lấy từ token | ✅ | Exercise + Question service |
-| **Còn lại (chưa làm trong đợt này)** | ⏳ | Duyệt `CourseVersion` bằng `ReviewComment` neo theo node/block; `LessonResource` gắn `MediaAsset` (upload file); re-parent node + rewrite `MaterializedPath`; `CurriculumFramework` gắn `Course` nhiều-nhiều; `NodeRevision` (diff/rollback); `ContentImportJob` (import hàng loạt); phân trang cho danh sách course/node |
+| Duyệt `CourseVersion` bằng `ReviewComment` neo theo node/block | ✅ | `ReviewCourseVersionDto.Comments`; `GET /api/courses/versions/{id}/reviews`, `POST /api/courses/reviews/comments/{id}/resolve` |
+| Re-parent node + rewrite `MaterializedPath` | ✅ | `PATCH /api/content/nodes/{id}/move` (kiểm NodeTypeRule + chống cycle, viết lại path + depth cả subtree) |
+| `NodeRevision` (snapshot / rollback) | ✅ | snapshot khi update/restore; `GET .../nodes/{id}/revisions`, `POST .../revisions/{n}/restore` |
+| **Còn lại (cần hạ tầng riêng)** | ⏳ | `LessonResource` gắn `MediaAsset` (cần blob storage); `ContentImportJob` (cần upload + parser CSV); `CurriculumFramework` ↔ `Course` nhiều-nhiều (Course hiện 1 FK `FrameworkId`) |
 
 ---
 
@@ -300,7 +303,8 @@ bản e2e xác thực tự động xanh.
 | Giới hạn đăng nhập (A1-08) | ✅ | `FailedLoginCount` + `LockoutEndsAt` tăng dần 1→30 phút sau 5 lần sai; rate-limit `auth` cấu hình được |
 | Admin khoá/mở khoá + đổi vai trò + ghi `AuditLog` | ✅ | `AdminController` (`/api/admin/users/{id}/lock|unlock|role`, `/api/admin/audit-logs`) |
 | Sửa `/api/auth/me` (A1-11) + extension claim duy nhất | ✅ | đọc qua `ClaimsPrincipalExtensions` |
-| **Còn lại** | ⏳ | JWT blacklist cho access token đang hành (hiện chỉ ngắn hạn 30′); `AuditLog` interceptor tự động (P7); đổi vai trò giữa learner↔staff (đang chặn để không mồ côi Student/Parent) |
+| JWT invalidation cho access token đang hành | ✅ | `User.SecurityStamp` trong claim `sstamp`, kiểm lại khi validate token (cache 30s); bump khi đổi mật khẩu / reset / khoá / đổi vai trò → token cũ 401 ngay |
+| **Còn lại** | ⏳ | đổi vai trò giữa learner↔staff (vẫn chặn để không mồ côi row Student/Parent) — cần luồng dọn dữ liệu |
 
 > ⚠️ `JwtSettings:ExpirationMinutes` đổi từ 1440 → **30**. Frontend phải dùng luồng refresh token (`LoginResponse.RefreshToken` + `POST /api/auth/refresh-token`).
 
@@ -382,7 +386,8 @@ kể số câu sai.
 | Chuẩn hoá chấm điểm mọi `QuestionType` (A2-09) | ✅ | `AnswerGrading` |
 | `report-tab-switch`: auth | ✅ | làm ở đợt A1 |
 | `report-tab-switch`: chống spam | ✅ | debounce 15s + ngừng gửi email sau 5 lần/attempt (log vẫn ghi đủ) |
-| **Còn lại** | ⏳ | test concurrency "gọi `complete` 2 lần song song" chưa có; AI feedback vẫn chạy trong process (hàng đợi in-memory, mất khi restart) |
+| Concurrency `complete` 2 lần song song | ✅ | `CompleteExerciseAsync` khoá dòng bằng conditional UPDATE trong transaction; test parallel-complete |
+| **Còn lại** | ⏳ | AI feedback vẫn dùng hàng đợi in-memory (mất khi restart) — cần outbox DB-backed |
 
 ---
 
@@ -428,7 +433,9 @@ AI với dữ liệu thật (kiểm qua mock). Không còn `Contains("premium")`
 | N+1 dashboard (A2-14) | ✅ | `GetDashboardStatsAsync` load exercise 1 lần, bucket trong RAM |
 | `DailyActivitySnapshot` + streak từ snapshot + heatmap | ✅ | snapshot cập nhật khi submit / hoàn thành bài; `GetStreakDataAsync` đọc snapshot; `GET /api/progress/students/{id}/heatmap` (guard chủ sở hữu) |
 | `ChapterName` rỗng (A4) | ✅ | `GetRecentLessonsAsync` / `GetChapterComparisonAsync` điền tên chương |
-| **Còn lại** | ⏳ | chưa gộp `StudentController.GetDashboardStats` với `DashboardController` (giữ 2 endpoint để không vỡ frontend); `SkillProgress` chưa được ghi; `ChartData`/`ScoreChartItemDto` vẫn theo node id chưa gộp chương; test "so sánh 2 tuần cố định" chưa có |
+| `ChartData` gộp theo chương | ✅ | roll-up attempt lên chapter ancestor |
+| Test "so sánh 2 tuần cố định" | ✅ | `P3P4RemainingTests` |
+| **Còn lại** | ⏳ | chưa gộp `StudentController.GetDashboardStats` với `DashboardController` (giữ 2 để không vỡ frontend); `SkillProgress` chưa ghi (chưa có seed skill) |
 
 ---
 
@@ -474,7 +481,8 @@ soát: tổng `Payment.Completed` == tổng subscription `Active` hợp lệ.
 | Endpoint "gói của tôi" / "lịch sử thanh toán của tôi" | ✅ | `GET /api/subscription/me`, `GET /api/payment/me` (payer hoặc beneficiary) |
 | Phụ huynh đứng tên trả (`Payment.PaidByUserId`) | ✅ | set từ token khi tạo pending (từ đợt A1/A2); `payment/me` bao gồm khoản phụ huynh trả |
 | Báo cáo đối soát | ✅ | `GET /api/finance/subscriptions/reconciliation` |
-| **Còn lại** | ⏳ | `Order` / `OrderItem` mua khoá lẻ (ngoài phạm vi đợt này); IPN mismatch trả 200 (không cho SePay retry) — cân nhắc trả 4xx; chưa có luồng refund |
+| Luồng refund | ✅ | `POST /api/payment/{id}/refund` (Finance/Admin) — Payment → Refunded + huỷ subscription tương ứng |
+| **Còn lại** | ⏳ | `Order` / `OrderItem` mua khoá lẻ (feature riêng, lớn); IPN mismatch trả 200 — cân nhắc 4xx để SePay retry |
 
 ---
 
@@ -522,7 +530,9 @@ truy cập. Thông báo sinh đúng luật (test rule engine xanh).
 | `Audience` Student/Parent/Both + fan-out đúng người nhận | ✅ | student user + parent user (link Active) |
 | Tuỳ chọn nhận thông báo | ✅ | `NotificationPreference` (opt-out theo rule); `GET/PUT /api/notifications/preferences` |
 | Email chuyển-tab → hàng đợi nền | ✅ | `IBackgroundEmailService.QueueTabSwitchEmail` — không còn `await` trong request |
-| **Còn lại** | ⏳ | `ChatConversation` chưa có luồng escalate sang nhân viên (`WaitingAgent`/staff); rule engine chưa có cấu hình ngưỡng động (SystemConfig); AI feedback không bị gate (chỉ đếm) — theo thiết kế |
+| Escalate chat sang nhân viên | ✅ | `POST /api/chatbot/request-human`; staff: `GET /api/chatbot/staff/queue`, `.../assign`, `.../reply`; `SuggestHuman` sau N lượt bot |
+| Ngưỡng rule động qua `SystemConfig` | ✅ | `SystemConfigService` (cache 5′) — rule engine + AI quota đọc `notify.*` / `ai.hint.*` / `support.chat.*`; `GET/PUT /api/admin/config` |
+| **Còn lại** | ⏳ | AI feedback không bị gate (chỉ đếm) — theo thiết kế |
 
 ---
 
@@ -559,11 +569,12 @@ dev. Có dashboard log/metric cơ bản.
 | Global exception handler + ProblemDetails (A2-15) | ✅ | `GlobalExceptionHandler` (`IExceptionHandler`) — log chi tiết + correlationId server-side, trả body chung; hết `ex.Message` ở service |
 | Health / readiness | ✅ | `/health` (liveness), `/health/ready` (`DbHealthCheck` — `CanConnectAsync`) |
 | `AuditLog` qua `SaveChanges` interceptor | ✅ | `AuditSaveChangesInterceptor` — User (role/active/lock), Subscription/Payment status, Package price/active, Question status; actor + IP từ HTTP context |
-| Phân trang / lọc | ✅ (một phần) | `Common/Paging` (`PagedRequest` + `ToPagedResultAsync`); áp cho `GET /api/user` (search), `/api/subscription` `/api/payment` (`?status=`). Các list khác (exercise, question-bank đã paged, attempt history) chưa |
+| Phân trang / lọc | ✅ (một phần) | `Common/Paging`; áp cho `GET /api/user` (search), `/api/subscription` `/api/payment` (`?status=`); question-bank + notification + payment/me đã paged. Còn: exercise list, attempt history |
+| Swagger nhóm tag | ✅ | 1 tag / controller, sắp xếp action ổn định, schema id dạng chấm |
 | Tinh chỉnh index DB | ✅ | `ExerciseAttempt (StudentId,ExerciseId,Status)` + `(StudentId,Status,SubmittedAt)`; `TabSwitchLog (AttemptId)`; `Notification (UserId,IsRead)` |
 | Xoá `AI_main.py` | ✅ | (`ExampleController` đã xoá từ P0) |
 | Fix double-register `IParentRepository` (A4) | ✅ | |
-| **Còn lại** | ⏳ | chuẩn hoá vỏ response `ApiResponse` cho **mọi** endpoint (nhiều nơi trả anonymous object) + mã HTTP đúng ngữ nghĩa (A5); route về kebab-case số nhiều; dọn nhóm tag Swagger; contract/snapshot test; load test 200 user; `/security-review` cuối cùng; enum serialize dạng số (cân nhắc bật `JsonStringEnumConverter`) |
+| **Còn lại (cần phối hợp frontend / hạ tầng)** | ⏳ | chuẩn hoá `ApiResponse` + mã HTTP cho **mọi** endpoint (A5) & route kebab-case → cần sửa đồng bộ WebApp; `JsonStringEnumConverter` (enum đang là số) → breaking; contract/snapshot test; load test 200 user (cần harness); `/security-review` cuối trên nhánh release |
 
 ---
 

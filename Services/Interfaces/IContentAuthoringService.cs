@@ -16,6 +16,11 @@ namespace ELearning_ToanHocHay_Control.Services.Interfaces
         Task<ApiResponse<ContentNodeDto>> UpdateNodeAsync(int nodeId, UpdateContentNodeDto dto, int userId);
         Task<ApiResponse<bool>> DeleteNodeAsync(int nodeId);
         Task<ApiResponse<bool>> ReorderChildrenAsync(int courseVersionId, int? parentNodeId, ReorderNodesDto dto);
+        Task<ApiResponse<ContentNodeDto>> MoveNodeAsync(int nodeId, MoveNodeDto dto, int userId);
+
+        // ----- revisions -----
+        Task<ApiResponse<List<NodeRevisionDto>>> GetRevisionsAsync(int nodeId);
+        Task<ApiResponse<ContentNodeDto>> RestoreRevisionAsync(int nodeId, int revisionNumber, int userId);
 
         // ----- blocks -----
         Task<ApiResponse<ContentBlockDto>> AddBlockAsync(int nodeId, ContentBlockRequestDto dto);

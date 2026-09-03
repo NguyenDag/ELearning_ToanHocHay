@@ -112,14 +112,18 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
     public class NotificationRuleEngine : INotificationRuleEngine
     {
         private readonly AppDbContext _context;
+        private readonly ISystemConfigService _config;
         private readonly ILogger<NotificationRuleEngine> _logger;
 
-        private const decimal LowScoreThreshold = 5m;    // out of 10
-        private const int InactivityDays = 3;
+        // SystemConfig fallbacks
+        private const decimal DefaultLowScoreThreshold = 5m;   // out of 10
+        private const int DefaultInactivityDays = 3;
 
-        public NotificationRuleEngine(AppDbContext context, ILogger<NotificationRuleEngine> logger)
+        public NotificationRuleEngine(
+            AppDbContext context, ISystemConfigService config, ILogger<NotificationRuleEngine> logger)
         {
             _context = context;
+            _config = config;
             _logger = logger;
         }
 
@@ -145,8 +149,9 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 .FirstOrDefaultAsync();
             if (a?.StudentId == null) return 0;
 
+            var threshold = await _config.GetDecimalAsync("notify.lowScore.threshold", DefaultLowScoreThreshold);
             var scoreOutOf10 = (decimal)(a.TotalScore / a.MaxScore) * 10m;
-            if (scoreOutOf10 >= LowScoreThreshold) return 0;
+            if (scoreOutOf10 >= threshold) return 0;
 
             return await FanOutAsync(a.StudentId.Value, NotificationRules.LowScore, NotifyAudience.Both,
                 NotificationType.Warning,
@@ -156,8 +161,9 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
         public async Task<int> RunInactivitySweepAsync()
         {
+            var inactivityDays = await _config.GetIntAsync("notify.inactivity.days", DefaultInactivityDays);
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
-            var since = today.AddDays(-InactivityDays);
+            var since = today.AddDays(-inactivityDays);
 
             // Students who have studied before but not in the last N days.
             var everActive = await _context.DailyActivitySnapshots
@@ -170,7 +176,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
             var idle = everActive.Except(recentlyActive).ToList();
             var created = 0;
-            var cutoff = DateTime.UtcNow.AddDays(-InactivityDays);
+            var cutoff = DateTime.UtcNow.AddDays(-inactivityDays);
 
             foreach (var studentId in idle)
             {
@@ -187,7 +193,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 created += await FanOutAsync(studentId, NotificationRules.Inactivity, NotifyAudience.Both,
                     NotificationType.Reminder,
                     "Lâu rồi chưa học",
-                    $"Đã {InactivityDays} ngày chưa có hoạt động học tập. Quay lại luyện tập nhé!");
+                    $"Đã {inactivityDays} ngày chưa có hoạt động học tập. Quay lại luyện tập nhé!");
             }
 
             if (created > 0) _logger.LogInformation("Inactivity sweep created {Count} notifications", created);

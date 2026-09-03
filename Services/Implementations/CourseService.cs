@@ -203,14 +203,25 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             if (v.State != VersionState.InReview)
                 return ApiResponse<CourseVersionDto>.ErrorResponse($"Only a version in review can be reviewed (current: {v.State})");
 
-            _context.ContentReviews.Add(new ContentReview
+            var review = new ContentReview
             {
                 CourseVersionId = versionId,
                 ReviewerId = reviewerId,
                 Decision = dto.Decision,
                 Summary = dto.Summary,
-                CreatedAt = DateTime.UtcNow
-            });
+                CreatedAt = DateTime.UtcNow,
+                Comments = dto.Comments
+                    .Where(c => !string.IsNullOrWhiteSpace(c.Body))
+                    .Select(c => new ReviewComment
+                    {
+                        NodeId = c.NodeId,
+                        BlockId = c.BlockId,
+                        Body = c.Body.Trim(),
+                        Status = CommentStatus.Open,
+                        CreatedAt = DateTime.UtcNow
+                    }).ToList()
+            };
+            _context.ContentReviews.Add(review);
 
             v.State = dto.Decision == ReviewDecision.Approve ? VersionState.Approved : VersionState.Draft;
             _context.CourseVersions.Update(v);
@@ -265,6 +276,54 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             v.State = VersionState.Archived;
             await _repo.UpdateVersionAsync(v);
             return ApiResponse<CourseVersionDto>.SuccessResponse(Map(v), "Version archived");
+        }
+
+        public async Task<ApiResponse<List<ContentReviewDto>>> GetVersionReviewsAsync(int versionId)
+        {
+            if (await _repo.GetVersionAsync(versionId) == null)
+                return ApiResponse<List<ContentReviewDto>>.ErrorResponse("Version not found");
+
+            var reviews = await _context.ContentReviews
+                .AsNoTracking()
+                .Include(r => r.Comments)
+                .Where(r => r.CourseVersionId == versionId)
+                .OrderByDescending(r => r.CreatedAt)
+                .ToListAsync();
+
+            return ApiResponse<List<ContentReviewDto>>.SuccessResponse(reviews.Select(r => new ContentReviewDto
+            {
+                ReviewId = r.ReviewId,
+                CourseVersionId = r.CourseVersionId,
+                ReviewerId = r.ReviewerId,
+                Decision = r.Decision,
+                Summary = r.Summary,
+                CreatedAt = r.CreatedAt,
+                Comments = (r.Comments ?? new List<ReviewComment>()).Select(c => new ReviewCommentDto
+                {
+                    CommentId = c.CommentId,
+                    NodeId = c.NodeId,
+                    BlockId = c.BlockId,
+                    Body = c.Body,
+                    Status = c.Status,
+                    ResolvedBy = c.ResolvedBy,
+                    ResolvedAt = c.ResolvedAt,
+                    CreatedAt = c.CreatedAt
+                }).ToList()
+            }).ToList());
+        }
+
+        public async Task<ApiResponse<bool>> ResolveReviewCommentAsync(int commentId, int userId)
+        {
+            var comment = await _context.ReviewComments.FirstOrDefaultAsync(c => c.CommentId == commentId);
+            if (comment == null) return ApiResponse<bool>.ErrorResponse("Comment not found");
+            if (comment.Status == CommentStatus.Resolved)
+                return ApiResponse<bool>.SuccessResponse(true, "Already resolved");
+
+            comment.Status = CommentStatus.Resolved;
+            comment.ResolvedBy = userId;
+            comment.ResolvedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            return ApiResponse<bool>.SuccessResponse(true, "Comment resolved");
         }
 
         // ================= helpers =================

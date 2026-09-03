@@ -1,4 +1,6 @@
+using ELearning_ToanHocHay_Control.Attributes;
 using ELearning_ToanHocHay_Control.Common;
+using ELearning_ToanHocHay_Control.Data.Entities;
 using ELearning_ToanHocHay_Control.Models.DTOs.Chatbot;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -74,6 +76,41 @@ namespace ELearning_ToanHocHay_Control.Controllers
             return ok
                 ? Ok(new { status = "healthy" })
                 : StatusCode(503, new { status = "unavailable" });
+        }
+
+        // ---------------- escalation ----------------
+        [HttpPost("request-human")]
+        public async Task<IActionResult> RequestHuman()
+            => Ok(await _chat.RequestHumanAsync(Uid));
+
+        [HttpPost("conversations/{id:int}/close")]
+        public async Task<IActionResult> Close(int id)
+        {
+            var isStaff = User.HasUserType(UserType.SupportStaff, UserType.SystemAdmin);
+            var r = await _chat.CloseAsync(Uid, id, isStaff);
+            return r.Success ? Ok(r) : BadRequest(r);
+        }
+
+        // ---------------- staff ----------------
+        [HttpGet("staff/queue")]
+        [AuthorizeUserType(UserType.SupportStaff, UserType.SystemAdmin)]
+        public async Task<IActionResult> Queue()
+            => Ok(await _chat.GetQueueAsync());
+
+        [HttpPost("staff/conversations/{id:int}/assign")]
+        [AuthorizeUserType(UserType.SupportStaff, UserType.SystemAdmin)]
+        public async Task<IActionResult> Assign(int id)
+        {
+            var r = await _chat.AssignToMeAsync(Uid, id);
+            return r.Success ? Ok(r) : BadRequest(r);
+        }
+
+        [HttpPost("staff/conversations/{id:int}/reply")]
+        [AuthorizeUserType(UserType.SupportStaff, UserType.SystemAdmin)]
+        public async Task<IActionResult> StaffReply(int id, [FromBody] SendChatMessageDto dto)
+        {
+            var r = await _chat.StaffReplyAsync(Uid, id, dto.Text, User.IsSystemAdmin());
+            return r.Success ? Ok(r) : BadRequest(r);
         }
     }
 }

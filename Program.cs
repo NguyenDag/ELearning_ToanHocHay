@@ -12,6 +12,7 @@ using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
@@ -63,6 +64,7 @@ namespace ELearning_ToanHocHay_Control
             RegisterAppServices(builder.Services);
 
             // P7 — global exception handling (A2-15) + health checks
+            builder.Services.AddMemoryCache();
             builder.Services.AddProblemDetails();
             builder.Services.AddExceptionHandler<Common.GlobalExceptionHandler>();
             builder.Services.AddHealthChecks()
@@ -122,6 +124,28 @@ namespace ELearning_ToanHocHay_Control
                             context.Response.Headers.Append("Token-Expired", "true");
                         }
                         return Task.CompletedTask;
+                    },
+
+                    // P1/P7 — reject an access token whose SecurityStamp is stale
+                    // (password changed / account locked / role changed). Cached 30s per user.
+                    OnTokenValidated = async context =>
+                    {
+                        var stampClaim = context.Principal?.FindFirst(Common.CustomJwtClaims.SecurityStamp)?.Value;
+                        var userIdClaim = context.Principal?.FindFirst(Common.CustomJwtClaims.UserId)?.Value;
+                        if (stampClaim == null || !int.TryParse(userIdClaim, out var uid)) return;
+
+                        var sp = context.HttpContext.RequestServices;
+                        var cache = sp.GetRequiredService<Microsoft.Extensions.Caching.Memory.IMemoryCache>();
+                        var current = await cache.GetOrCreateAsync($"sstamp:{uid}", async e =>
+                        {
+                            e.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(30);
+                            var db = sp.GetRequiredService<AppDbContext>();
+                            return await db.Users.AsNoTracking()
+                                .Where(u => u.UserId == uid).Select(u => u.SecurityStamp).FirstOrDefaultAsync();
+                        });
+
+                        if (current != null && current != stampClaim)
+                            context.Fail("Security stamp mismatch");
                     }
                 };
             });
@@ -325,6 +349,7 @@ namespace ELearning_ToanHocHay_Control
             services.AddScoped<IQuestionBankService, QuestionBankService>();
             services.AddScoped<IAdminUserService, AdminUserService>();
             services.AddScoped<IProgressProjectionService, ProgressProjectionService>();
+            services.AddScoped<ISystemConfigService, SystemConfigService>();
 
             // Background Services
             services.AddSingleton<IBackgroundEmailService, BackgroundEmailService>();
@@ -346,6 +371,15 @@ namespace ELearning_ToanHocHay_Control
                     Version = "v1",
                     Description = "API for the ToanHocHay e-learning platform"
                 });
+
+                // P7 — stable, grouped Swagger: one tag per controller, actions ordered.
+                c.TagActionsBy(api => new[]
+                {
+                    api.ActionDescriptor.RouteValues.TryGetValue("controller", out var ctrl) ? ctrl ?? "Misc" : "Misc"
+                });
+                c.OrderActionsBy(api =>
+                    $"{api.ActionDescriptor.RouteValues["controller"]}_{api.RelativePath}_{api.HttpMethod}");
+                c.CustomSchemaIds(t => t.FullName?.Replace("+", ".") ?? t.Name);
 
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {

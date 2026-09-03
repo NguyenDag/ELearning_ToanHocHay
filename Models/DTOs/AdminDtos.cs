@@ -15,6 +15,11 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs
         public UserType NewRole { get; set; }
     }
 
+    public class SetConfigDto
+    {
+        public string? Value { get; set; }
+    }
+
     public class AuditLogDto
     {
         public long LogId { get; set; }

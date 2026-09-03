@@ -30,8 +30,12 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs.Chatbot
     public class ChatTurnResultDto
     {
         public int ConversationId { get; set; }
-        public ChatMessageDto Reply { get; set; } = new();
+        public ChatMessageDto? Reply { get; set; }
         public bool AiAvailable { get; set; }
         public List<string>? Options { get; set; }
+        public ChatStatus ConversationStatus { get; set; }
+
+        /// <summary>The bot has tried enough — offer a human agent.</summary>
+        public bool SuggestHuman { get; set; }
     }
 }

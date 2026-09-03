@@ -13,19 +13,25 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         private readonly IUserRepository _userRepo;
         private readonly IAuditLogRepository _auditRepo;
         private readonly IRefreshTokenRepository _refreshRepo;
+        private readonly Microsoft.Extensions.Caching.Memory.IMemoryCache _cache;
         private readonly IMapper _mapper;
 
         public AdminUserService(
             IUserRepository userRepo,
             IAuditLogRepository auditRepo,
             IRefreshTokenRepository refreshRepo,
+            Microsoft.Extensions.Caching.Memory.IMemoryCache cache,
             IMapper mapper)
         {
             _userRepo = userRepo;
             _auditRepo = auditRepo;
             _refreshRepo = refreshRepo;
+            _cache = cache;
             _mapper = mapper;
         }
+
+        private void InvalidateSessions(int userId)
+            => _cache.Remove($"sstamp:{userId}");
 
         public async Task<ApiResponse<UserDto>> LockUserAsync(int targetUserId, int adminUserId, string reason, string? ip)
         {
@@ -38,10 +44,12 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             user.LockedReason = reason;
             user.LockedByUserId = adminUserId;
             user.IsActive = false;
+            user.SecurityStamp = Guid.NewGuid().ToString("N");
             user.UpdatedAt = DateTime.UtcNow;
             await _userRepo.UpdateUserAsync(user);
 
             await _refreshRepo.RevokeAllForUserAsync(targetUserId);
+            InvalidateSessions(targetUserId);
             await AuditAsync(adminUserId, "LockUser", targetUserId, null, new { reason }, ip);
 
             return ApiResponse<UserDto>.SuccessResponse(_mapper.Map<UserDto>(user), "Account locked");
@@ -80,11 +88,13 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
             var oldRole = user.UserType;
             user.UserType = newRole;
+            user.SecurityStamp = Guid.NewGuid().ToString("N");
             user.UpdatedAt = DateTime.UtcNow;
             await _userRepo.UpdateUserAsync(user);
 
             // Force re-login so the new role lands in a fresh token.
             await _refreshRepo.RevokeAllForUserAsync(targetUserId);
+            InvalidateSessions(targetUserId);
             await AuditAsync(adminUserId, "ChangeRole", targetUserId,
                 new { role = oldRole.ToString() }, new { role = newRole.ToString() }, ip);
 

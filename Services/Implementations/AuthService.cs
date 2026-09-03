@@ -5,6 +5,7 @@ using ELearning_ToanHocHay_Control.Repositories.Interfaces;
 using ELearning_ToanHocHay_Control.Services.Helpers;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 
 namespace ELearning_ToanHocHay_Control.Services.Implementations
@@ -22,6 +23,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         private readonly AppSettings _appSettings;
         private readonly IBackgroundEmailService _backgroundEmailService;
         private readonly IConfiguration _configuration;
+        private readonly IMemoryCache _cache;
 
         // P1 — login throttling
         private const int MaxFailedAttempts = 5;
@@ -39,8 +41,10 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             IEmailService emailService,
             IOptions<AppSettings> appSettings,
             IBackgroundEmailService backgroundEmailService,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IMemoryCache cache)
         {
+            _cache = cache;
             _context = context;
             _userRepository = userRepository;
             _studentRepository = studentRepository;
@@ -265,10 +269,12 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 return ApiResponse<bool>.ErrorResponse("Mật khẩu hiện tại không đúng");
 
             user.PasswordHash = _passwordHasher.HashPassword(request.NewPassword);
+            user.SecurityStamp = Guid.NewGuid().ToString("N");
             await _userRepository.UpdateUserAsync(user);
 
-            // P1 — invalidate every existing session
+            // P1 — invalidate every existing session (refresh + in-flight access tokens)
             await _refreshTokenRepository.RevokeAllForUserAsync(userId);
+            _cache.Remove($"sstamp:{userId}");
 
             return ApiResponse<bool>.SuccessResponse(true, "Đổi mật khẩu thành công. Vui lòng đăng nhập lại.");
         }
@@ -368,12 +374,14 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             user.PasswordHash = _passwordHasher.HashPassword(newPassword);
             user.FailedLoginCount = 0;
             user.LockoutEndsAt = null;
+            user.SecurityStamp = Guid.NewGuid().ToString("N");
             reset.IsUsed = true;
             await _userRepository.UpdateUserAsync(user);
             await _context.SaveChangesAsync();
 
             // P1 — a password reset kills every existing session
             await _refreshTokenRepository.RevokeAllForUserAsync(user.UserId);
+            _cache.Remove($"sstamp:{user.UserId}");
 
             return ApiResponse<bool>.SuccessResponse(true, "Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại.");
         }

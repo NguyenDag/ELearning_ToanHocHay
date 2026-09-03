@@ -70,12 +70,4 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs.Question
         [Required] public bool Approve { get; set; }
         public string? RejectReason { get; set; }
     }
-
-    public class PagedResult<T>
-    {
-        public List<T> Items { get; set; } = new();
-        public int Total { get; set; }
-        public int Page { get; set; }
-        public int PageSize { get; set; }
-    }
 }

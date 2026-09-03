@@ -131,9 +131,9 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     PackageTier = packageTier
                 }, "Đăng nhập thành công");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return ApiResponse<LoginResponseDto>.ErrorResponse("Đã xảy ra lỗi", new List<string> { ex.Message });
+                return ApiResponse<LoginResponseDto>.ErrorResponse("Đã xảy ra lỗi", new List<string>());
             }
         }
 

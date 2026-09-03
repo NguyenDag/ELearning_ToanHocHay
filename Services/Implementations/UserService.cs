@@ -50,11 +50,11 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     "User created successfully"
                     );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return ApiResponse<UserDto>.ErrorResponse(
                     "Error creating user",
-                    new List<string> { ex.Message }
+                    new List<string>()
                     );
             }
         }
@@ -80,11 +80,11 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     "User deleted successfully"
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return ApiResponse<bool>.ErrorResponse(
                     "Error deleting user",
-                    new List<string> { ex.Message }
+                    new List<string>()
                 );
             }
         }
@@ -99,11 +99,11 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     "Users retrieved successfully"
                     );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return ApiResponse<IEnumerable<UserDto>>.ErrorResponse(
                     "Error retrieving users",
-                    new List<string> { ex.Message }
+                    new List<string>()
                 );
             }
         }
@@ -123,11 +123,11 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     "User retrieved successfully"
                     );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return ApiResponse<UserDto>.ErrorResponse(
                     "Error retrieving user",
-                    new List<string> { ex.Message }
+                    new List<string>()
                 );
             }
         }
@@ -151,11 +151,11 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     "User retrieved successfully"
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return ApiResponse<UserDto>.ErrorResponse(
                     "Error retrieving user",
-                    new List<string> { ex.Message }
+                    new List<string>()
                 );
             }
         }
@@ -201,11 +201,11 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     "User updated successfully"
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return ApiResponse<UserDto>.ErrorResponse(
                     "Error updating user",
-                    new List<string> { ex.Message }
+                    new List<string>()
                 );
             }
         }
@@ -245,11 +245,11 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     _mapper.Map<UserDto>(user),
                     "Profile updated successfully");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return ApiResponse<UserDto>.ErrorResponse(
                     "Error updating profile",
-                    new List<string> { ex.Message });
+                    new List<string>());
             }
         }
     }

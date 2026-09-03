@@ -551,6 +551,20 @@ truy cập. Thông báo sinh đúng luật (test rule engine xanh).
 Toàn bộ regression suite xanh trong CI. Load test đạt ngưỡng. Swagger sạch, không endpoint
 dev. Có dashboard log/metric cơ bản.
 
+**Trạng thái triển khai (cập nhật)** — nhánh `feat/p7-ops-quality`, migration `P7_Indexes`, test `P7Tests` (5), toàn bộ suite 89 xanh:
+
+| Hạng mục P7 | Trạng thái | Ghi chú |
+|---|---|---|
+| Structured logging + correlation id + Serilog | ✅ | `Serilog.AspNetCore` (console, config-driven), `UseSerilogRequestLogging`; `CorrelationIdMiddleware` (`X-Correlation-ID` sinh/echo, đẩy vào `LogContext`) |
+| Global exception handler + ProblemDetails (A2-15) | ✅ | `GlobalExceptionHandler` (`IExceptionHandler`) — log chi tiết + correlationId server-side, trả body chung; hết `ex.Message` ở service |
+| Health / readiness | ✅ | `/health` (liveness), `/health/ready` (`DbHealthCheck` — `CanConnectAsync`) |
+| `AuditLog` qua `SaveChanges` interceptor | ✅ | `AuditSaveChangesInterceptor` — User (role/active/lock), Subscription/Payment status, Package price/active, Question status; actor + IP từ HTTP context |
+| Phân trang / lọc | ✅ (một phần) | `Common/Paging` (`PagedRequest` + `ToPagedResultAsync`); áp cho `GET /api/user` (search), `/api/subscription` `/api/payment` (`?status=`). Các list khác (exercise, question-bank đã paged, attempt history) chưa |
+| Tinh chỉnh index DB | ✅ | `ExerciseAttempt (StudentId,ExerciseId,Status)` + `(StudentId,Status,SubmittedAt)`; `TabSwitchLog (AttemptId)`; `Notification (UserId,IsRead)` |
+| Xoá `AI_main.py` | ✅ | (`ExampleController` đã xoá từ P0) |
+| Fix double-register `IParentRepository` (A4) | ✅ | |
+| **Còn lại** | ⏳ | chuẩn hoá vỏ response `ApiResponse` cho **mọi** endpoint (nhiều nơi trả anonymous object) + mã HTTP đúng ngữ nghĩa (A5); route về kebab-case số nhiều; dọn nhóm tag Swagger; contract/snapshot test; load test 200 user; `/security-review` cuối cùng; enum serialize dạng số (cân nhắc bật `JsonStringEnumConverter`) |
+
 ---
 
 ## C — Chiến lược kiểm thử tổng thể

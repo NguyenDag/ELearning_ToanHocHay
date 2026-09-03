@@ -1,6 +1,7 @@
 using ELearning_ToanHocHay_Control.Attributes;
 using ELearning_ToanHocHay_Control.Common;
 using ELearning_ToanHocHay_Control.Data.Entities;
+using ELearning_ToanHocHay_Control.Models.DTOs;
 using ELearning_ToanHocHay_Control.Models.DTOs.Course;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -41,9 +42,9 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> GetCourse(int id)
         {
             var r = await _courses.GetCourseAsync(id);
-            if (!r.Success) return NotFound(r);
-            if (r.Data!.Status != CourseStatus.Published && !IsContentRole) return NotFound(r);
-            return Ok(r);
+            if (!r.Success || (r.Data!.Status != CourseStatus.Published && !IsContentRole))
+                return ApiResponse<object>.NotFound(r.Success ? "Không tìm thấy khoá học" : r.Message).ToActionResult();
+            return r.ToActionResult();
         }
 
         [HttpGet("by-slug/{slug}")]
@@ -51,9 +52,9 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> GetCourseBySlug(string slug)
         {
             var r = await _courses.GetCourseBySlugAsync(slug);
-            if (!r.Success) return NotFound(r);
-            if (r.Data!.Status != CourseStatus.Published && !IsContentRole) return NotFound(r);
-            return Ok(r);
+            if (!r.Success || (r.Data!.Status != CourseStatus.Published && !IsContentRole))
+                return ApiResponse<object>.NotFound(r.Success ? "Không tìm thấy khoá học" : r.Message).ToActionResult();
+            return r.ToActionResult();
         }
 
         // ---------------- Authoring ----------------

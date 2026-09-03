@@ -70,8 +70,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
             if (!userId.HasValue)
                 return Unauthorized(ApiResponse<bool>.ErrorResponse("Token không hợp lệ"));
 
-            var result = await _authService.LogoutAsync(userId.Value, request?.RefreshToken);
-            return Ok(result);
+            return (await _authService.LogoutAsync(userId.Value, request?.RefreshToken)).ToActionResult();
         }
 
         [HttpPost("register")]
@@ -98,7 +97,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> ChangePassword(ChangePasswordDto request)
         {
             var userId = User.GetUserId();
-            if (!userId.HasValue) return Unauthorized();
+            if (!userId.HasValue) return Unauthorized(ApiResponse<object>.ErrorResponse("Token không hợp lệ"));
 
             var result = await _authService.ChangePasswordAsync(userId.Value, request);
             return result.ToActionResult();
@@ -129,8 +128,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         [EnableRateLimiting("auth")]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto request)
         {
-            var result = await _authService.ForgotPasswordAsync(request.Email);
-            return Ok(result);
+            return (await _authService.ForgotPasswordAsync(request.Email)).ToActionResult();
         }
 
         [HttpPost("reset-password")]

@@ -54,7 +54,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Chatbot trigger failed");
-                return StatusCode(503, new { success = false, error = "AI service unavailable" });
+                return StatusCode(503, ApiResponse<object>.ErrorResponse("AI service unavailable"));
             }
         }
 

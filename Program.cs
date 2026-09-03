@@ -206,6 +206,20 @@ namespace ELearning_ToanHocHay_Control
         options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
     });
 
+            // A5 — [ApiController] model-validation failures also use the ApiResponse envelope.
+            builder.Services.Configure<Microsoft.AspNetCore.Mvc.ApiBehaviorOptions>(o =>
+            {
+                o.InvalidModelStateResponseFactory = ctx =>
+                {
+                    var errors = ctx.ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => string.IsNullOrWhiteSpace(e.ErrorMessage) ? "Giá trị không hợp lệ" : e.ErrorMessage)
+                        .ToList();
+                    return new Microsoft.AspNetCore.Mvc.BadRequestObjectResult(
+                        Models.DTOs.ApiResponse<object>.ErrorResponse("Dữ liệu không hợp lệ", errors));
+                };
+            });
+
             // 7. Swagger & CORS
             builder.Services.AddEndpointsApiExplorer();
             ConfigureSwagger(builder.Services);

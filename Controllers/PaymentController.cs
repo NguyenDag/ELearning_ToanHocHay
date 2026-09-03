@@ -1,6 +1,7 @@
 using ELearning_ToanHocHay_Control.Attributes;
 using ELearning_ToanHocHay_Control.Common;
 using ELearning_ToanHocHay_Control.Data.Entities;
+using ELearning_ToanHocHay_Control.Models.DTOs;
 using ELearning_ToanHocHay_Control.Models.DTOs.Payment;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -39,7 +40,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> GetMine([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
             var userId = User.GetUserId();
-            if (userId == null) return Unauthorized();
+            if (userId == null) return Unauthorized(ApiResponse<object>.ErrorResponse("Token không hợp lệ"));
             return (await _service.GetMyPaymentsAsync(userId.Value, page, pageSize)).ToActionResult();
         }
 

@@ -59,7 +59,8 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> Create([FromBody] CreateUserDto user)
         {
             if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+                return BadRequest(ApiResponse<object>.ErrorResponse("Dữ liệu không hợp lệ",
+                    ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList()));
 
             var response = await _userService.CreateUserAsync(user);
             return response.ToActionResult();

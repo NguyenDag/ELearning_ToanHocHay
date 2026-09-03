@@ -1,5 +1,6 @@
 using ELearning_ToanHocHay_Control.Attributes;
 using ELearning_ToanHocHay_Control.Common;
+using ELearning_ToanHocHay_Control.Models.DTOs;
 using ELearning_ToanHocHay_Control.Models.DTOs.AIFeedback;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -30,8 +31,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
             if (!await _access.CanViewAttemptAsync(User, attemptId))
                 return this.Forbidden();
 
-            var result = await _feedbackService.GetByAttemptAsync(attemptId);
-            return Ok(result);
+            return (await _feedbackService.GetByAttemptAsync(attemptId)).ToActionResult();
         }
 
         [HttpGet("{id:int}")]

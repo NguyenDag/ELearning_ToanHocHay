@@ -32,9 +32,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetNode(int nodeId)
         {
-            var r = await _learn.GetNodeAsync(User, nodeId);
-            if (r.Success) return Ok(r);
-            return r.Message.Contains("subscription") ? StatusCode(403, r) : NotFound(r);
+            return (await _learn.GetNodeAsync(User, nodeId)).ToActionResult();
         }
     }
 }

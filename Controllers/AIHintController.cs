@@ -44,8 +44,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
             if (!await _access.CanViewAttemptAsync(User, attemptId))
                 return this.Forbidden();
 
-            var result = await _hintService.GetByAttemptAsync(attemptId);
-            return Ok(result);
+            return (await _hintService.GetByAttemptAsync(attemptId)).ToActionResult();
         }
 
         [HttpGet("by-attempt-question")]
@@ -56,8 +55,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
             if (!await _access.CanViewAttemptAsync(User, attemptId))
                 return this.Forbidden();
 
-            var result = await _hintService.GetByAttemptAndQuestionAsync(attemptId, questionId);
-            return Ok(result);
+            return (await _hintService.GetByAttemptAndQuestionAsync(attemptId, questionId)).ToActionResult();
         }
 
         [HttpGet("{id:int}")]

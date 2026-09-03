@@ -113,7 +113,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     sc.CourseVersionId == node.CourseVersionId &&
                     sc.Status == StudentCourseStatus.Active);
                 if (!enrolled)
-                    return ApiResponse<NodeProgressDto>.ErrorResponse("You are not enrolled in this course");
+                    return ApiResponse<NodeProgressDto>.Forbidden("Bạn chưa ghi danh khoá học này");
             }
 
             if (secondsViewed < MinViewSeconds)

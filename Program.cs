@@ -75,25 +75,32 @@ namespace ELearning_ToanHocHay_Control
             // 4. AutoMapper
             builder.Services.AddAutoMapper(typeof(UserProfile));
 
-            // 5. JWT config (flexible SecretKey resolution)
+            // 5. JWT config — SecretKey MUST come from a secret store, never appsettings.json in the repo.
+            //    Local dev : dotnet user-secrets set "JwtSettings:SecretKey" "<32+ character secret>"
+            //    Server    : environment variable  JwtSettings__SecretKey
             var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 
-            // Prefer an environment variable (server), fall back to appsettings (local)
             var secretKey = Environment.GetEnvironmentVariable("JwtSettings__SecretKey")
-                            ?? jwtSettings["SecretKey"]
                             ?? builder.Configuration["JwtSettings:SecretKey"];
-
 
             // Register SePay
             builder.Services.Configure<SePayOptions>(
                 builder.Configuration.GetSection("SePay")
             );
 
-            
             // Fail fast with a clear message instead of an ArgumentNullException if the key is missing
-            if (string.IsNullOrEmpty(secretKey))
+            if (string.IsNullOrWhiteSpace(secretKey))
             {
-                throw new Exception("CRITICAL ERROR: 'SecretKey' not found in configuration! Check appsettings.json or environment variables.");
+                throw new InvalidOperationException(
+                    "JWT SecretKey is not configured. For local development run "
+                    + "'dotnet user-secrets set \"JwtSettings:SecretKey\" \"<32+ character secret>\"'; "
+                    + "on the server set the 'JwtSettings__SecretKey' environment variable. "
+                    + "It must never be committed to appsettings.json.");
+            }
+            if (secretKey.Length < 32)
+            {
+                throw new InvalidOperationException(
+                    "JWT SecretKey must be at least 32 characters long for HMAC-SHA256 token signing.");
             }
 
             builder.Services.AddAuthentication(options =>
@@ -221,6 +228,11 @@ namespace ELearning_ToanHocHay_Control
 
         // 3. (Optional) Drop null fields to make the JSON smaller
         options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+
+        // 4. Serialize enums as their string names, not integers (A5). BREAKING for any
+        //    client that read enum values as numbers. Reading still accepts both names and numbers.
+        options.JsonSerializerOptions.Converters.Add(
+            new System.Text.Json.Serialization.JsonStringEnumConverter());
     });
 
             // A5 — [ApiController] model-validation failures also use the ApiResponse envelope.

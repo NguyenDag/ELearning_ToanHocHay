@@ -74,7 +74,7 @@ public class P7Tests
         res.StatusCode.Should().Be(HttpStatusCode.OK, await res.Content.ReadAsStringAsync());
         var items = (await Root(res)).GetProperty("Data").GetProperty("Items");
         foreach (var s in items.EnumerateArray())
-            s.GetProperty("Status").GetInt32().Should().Be((int)SubscriptionStatus.Pending);
+            s.GetProperty("Status").GetString().Should().Be(nameof(SubscriptionStatus.Pending));
     }
 
     [SkippableFact]

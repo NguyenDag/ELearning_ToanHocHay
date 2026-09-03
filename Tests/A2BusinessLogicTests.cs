@@ -119,9 +119,9 @@ public class A2BusinessLogicTests
         var completeRes = await client.PostAsJsonAsync("/api/exercise-attempts/complete", new { AttemptId = attemptId });
         completeRes.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        // AttemptStatus serialises as a number: 1 = Submitted, 2 = Timeout.
-        var status = (await Root(completeRes)).GetProperty("Data").GetProperty("Status").GetInt32();
-        status.Should().Be(1, "there is no fake timeout anymore");
+        // AttemptStatus serialises as its string name (A5).
+        var status = (await Root(completeRes)).GetProperty("Data").GetProperty("Status").GetString();
+        status.Should().Be("Submitted", "there is no fake timeout anymore");
     }
 
     // ---------- A2-04: complete returns immediately; AI feedback is queued ----------

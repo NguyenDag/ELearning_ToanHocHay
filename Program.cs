@@ -146,6 +146,23 @@ namespace ELearning_ToanHocHay_Control
 
                         if (current != null && current != stampClaim)
                             context.Fail("Security stamp mismatch");
+                    },
+
+                    // A5 — 401 / 403 challenges also carry the ApiResponse envelope.
+                    OnChallenge = async context =>
+                    {
+                        context.HandleResponse();
+                        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                        context.Response.ContentType = "application/json";
+                        await context.Response.WriteAsJsonAsync(
+                            Models.DTOs.ApiResponse<object>.ErrorResponse("Bạn cần đăng nhập để truy cập tài nguyên này"));
+                    },
+                    OnForbidden = async context =>
+                    {
+                        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                        context.Response.ContentType = "application/json";
+                        await context.Response.WriteAsJsonAsync(
+                            Models.DTOs.ApiResponse<object>.Forbidden());
                     }
                 };
             });

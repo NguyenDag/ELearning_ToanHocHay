@@ -1,13 +1,13 @@
-﻿using ELearning_ToanHocHay_Control.Common;
+using ELearning_ToanHocHay_Control.Common;
 using ELearning_ToanHocHay_Control.Data.Entities;
+using ELearning_ToanHocHay_Control.Models.DTOs;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace ELearning_ToanHocHay_Control.Attributes
 {
-    /// <summary>
-    /// Attribute để phân quyền theo UserType
-    /// </summary>
+    /// <summary>Phân quyền theo <see cref="UserType"/>. Trả 401 / 403 với vỏ <see cref="ApiResponse{T}"/> (A5).</summary>
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
     public class AuthorizeUserTypeAttribute : Attribute, IAuthorizationFilter
     {
@@ -20,44 +20,23 @@ namespace ELearning_ToanHocHay_Control.Attributes
 
         public void OnAuthorization(AuthorizationFilterContext context)
         {
-            // Kiểm tra user đã authenticated chưa
             var user = context.HttpContext.User;
             if (user?.Identity?.IsAuthenticated != true)
             {
-                context.Result = new UnauthorizedObjectResult(new
-                {
-                    success = false,
-                    message = "Bạn cần đăng nhập để truy cập tài nguyên này"
-                });
+                context.Result = new ObjectResult(
+                    ApiResponse<object>.ErrorResponse("Bạn cần đăng nhập để truy cập tài nguyên này"))
+                { StatusCode = StatusCodes.Status401Unauthorized };
                 return;
             }
 
-            // Get UserType from claims
             var userTypeClaim = user.FindFirst(CustomJwtClaims.UserType)?.Value;
-            if (string.IsNullOrEmpty(userTypeClaim))
+            if (string.IsNullOrEmpty(userTypeClaim)
+                || !Enum.TryParse<UserType>(userTypeClaim, out var userType)
+                || !_allowedUserTypes.Contains(userType))
             {
-                context.Result = new ForbidResult();
-                return;
-            }
-
-            // Parse UserType
-            if (!Enum.TryParse<UserType>(userTypeClaim, out var userType))
-            {
-                context.Result = new ForbidResult();
-                return;
-            }
-
-            // Kiểm tra quyền
-            if (!_allowedUserTypes.Contains(userType))
-            {
-                context.Result = new ObjectResult(new
-                {
-                    success = false,
-                    message = "Bạn không có quyền truy cập tài nguyên này"
-                })
-                {
-                    StatusCode = 403
-                };
+                context.Result = new ObjectResult(
+                    ApiResponse<object>.Forbidden("Bạn không có quyền truy cập tài nguyên này"))
+                { StatusCode = StatusCodes.Status403Forbidden };
             }
         }
     }

@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ELearning_ToanHocHay_Control.Controllers
 {
-    [Route("api/[controller]/[action]")]
+    [Route("api/sepay/[action]")]
     [ApiController]
     public class SepayController : ControllerBase
     {

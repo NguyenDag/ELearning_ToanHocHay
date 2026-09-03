@@ -37,7 +37,7 @@ public class P5PaymentTests
     private async Task<(int subId, long amount)> CreatePendingAsync()
     {
         var res = await _f.ClientFor(Id.StudentAUserId)
-            .PostAsJsonAsync("/api/subscription", new { StudentId = Id.StudentAId, PackageId = Id.PackageId });
+            .PostAsJsonAsync("/api/subscriptions", new { StudentId = Id.StudentAId, PackageId = Id.PackageId });
         res.StatusCode.Should().Be(HttpStatusCode.OK, await res.Content.ReadAsStringAsync());
         var root = await Root(res);
         return (root.GetProperty("subscriptionId").GetInt32(), (long)root.GetProperty("amount").GetDecimal());
@@ -199,9 +199,9 @@ public class P5PaymentTests
         recon.StatusCode.Should().Be(HttpStatusCode.OK, await recon.Content.ReadAsStringAsync());
         (await Root(recon)).TryGetProperty("Balanced", out _).Should().BeTrue();
 
-        (await _f.ClientFor(Id.StudentAUserId).GetAsync("/api/subscription/me"))
+        (await _f.ClientFor(Id.StudentAUserId).GetAsync("/api/subscriptions/me"))
             .StatusCode.Should().Be(HttpStatusCode.OK);
-        (await _f.ClientFor(Id.StudentAUserId).GetAsync("/api/payment/me"))
+        (await _f.ClientFor(Id.StudentAUserId).GetAsync("/api/payments/me"))
             .StatusCode.Should().Be(HttpStatusCode.OK);
     }
 }

@@ -52,13 +52,13 @@ public class P7Tests
         RequireDocker();
         var admin = _f.ClientFor(Id.AdminUserId);
 
-        var paged = await Root(await admin.GetAsync("/api/user?page=1&pageSize=2"));
+        var paged = await Root(await admin.GetAsync("/api/users?page=1&pageSize=2"));
         var data = paged.GetProperty("Data");
         data.GetProperty("Items").GetArrayLength().Should().Be(2);
         data.GetProperty("PageSize").GetInt32().Should().Be(2);
         data.GetProperty("Total").GetInt32().Should().BeGreaterThan(2);
 
-        var search = await Root(await admin.GetAsync("/api/user?search=admin@test.local"));
+        var search = await Root(await admin.GetAsync("/api/users?search=admin@test.local"));
         var items = search.GetProperty("Data").GetProperty("Items");
         items.GetArrayLength().Should().Be(1);
         items[0].GetProperty("Email").GetString().Should().Be("admin@test.local");
@@ -70,7 +70,7 @@ public class P7Tests
         RequireDocker();
         var finance = _f.ClientFor(Id.FinanceUserId);
 
-        var res = await finance.GetAsync("/api/subscription?page=1&pageSize=5&status=Pending");
+        var res = await finance.GetAsync("/api/subscriptions?page=1&pageSize=5&status=Pending");
         res.StatusCode.Should().Be(HttpStatusCode.OK, await res.Content.ReadAsStringAsync());
         var items = (await Root(res)).GetProperty("Data").GetProperty("Items");
         foreach (var s in items.EnumerateArray())

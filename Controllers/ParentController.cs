@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ELearning_ToanHocHay_Control.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/parents")]
     [ApiController]
     [Authorize]
     public class ParentController : ControllerBase

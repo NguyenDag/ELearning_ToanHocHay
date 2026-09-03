@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ELearning_ToanHocHay_Control.Controllers
 {
-    [Route("api/student/{studentId:int}")]
+    [Route("api/students/{studentId:int}")]
     [ApiController]
     [Authorize]
     public class StudentSubscriptionController : ControllerBase

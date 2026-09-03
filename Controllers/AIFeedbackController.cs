@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.RateLimiting;
 
 namespace ELearning_ToanHocHay_Control.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/ai-feedback")]
     [ApiController]
     [Authorize]
     [EnableRateLimiting("ai")]

@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ELearning_ToanHocHay_Control.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/exercise-attempts")]
     [ApiController]
     [Authorize]
     public class ExerciseAttemptsController : ControllerBase

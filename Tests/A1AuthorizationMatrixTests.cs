@@ -26,7 +26,7 @@ public class A1AuthorizationMatrixTests
     public async Task A1_01_AnonymousCannotListUsers()
     {
         RequireDocker();
-        var res = await _f.ClientFor(null).GetAsync("/api/user");
+        var res = await _f.ClientFor(null).GetAsync("/api/users");
         res.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
@@ -34,7 +34,7 @@ public class A1AuthorizationMatrixTests
     public async Task A1_01_StudentCannotListUsers()
     {
         RequireDocker();
-        var res = await _f.ClientFor(Id.StudentAUserId).GetAsync("/api/user");
+        var res = await _f.ClientFor(Id.StudentAUserId).GetAsync("/api/users");
         res.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
@@ -42,7 +42,7 @@ public class A1AuthorizationMatrixTests
     public async Task A1_01_StudentCannotDeleteAnotherUser()
     {
         RequireDocker();
-        var res = await _f.ClientFor(Id.StudentAUserId).DeleteAsync($"/api/user/{Id.StudentBUserId}");
+        var res = await _f.ClientFor(Id.StudentAUserId).DeleteAsync($"/api/users/{Id.StudentBUserId}");
         res.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
@@ -50,7 +50,7 @@ public class A1AuthorizationMatrixTests
     public async Task A1_01_AdminCanListUsers()
     {
         RequireDocker();
-        var res = await _f.ClientFor(Id.AdminUserId).GetAsync("/api/user");
+        var res = await _f.ClientFor(Id.AdminUserId).GetAsync("/api/users");
         res.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
@@ -61,7 +61,7 @@ public class A1AuthorizationMatrixTests
     {
         RequireDocker();
         var res = await _f.ClientFor(null)
-            .PostAsJsonAsync("/api/exerciseattempts/save-answer", new { AttemptId = Id.AttemptAId, QuestionId = 1 });
+            .PostAsJsonAsync("/api/exercise-attempts/save-answer", new { AttemptId = Id.AttemptAId, QuestionId = 1 });
         res.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
@@ -70,7 +70,7 @@ public class A1AuthorizationMatrixTests
     {
         RequireDocker();
         var res = await _f.ClientFor(Id.StudentBUserId)
-            .PostAsJsonAsync("/api/exerciseattempts/save-answer", new { AttemptId = Id.AttemptAId, QuestionId = 1 });
+            .PostAsJsonAsync("/api/exercise-attempts/save-answer", new { AttemptId = Id.AttemptAId, QuestionId = 1 });
         res.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
@@ -79,7 +79,7 @@ public class A1AuthorizationMatrixTests
     {
         RequireDocker();
         var res = await _f.ClientFor(Id.StudentBUserId)
-            .GetAsync($"/api/exerciseattempts/{Id.AttemptAId}/result");
+            .GetAsync($"/api/exercise-attempts/{Id.AttemptAId}/result");
         res.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
@@ -88,7 +88,7 @@ public class A1AuthorizationMatrixTests
     {
         RequireDocker();
         var res = await _f.ClientFor(Id.StudentBUserId)
-            .GetAsync($"/api/exerciseattempts/student/{Id.StudentAId}/history");
+            .GetAsync($"/api/exercise-attempts/student/{Id.StudentAId}/history");
         res.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
@@ -97,15 +97,15 @@ public class A1AuthorizationMatrixTests
     {
         RequireDocker();
         var owner = await _f.ClientFor(Id.StudentAUserId)
-            .GetAsync($"/api/exerciseattempts/student/{Id.StudentAId}/history");
+            .GetAsync($"/api/exercise-attempts/student/{Id.StudentAId}/history");
         owner.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var linkedParent = await _f.ClientFor(Id.ParentLinkedUserId)
-            .GetAsync($"/api/exerciseattempts/student/{Id.StudentAId}/history");
+            .GetAsync($"/api/exercise-attempts/student/{Id.StudentAId}/history");
         linkedParent.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var strangerParent = await _f.ClientFor(Id.ParentUnlinkedUserId)
-            .GetAsync($"/api/exerciseattempts/student/{Id.StudentAId}/history");
+            .GetAsync($"/api/exercise-attempts/student/{Id.StudentAId}/history");
         strangerParent.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
@@ -116,7 +116,7 @@ public class A1AuthorizationMatrixTests
     {
         RequireDocker();
         var res = await _f.ClientFor(null)
-            .PatchAsJsonAsync($"/api/subscription/{Id.SubscriptionAId}/status", new { Status = "Active" });
+            .PatchAsJsonAsync($"/api/subscriptions/{Id.SubscriptionAId}/status", new { Status = "Active" });
         res.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
@@ -125,7 +125,7 @@ public class A1AuthorizationMatrixTests
     {
         RequireDocker();
         var res = await _f.ClientFor(Id.StudentAUserId)
-            .PatchAsJsonAsync($"/api/subscription/{Id.SubscriptionAId}/status", new { Status = "Active" });
+            .PatchAsJsonAsync($"/api/subscriptions/{Id.SubscriptionAId}/status", new { Status = "Active" });
         res.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
@@ -134,7 +134,7 @@ public class A1AuthorizationMatrixTests
     {
         RequireDocker();
         var res = await _f.ClientFor(null)
-            .PutAsJsonAsync($"/api/payment/update-status/{Id.PaymentAId}", new { Status = "Completed" });
+            .PutAsJsonAsync($"/api/payments/update-status/{Id.PaymentAId}", new { Status = "Completed" });
         res.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
@@ -143,7 +143,7 @@ public class A1AuthorizationMatrixTests
     {
         RequireDocker();
         var res = await _f.ClientFor(Id.StudentAUserId)
-            .PostAsJsonAsync("/api/package", new { PackageName = "x", Price = 1, DurationDays = 30 });
+            .PostAsJsonAsync("/api/packages", new { PackageName = "x", Price = 1, DurationDays = 30 });
         res.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
@@ -151,7 +151,7 @@ public class A1AuthorizationMatrixTests
     public async Task A1_03_FinanceCanListPayments()
     {
         RequireDocker();
-        var res = await _f.ClientFor(Id.FinanceUserId).GetAsync("/api/payment");
+        var res = await _f.ClientFor(Id.FinanceUserId).GetAsync("/api/payments");
         res.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
@@ -159,7 +159,7 @@ public class A1AuthorizationMatrixTests
     public async Task A1_03_PackageListIsPublic()
     {
         RequireDocker();
-        var res = await _f.ClientFor(null).GetAsync("/api/package");
+        var res = await _f.ClientFor(null).GetAsync("/api/packages");
         res.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
@@ -179,7 +179,7 @@ public class A1AuthorizationMatrixTests
     {
         RequireDocker();
         var res = await _f.ClientFor(Id.StudentAUserId)
-            .PostAsJsonAsync("/api/Questions", new[] { new { QuestionText = "x" } });
+            .PostAsJsonAsync("/api/questions", new[] { new { QuestionText = "x" } });
         res.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
@@ -203,7 +203,7 @@ public class A1AuthorizationMatrixTests
 
         foreach (var path in new[] { "overview", "chapter-score-comparison", "ai-assessment", "ai-roadmap" })
         {
-            var res = await client.GetAsync($"/api/student/{Id.StudentAId}/dashboard/{path}");
+            var res = await client.GetAsync($"/api/students/{Id.StudentAId}/dashboard/{path}");
             res.StatusCode.Should().Be(HttpStatusCode.Forbidden, $"endpoint {path} must block another student");
         }
     }
@@ -216,9 +216,9 @@ public class A1AuthorizationMatrixTests
         RequireDocker();
         var anon = _f.ClientFor(null);
 
-        (await anon.PostAsJsonAsync("/api/aihint", new { AttemptId = Id.AttemptAId, QuestionId = 1 }))
+        (await anon.PostAsJsonAsync("/api/ai-hints", new { AttemptId = Id.AttemptAId, QuestionId = 1 }))
             .StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-        (await anon.PostAsJsonAsync("/api/aifeedback", new { AttemptId = Id.AttemptAId, QuestionId = 1 }))
+        (await anon.PostAsJsonAsync("/api/ai-feedback", new { AttemptId = Id.AttemptAId, QuestionId = 1 }))
             .StatusCode.Should().Be(HttpStatusCode.Unauthorized);
         (await anon.PostAsJsonAsync("/api/chatbot/message", new { text = "hi" }))
             .StatusCode.Should().Be(HttpStatusCode.Unauthorized);
@@ -229,7 +229,7 @@ public class A1AuthorizationMatrixTests
     {
         RequireDocker();
         var res = await _f.ClientFor(Id.StudentBUserId)
-            .GetAsync($"/api/aihint/by-attempt/{Id.AttemptAId}");
+            .GetAsync($"/api/ai-hints/by-attempt/{Id.AttemptAId}");
         res.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 

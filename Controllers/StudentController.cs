@@ -7,7 +7,7 @@ using System.Security.Claims;
 
 namespace ELearning_ToanHocHay_Control.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/students")]
     [ApiController]
     [Authorize] // Bắt buộc đăng nhập để lấy dữ liệu cá nhân
     public class StudentController : ControllerBase

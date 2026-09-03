@@ -108,15 +108,15 @@ public class P4ProgressTests
     {
         var client = _f.ClientFor(Id.StudentAUserId);
 
-        var start = await client.PostAsJsonAsync("/api/exerciseattempts/start", new { ExerciseId = exerciseId });
+        var start = await client.PostAsJsonAsync("/api/exercise-attempts/start", new { ExerciseId = exerciseId });
         start.StatusCode.Should().Be(HttpStatusCode.OK, await start.Content.ReadAsStringAsync());
         var attemptId = (await Root(start)).GetProperty("Data").GetProperty("AttemptId").GetInt32();
 
-        var save = await client.PostAsJsonAsync("/api/exerciseattempts/save-answer",
+        var save = await client.PostAsJsonAsync("/api/exercise-attempts/save-answer",
             new { AttemptId = attemptId, QuestionId = Id.McQuestionId, SelectedOptionId = Id.McCorrectOptionId });
         save.StatusCode.Should().Be(HttpStatusCode.OK, await save.Content.ReadAsStringAsync());
 
-        var complete = await client.PostAsJsonAsync("/api/exerciseattempts/complete", new { AttemptId = attemptId });
+        var complete = await client.PostAsJsonAsync("/api/exercise-attempts/complete", new { AttemptId = attemptId });
         complete.StatusCode.Should().Be(HttpStatusCode.OK, await complete.Content.ReadAsStringAsync());
     }
 
@@ -188,7 +188,7 @@ public class P4ProgressTests
 
         // seed subscription is Pending -> student A is Free -> Standard-only endpoint is 403
         (await _f.ClientFor(Id.StudentAUserId)
-            .GetAsync($"/api/student/{Id.StudentAId}/dashboard/chapter-score-comparison"))
+            .GetAsync($"/api/students/{Id.StudentAId}/dashboard/chapter-score-comparison"))
             .StatusCode.Should().Be(HttpStatusCode.Forbidden);
 
         await _f.QueryDbAsync(async db =>
@@ -202,7 +202,7 @@ public class P4ProgressTests
 
         // package tier is Standard -> now allowed
         (await _f.ClientFor(Id.StudentAUserId)
-            .GetAsync($"/api/student/{Id.StudentAId}/dashboard/chapter-score-comparison"))
+            .GetAsync($"/api/students/{Id.StudentAId}/dashboard/chapter-score-comparison"))
             .StatusCode.Should().Be(HttpStatusCode.OK);
 
         // reset so other tests keep seeing a Free student A

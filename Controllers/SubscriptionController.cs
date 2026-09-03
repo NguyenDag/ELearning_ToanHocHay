@@ -12,7 +12,7 @@ using SendGrid;
 
 namespace ELearning_ToanHocHay_Control.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/subscriptions")]
     [ApiController]
     [Authorize]
     public class SubscriptionController : ControllerBase

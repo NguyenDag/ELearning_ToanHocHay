@@ -164,7 +164,7 @@ public class RemainingFeaturesTests
         });
 
         var res = await _f.ClientFor(Id.FinanceUserId)
-            .PostAsJsonAsync($"/api/payment/{paymentId}/refund", new { Reason = "customer request" });
+            .PostAsJsonAsync($"/api/payments/{paymentId}/refund", new { Reason = "customer request" });
         res.StatusCode.Should().Be(HttpStatusCode.OK, await res.Content.ReadAsStringAsync());
 
         var state = await _f.QueryDbAsync(db => db.Payments.AsNoTracking()

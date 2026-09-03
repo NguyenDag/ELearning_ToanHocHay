@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ELearning_ToanHocHay_Control.Controllers
 {
-    [Route("api/student/{studentId}/dashboard")]
+    [Route("api/students/{studentId:int}/dashboard")]
     [ApiController]
     [Authorize] // the backend validates the token forwarded by the WebApp
     public class DashboardController : ControllerBase

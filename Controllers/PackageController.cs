@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ELearning_ToanHocHay_Control.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/packages")]
     [ApiController]
     public class PackageController : ControllerBase
     {

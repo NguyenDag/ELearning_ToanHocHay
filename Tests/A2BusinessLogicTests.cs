@@ -37,7 +37,7 @@ public class A2BusinessLogicTests
         var before = await _f.QueryDbAsync(db => db.Users.AsNoTracking().SingleAsync(u => u.UserId == Id.StudentAUserId));
 
         var res = await _f.ClientFor(Id.StudentAUserId)
-            .PutAsJsonAsync($"/api/user/{Id.StudentAUserId}", new { FullName = "Renamed Student" });
+            .PutAsJsonAsync($"/api/users/{Id.StudentAUserId}", new { FullName = "Renamed Student" });
         res.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var after = await _f.QueryDbAsync(db => db.Users.AsNoTracking().SingleAsync(u => u.UserId == Id.StudentAUserId));
@@ -54,7 +54,7 @@ public class A2BusinessLogicTests
         RequireDocker();
 
         var res = await _f.ClientFor(Id.StudentAUserId)
-            .PostAsJsonAsync($"/api/user/update-profile/{Id.StudentAUserId}",
+            .PostAsJsonAsync($"/api/users/update-profile/{Id.StudentAUserId}",
                 new { FullName = "SchoolKid", SchoolName = "Test High" });
         res.StatusCode.Should().Be(HttpStatusCode.OK, await res.Content.ReadAsStringAsync());
 
@@ -71,7 +71,7 @@ public class A2BusinessLogicTests
         RequireDocker();
 
         var res = await _f.ClientFor(Id.StudentAUserId)
-            .PostAsJsonAsync("/api/subscription", new { StudentId = Id.StudentAId, PackageId = Id.PackageId });
+            .PostAsJsonAsync("/api/subscriptions", new { StudentId = Id.StudentAId, PackageId = Id.PackageId });
         res.StatusCode.Should().Be(HttpStatusCode.OK, await res.Content.ReadAsStringAsync());
 
         var root = await Root(res);
@@ -98,7 +98,7 @@ public class A2BusinessLogicTests
         RequireDocker();
         var client = _f.ClientFor(Id.StudentBUserId);
 
-        var startRes = await client.PostAsJsonAsync("/api/exerciseattempts/start-random", new
+        var startRes = await client.PostAsJsonAsync("/api/exercise-attempts/start-random", new
         {
             BankId = Id.BankId,
             ExerciseType = 0, // Practice
@@ -112,11 +112,11 @@ public class A2BusinessLogicTests
         var attemptId = start.GetProperty("Data").GetProperty("AttemptId").GetInt32();
         var firstQuestionId = start.GetProperty("Data").GetProperty("Questions")[0].GetProperty("QuestionId").GetInt32();
 
-        var saveRes = await client.PostAsJsonAsync("/api/exerciseattempts/save-answer",
+        var saveRes = await client.PostAsJsonAsync("/api/exercise-attempts/save-answer",
             new { AttemptId = attemptId, QuestionId = firstQuestionId, AnswerText = "42" });
         saveRes.StatusCode.Should().Be(HttpStatusCode.OK, "the attempt must not be treated as expired");
 
-        var completeRes = await client.PostAsJsonAsync("/api/exerciseattempts/complete", new { AttemptId = attemptId });
+        var completeRes = await client.PostAsJsonAsync("/api/exercise-attempts/complete", new { AttemptId = attemptId });
         completeRes.StatusCode.Should().Be(HttpStatusCode.OK);
 
         // AttemptStatus serialises as a number: 1 = Submitted, 2 = Timeout.
@@ -137,7 +137,7 @@ public class A2BusinessLogicTests
         await SaveAnswer(client, attemptId, Id.McQuestionId, selectedOptionId: null, answerText: "definitely wrong");
 
         var sw = Stopwatch.StartNew();
-        var completeRes = await client.PostAsJsonAsync("/api/exerciseattempts/complete", new { AttemptId = attemptId });
+        var completeRes = await client.PostAsJsonAsync("/api/exercise-attempts/complete", new { AttemptId = attemptId });
         sw.Stop();
 
         completeRes.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -147,7 +147,7 @@ public class A2BusinessLogicTests
         foreach (var d in data.GetProperty("AnswerDetails").EnumerateArray())
             d.TryGetProperty("FullSolution", out var fs).Should().BeFalse("AI fields fill in later via /result");
 
-        var statusRes = await client.GetAsync($"/api/exerciseattempts/{attemptId}/feedback-status");
+        var statusRes = await client.GetAsync($"/api/exercise-attempts/{attemptId}/feedback-status");
         statusRes.StatusCode.Should().Be(HttpStatusCode.OK);
         (await Root(statusRes)).GetProperty("Data").GetProperty("TotalWrong").GetInt32().Should().BeGreaterThan(0);
     }
@@ -160,11 +160,11 @@ public class A2BusinessLogicTests
         RequireDocker();
         var client = _f.ClientFor(Id.StudentBUserId);
 
-        (await client.PostAsJsonAsync("/api/exerciseattempts/submit",
+        (await client.PostAsJsonAsync("/api/exercise-attempts/submit",
             new { AttemptId = Id.AttemptAId, Answers = Array.Empty<object>() })).StatusCode
             .Should().Be(HttpStatusCode.NotFound);
 
-        (await client.PostAsJsonAsync("/api/exerciseattempts/submit-answer",
+        (await client.PostAsJsonAsync("/api/exercise-attempts/submit-answer",
             new { AttemptId = Id.AttemptAId, QuestionId = Id.McQuestionId })).StatusCode
             .Should().Be(HttpStatusCode.NotFound);
     }
@@ -178,10 +178,10 @@ public class A2BusinessLogicTests
         var client = _f.ClientFor(Id.StudentBUserId);
 
         var attemptId = await StartExercise(client, Id.MaxAttemptsExerciseId);
-        (await client.PostAsJsonAsync("/api/exerciseattempts/complete", new { AttemptId = attemptId }))
+        (await client.PostAsJsonAsync("/api/exercise-attempts/complete", new { AttemptId = attemptId }))
             .StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var second = await client.PostAsJsonAsync("/api/exerciseattempts/start",
+        var second = await client.PostAsJsonAsync("/api/exercise-attempts/start",
             new { ExerciseId = Id.MaxAttemptsExerciseId });
         second.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         (await second.Content.ReadAsStringAsync()).ToLower().Should().Contain("attempt");
@@ -201,7 +201,7 @@ public class A2BusinessLogicTests
         await SaveAnswer(client, attemptId, Id.FillBlankQuestionId, null, "0.5"); // "1/2" accepted
         await SaveAnswer(client, attemptId, Id.EssayQuestionId, null, "Zero is even because it is divisible by 2.");
 
-        var res = await client.PostAsJsonAsync("/api/exerciseattempts/complete", new { AttemptId = attemptId });
+        var res = await client.PostAsJsonAsync("/api/exercise-attempts/complete", new { AttemptId = attemptId });
         res.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var data = (await Root(res)).GetProperty("Data");
@@ -219,14 +219,14 @@ public class A2BusinessLogicTests
 
     private async Task<int> StartExercise(HttpClient client, int exerciseId)
     {
-        var res = await client.PostAsJsonAsync("/api/exerciseattempts/start", new { ExerciseId = exerciseId });
+        var res = await client.PostAsJsonAsync("/api/exercise-attempts/start", new { ExerciseId = exerciseId });
         res.StatusCode.Should().Be(HttpStatusCode.OK);
         return (await Root(res)).GetProperty("Data").GetProperty("AttemptId").GetInt32();
     }
 
     private async Task SaveAnswer(HttpClient client, int attemptId, int questionId, int? selectedOptionId, string? answerText)
     {
-        var res = await client.PostAsJsonAsync("/api/exerciseattempts/save-answer",
+        var res = await client.PostAsJsonAsync("/api/exercise-attempts/save-answer",
             new { AttemptId = attemptId, QuestionId = questionId, SelectedOptionId = selectedOptionId, AnswerText = answerText });
         res.StatusCode.Should().Be(HttpStatusCode.OK);
     }

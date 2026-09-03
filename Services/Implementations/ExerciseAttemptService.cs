@@ -756,7 +756,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 var allChapters = await _context.ContentNodes
                     .Where(n => n.NodeType == NodeType.Chapter && versionIds.Contains(n.CourseVersionId))
                     .OrderBy(n => n.OrderIndex)
-                    .Select(n => new { n.NodeId, n.Title, Prefix = n.MaterializedPath + n.NodeId + "/" })
+                    .Select(n => new { n.NodeId, n.Title, Prefix = n.MaterializedPath })
                     .ToListAsync();
 
                 // 2. Load the student's attempt history

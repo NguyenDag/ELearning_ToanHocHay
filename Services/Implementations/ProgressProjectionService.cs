@@ -30,27 +30,39 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         {
             try
             {
-                var attempt = await _context.ExerciseAttempts
-                    .Include(a => a.Exercise)
-                    .FirstOrDefaultAsync(a => a.AttemptId == attemptId);
+                var a = await _context.ExerciseAttempts
+                    .AsNoTracking()
+                    .Where(x => x.AttemptId == attemptId)
+                    .Select(x => new
+                    {
+                        x.StudentId,
+                        x.Status,
+                        x.CorrectAnswers,
+                        x.WrongAnswers,
+                        x.StartTime,
+                        x.SubmittedAt,
+                        x.CompletionPercentage,
+                        NodeId = x.Exercise!.NodeId
+                    })
+                    .FirstOrDefaultAsync();
 
-                if (attempt?.StudentId == null || attempt.Status == AttemptStatus.InProgress)
+                if (a?.StudentId == null || a.Status == AttemptStatus.InProgress)
                     return;
 
-                var studentId = attempt.StudentId.Value;
-                var minutes = Math.Max(0, (int)((attempt.SubmittedAt ?? DateTime.UtcNow) - attempt.StartTime).TotalMinutes);
-                var questions = attempt.CorrectAnswers + attempt.WrongAnswers;
+                var studentId = a.StudentId.Value;
+                var endedAt = a.SubmittedAt ?? DateTime.UtcNow;
+                var minutes = Math.Max(0, (int)(endedAt - a.StartTime).TotalMinutes);
+                var questions = a.CorrectAnswers + a.WrongAnswers;
 
                 await BumpSnapshotAsync(studentId, minutes, exercises: 1, lessons: 0, questions: questions);
 
-                var nodeId = attempt.Exercise?.NodeId;
-                if (nodeId == null)
+                if (a.NodeId == null)
                 {
                     await _context.SaveChangesAsync();
                     return;
                 }
 
-                var node = await _context.ContentNodes.FirstOrDefaultAsync(n => n.NodeId == nodeId.Value);
+                var node = await _context.ContentNodes.AsNoTracking().FirstOrDefaultAsync(n => n.NodeId == a.NodeId.Value);
                 if (node == null)
                 {
                     await _context.SaveChangesAsync();
@@ -59,12 +71,12 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
                 var np = await GetOrCreateAsync(studentId, node.NodeId);
                 np.TotalAttempts += 1;
-                np.CorrectCount += attempt.CorrectAnswers;
-                np.WrongCount += attempt.WrongAnswers;
-                np.TimeSpentSeconds += Math.Max(0, (int)((attempt.SubmittedAt ?? DateTime.UtcNow) - attempt.StartTime).TotalSeconds);
+                np.CorrectCount += a.CorrectAnswers;
+                np.WrongCount += a.WrongAnswers;
+                np.TimeSpentSeconds += Math.Max(0, (int)(endedAt - a.StartTime).TotalSeconds);
                 np.LastAccessedAt = DateTime.UtcNow;
 
-                var pct = Math.Clamp(attempt.CompletionPercentage, 0m, 100m);
+                var pct = Math.Clamp(a.CompletionPercentage, 0m, 100m);
                 np.CompletionPercent = Math.Max(np.CompletionPercent, pct);
                 np.MasteryLevel = MasteryFor(np.CompletionPercent);
                 if (np.CompletionPercent >= LessonCompleteScorePct)
@@ -210,9 +222,11 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
         private async Task RecomputeAggregateAsync(int studentId, ContentNode node)
         {
-            var prefix = node.MaterializedPath + node.NodeId + "/";
+            // MaterializedPath already ends with the node's own id ("/…/nodeId/").
+            var prefix = node.MaterializedPath;
             var lessonIds = await _context.ContentNodes
                 .Where(n => n.NodeType == NodeType.Lesson && !n.IsHidden
+                            && n.NodeId != node.NodeId
                             && n.MaterializedPath.StartsWith(prefix))
                 .Select(n => n.NodeId)
                 .ToListAsync();

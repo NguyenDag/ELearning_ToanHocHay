@@ -184,10 +184,11 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             var result = new List<ChapterProgressModel>();
             foreach (var ch in chapters)
             {
-                var prefix = ch.MaterializedPath + ch.NodeId + "/";
+                var prefix = ch.MaterializedPath; // already ends with "/{chapterId}/"
                 var lessons = await _context.ContentNodes
                     .AsNoTracking()
-                    .Where(n => n.NodeType == NodeType.Lesson && n.MaterializedPath.StartsWith(prefix))
+                    .Where(n => n.NodeType == NodeType.Lesson && n.NodeId != ch.NodeId
+                                && n.MaterializedPath.StartsWith(prefix))
                     .Select(n => n.NodeId)
                     .ToListAsync();
 
@@ -291,10 +292,11 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             var result = new List<WeakTopicDto>();
             foreach (var w in weak)
             {
-                var prefix = w.MaterializedPath + w.NodeId + "/";
+                var prefix = w.MaterializedPath; // already ends with "/{nodeId}/"
                 var lessons = await _context.ContentNodes
                     .AsNoTracking()
-                    .Where(n => n.NodeType == NodeType.Lesson && !n.IsHidden && n.MaterializedPath.StartsWith(prefix))
+                    .Where(n => n.NodeType == NodeType.Lesson && !n.IsHidden && n.NodeId != w.NodeId
+                                && n.MaterializedPath.StartsWith(prefix))
                     .OrderBy(n => n.OrderIndex)
                     .Select(n => new { n.NodeId, n.Title })
                     .ToListAsync();

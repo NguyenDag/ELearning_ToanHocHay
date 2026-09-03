@@ -272,6 +272,7 @@ namespace ELearning_ToanHocHay_Control
             services.AddScoped<ISubscriptionPaymentService, SubscriptionPaymentService>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<ISePayService, SePayService>();
+            services.AddScoped<ISePayIpnService, SePayIpnService>();
             services.AddScoped<IAIHintService, AIHintService>();
             services.AddScoped<IAIFeedbackService, AIFeedbackService>();
             services.AddScoped<ICoreDashboardService, CoreDashboardService>();

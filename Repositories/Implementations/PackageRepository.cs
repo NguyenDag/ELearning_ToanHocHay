@@ -47,13 +47,15 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
 
         public async Task<Subscription?> GetActivePackageAsync(int studentId)
         {
+            // A2-11 — consistent tie-break: highest tier, then latest expiry.
             return await _context.Subscriptions
             .AsNoTracking()
             .Include(s => s.Package)
             .Where(s => s.StudentId == studentId &&
                        s.Status == SubscriptionStatus.Active &&
                        s.EndDate > DateTime.UtcNow)
-            .OrderByDescending(s => s.CreatedAt)
+            .OrderByDescending(s => s.Package!.Tier)
+            .ThenByDescending(s => s.EndDate)
             .FirstOrDefaultAsync();
         }
 

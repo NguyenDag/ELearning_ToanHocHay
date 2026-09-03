@@ -30,10 +30,13 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
 
         public async Task<Subscription?> GetActiveByStudentAsync(int studentId)
             => await _context.Subscriptions
-                .FirstOrDefaultAsync(x =>
-                    x.StudentId == studentId &&
-                    x.Status == SubscriptionStatus.Active &&
-                    x.EndDate >= DateTime.UtcNow);
+                .Include(x => x.Package)
+                .Where(x => x.StudentId == studentId &&
+                            x.Status == SubscriptionStatus.Active &&
+                            x.EndDate >= DateTime.UtcNow)
+                .OrderByDescending(x => x.Package!.Tier)
+                .ThenByDescending(x => x.EndDate)
+                .FirstOrDefaultAsync();
 
         public async Task AddAsync(Subscription subscription)
         {

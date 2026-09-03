@@ -372,6 +372,15 @@ namespace ELearning_ToanHocHay_Control
                     Description = "API for the ToanHocHay e-learning platform"
                 });
 
+                // P7 — stable, grouped Swagger: one tag per controller, actions ordered.
+                c.TagActionsBy(api => new[]
+                {
+                    api.ActionDescriptor.RouteValues.TryGetValue("controller", out var ctrl) ? ctrl ?? "Misc" : "Misc"
+                });
+                c.OrderActionsBy(api =>
+                    $"{api.ActionDescriptor.RouteValues["controller"]}_{api.RelativePath}_{api.HttpMethod}");
+                c.CustomSchemaIds(t => t.FullName?.Replace("+", ".") ?? t.Name);
+
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
                     Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] then your token",

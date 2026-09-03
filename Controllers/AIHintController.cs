@@ -65,7 +65,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> GetById(int id)
         {
             var result = await _hintService.GetByIdAsync(id);
-            return result.Success ? Ok(result) : NotFound(result);
+            return result.ToActionResult();
         }
 
         [HttpPost]
@@ -86,7 +86,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
             }
 
             var result = await _hintService.CreateAsync(dto);
-            return result.Success ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpPut("{id:int}")]
@@ -94,7 +94,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> Update(int id, UpdateAIHintDto dto)
         {
             var result = await _hintService.UpdateAsync(id, dto);
-            return result.Success ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpDelete("{id:int}")]
@@ -102,7 +102,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             var result = await _hintService.DeleteAsync(id);
-            return result.Success ? Ok(result) : NotFound(result);
+            return result.ToActionResult();
         }
     }
 }

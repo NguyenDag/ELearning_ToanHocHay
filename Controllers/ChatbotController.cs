@@ -32,14 +32,14 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> Message([FromBody] SendChatMessageDto request)
         {
             var r = await _chat.SendUserTurnAsync(Uid, User.GetStudentId(), request.Text, isQuickReply: false);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpPost("quick-reply")]
         public async Task<IActionResult> QuickReply([FromBody] SendChatMessageDto request)
         {
             var r = await _chat.SendUserTurnAsync(Uid, User.GetStudentId(), request.Text, isQuickReply: true);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpPost("trigger")]
@@ -65,7 +65,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> Messages(int id)
         {
             var r = await _chat.GetMessagesAsync(Uid, id);
-            return r.Success ? Ok(r) : NotFound(r);
+            return r.ToActionResult();
         }
 
         [HttpGet("health")]
@@ -88,7 +88,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         {
             var isStaff = User.HasUserType(UserType.SupportStaff, UserType.SystemAdmin);
             var r = await _chat.CloseAsync(Uid, id, isStaff);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         // ---------------- staff ----------------
@@ -102,7 +102,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> Assign(int id)
         {
             var r = await _chat.AssignToMeAsync(Uid, id);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpPost("staff/conversations/{id:int}/reply")]
@@ -110,7 +110,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> StaffReply(int id, [FromBody] SendChatMessageDto dto)
         {
             var r = await _chat.StaffReplyAsync(Uid, id, dto.Text, User.IsSystemAdmin());
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
     }
 }

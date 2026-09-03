@@ -53,7 +53,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         {
             if (!CanAccess(id)) return this.Forbidden();
             var r = await _links.CreateInviteAsync(id, dto);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         /// <summary>Student links to a parent using an invite code or the parent's connection code.</summary>
@@ -63,7 +63,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
             var studentId = User.GetStudentId();
             if (studentId == null) return this.Forbidden("Only a student can accept a parent link");
             var r = await _links.LinkByCodeAsync(studentId.Value, dto);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpGet("{id:int}/children")]
@@ -78,7 +78,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         {
             if (!CanAccess(id)) return this.Forbidden();
             var r = await _links.RevokeAsync(id, studentId);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpGet("{id:int}/children/overview")]

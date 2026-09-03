@@ -30,10 +30,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> CreateExercise([FromBody] ExerciseRequestDto dto)
         {
             var result = await _exerciseService.CreateExerciseAsync(dto, User.GetUserId()!.Value);
-            if (!result.Success)
-                return BadRequest(result);
-
-            return Ok(result);
+            return result.ToActionResult();
         }
 
         // ============================
@@ -44,10 +41,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> GetAll()
         {
             var result = await _exerciseService.GetAllAsync();
-            if (!result.Success)
-                return BadRequest(result);
-
-            return Ok(result);
+            return result.ToActionResult();
         }
 
         // ============================
@@ -58,10 +52,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> GetById(int id)
         {
             var result = await _exerciseService.GetByIdAsync(id);
-            if (!result.Success)
-                return NotFound(result);
-
-            return Ok(result);
+            return result.ToActionResult();
         }
 
         // ============================
@@ -73,10 +64,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> UpdateExercise(int id, [FromBody] ExerciseRequestDto dto)
         {
             var result = await _exerciseService.UpdateExerciseAsync(id, dto);
-            if (!result.Success)
-                return BadRequest(result);
-
-            return Ok(result);
+            return result.ToActionResult();
         }
 
         // ============================
@@ -88,10 +76,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> DeleteExercise(int id)
         {
             var result = await _exerciseService.DeleteExerciseAsync(id);
-            if (!result.Success)
-                return BadRequest(result);
-
-            return Ok(result);
+            return result.ToActionResult();
         }
 
         // ============================
@@ -103,10 +88,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> AddQuestions(int exerciseId, [FromBody] AddQuestionsToExerciseDto dto)
         {
             var result = await _exerciseService.AddQuestionsToExerciseAsync(exerciseId, dto);
-            if (!result.Success)
-                return BadRequest(result);
-
-            return Ok(result);
+            return result.ToActionResult();
         }
 
         // =================== FILTER ===================
@@ -128,7 +110,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> Publish(int id)
         {
             var result = await _exerciseService.SetPublishedAsync(id, true);
-            return result.Success ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpPost("{id}/unpublish")]
@@ -136,7 +118,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> Unpublish(int id)
         {
             var result = await _exerciseService.SetPublishedAsync(id, false);
-            return result.Success ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         // Full exercise incl. answer keys — for the editor (A3/P2)
@@ -145,7 +127,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> GetForEdit(int id)
         {
             var result = await _exerciseService.GetForEditAsync(id);
-            return result.Success ? Ok(result) : NotFound(result);
+            return result.ToActionResult();
         }
 
         // =================== QUESTIONS ===================
@@ -154,7 +136,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> GetQuestions(int id)
         {
             var result = await _exerciseService.GetExerciseQuestionsAsync(id);
-            return result.Success ? Ok(result) : NotFound(result);
+            return result.ToActionResult();
         }
 
         [HttpDelete("{exerciseId}/questions/{questionId}")]

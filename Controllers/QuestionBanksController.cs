@@ -33,28 +33,28 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> GetBank(int bankId)
         {
             var r = await _service.GetBankAsync(bankId);
-            return r.Success ? Ok(r) : NotFound(r);
+            return r.ToActionResult();
         }
 
         [HttpPost]
         public async Task<IActionResult> CreateBank([FromBody] QuestionBankRequestDto dto)
         {
             var r = await _service.CreateBankAsync(dto, User.GetUserId()!.Value);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpPut("{bankId:int}")]
         public async Task<IActionResult> UpdateBank(int bankId, [FromBody] QuestionBankRequestDto dto)
         {
             var r = await _service.UpdateBankAsync(bankId, dto);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpDelete("{bankId:int}")]
         public async Task<IActionResult> DeleteBank(int bankId)
         {
             var r = await _service.DeleteBankAsync(bankId);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         // ---------------- questions ----------------
@@ -67,28 +67,28 @@ namespace ELearning_ToanHocHay_Control.Controllers
             [FromQuery] int pageSize = 20)
         {
             var r = await _service.GetQuestionsAsync(bankId, status, search, page, pageSize);
-            return r.Success ? Ok(r) : NotFound(r);
+            return r.ToActionResult();
         }
 
         [HttpGet("questions/{questionId:int}")]
         public async Task<IActionResult> GetQuestion(int questionId)
         {
             var r = await _service.GetQuestionAsync(questionId);
-            return r.Success ? Ok(r) : NotFound(r);
+            return r.ToActionResult();
         }
 
         [HttpPut("questions/{questionId:int}")]
         public async Task<IActionResult> UpdateQuestion(int questionId, [FromBody] UpdateQuestionDto dto)
         {
             var r = await _service.UpdateQuestionAsync(questionId, dto);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpDelete("questions/{questionId:int}")]
         public async Task<IActionResult> DeleteQuestion(int questionId)
         {
             var r = await _service.DeleteQuestionAsync(questionId);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         // ---------------- review workflow ----------------
@@ -96,7 +96,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> SubmitQuestion(int questionId)
         {
             var r = await _service.SubmitQuestionAsync(questionId);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpPost("questions/{questionId:int}/review")]
@@ -104,7 +104,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> ReviewQuestion(int questionId, [FromBody] ReviewQuestionDto dto)
         {
             var r = await _service.ReviewQuestionAsync(questionId, dto, User.GetUserId()!.Value);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
     }
 }

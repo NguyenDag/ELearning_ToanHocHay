@@ -28,7 +28,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
             if (studentId == null) return this.Forbidden("Only students track lesson progress");
 
             var r = await _progress.MarkLessonCompleteAsync(studentId.Value, nodeId, dto.SecondsViewed);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpGet("versions/{courseVersionId:int}")]

@@ -39,10 +39,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
 
             var response = await _attemptService.StartExerciseAsync(dto);
 
-            if (!response.Success)
-                return BadRequest(response);
-
-            return Ok(response);
+            return response.ToActionResult();
         }
 
         /// <summary>
@@ -60,10 +57,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
 
             var response = await _attemptService.StartRandomExerciseAsync(dto);
 
-            if (!response.Success)
-                return BadRequest(response);
-
-            return Ok(response);
+            return response.ToActionResult();
         }
 
         /// <summary>
@@ -77,10 +71,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
 
             var response = await _attemptService.SaveAnswerAsync(dto);
 
-            if (!response.Success)
-                return BadRequest(response);
-
-            return Ok(response);
+            return response.ToActionResult();
         }
 
 
@@ -97,10 +88,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
 
             var response = await _attemptService.CompleteExerciseAsync(dto);
 
-            if (!response.Success)
-                return BadRequest(response);
-
-            return Ok(response);
+            return response.ToActionResult();
         }
 
         /// <summary>
@@ -115,10 +103,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
 
             var response = await _attemptService.GetExerciseResultAsync(attemptId);
 
-            if (!response.Success)
-                return NotFound(response);
-
-            return Ok(response);
+            return response.ToActionResult();
         }
 
         /// <summary>
@@ -133,10 +118,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
 
             var response = await _attemptService.GetStudentHistoryAsync(studentId);
 
-            if (!response.Success)
-                return BadRequest(response);
-
-            return Ok(response);
+            return response.ToActionResult();
         }
 
         /// <summary>
@@ -150,10 +132,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
 
             var response = await _attemptService.ReportTabSwitchAsync(attemptId);
 
-            if (!response.Success)
-                return BadRequest(response);
-
-            return Ok(response);
+            return response.ToActionResult();
         }
 
         /// <summary>
@@ -167,10 +146,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
 
             var response = await _attemptService.GetFeedbackStatusAsync(attemptId);
 
-            if (!response.Success)
-                return BadRequest(response);
-
-            return Ok(response);
+            return response.ToActionResult();
         }
 
         /// <summary>
@@ -184,10 +160,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
 
             var response = await _attemptService.GetTabSwitchLogsAsync(attemptId);
 
-            if (!response.Success)
-                return BadRequest(response);
-
-            return Ok(response);
+            return response.ToActionResult();
         }
     }
 }

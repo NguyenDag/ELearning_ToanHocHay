@@ -1,3 +1,4 @@
+using ELearning_ToanHocHay_Control.Common;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -24,7 +25,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> GetCourseContent(int courseId)
         {
             var r = await _learn.GetCourseContentAsync(User, courseId);
-            return r.Success ? Ok(r) : NotFound(r);
+            return r.ToActionResult();
         }
 
         [HttpGet("nodes/{nodeId:int}")]

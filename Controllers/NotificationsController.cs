@@ -34,7 +34,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> MarkRead(int id)
         {
             var r = await _notifications.MarkReadAsync(Uid, id);
-            return r.Success ? Ok(r) : NotFound(r);
+            return r.ToActionResult();
         }
 
         [HttpPost("read-all")]
@@ -49,7 +49,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> SetPreference([FromBody] SetNotificationPreferenceDto dto)
         {
             var r = await _notifications.SetPreferenceAsync(Uid, dto.RuleKey, dto.Enabled);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
     }
 }

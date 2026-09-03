@@ -47,7 +47,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> CreateSubject([FromBody] SubjectRequestDto dto)
         {
             var r = await _catalog.CreateSubjectAsync(dto);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpPut("subjects/{id:int}")]
@@ -55,7 +55,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> UpdateSubject(int id, [FromBody] SubjectRequestDto dto)
         {
             var r = await _catalog.UpdateSubjectAsync(id, dto);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         // ---------------- Grade levels ----------------
@@ -79,7 +79,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> CreateGradeLevel([FromBody] GradeLevelRequestDto dto)
         {
             var r = await _catalog.CreateGradeLevelAsync(dto);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpPut("grade-levels/{id:int}")]
@@ -87,7 +87,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> UpdateGradeLevel(int id, [FromBody] GradeLevelRequestDto dto)
         {
             var r = await _catalog.UpdateGradeLevelAsync(id, dto);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         // ---------------- Curriculum frameworks ----------------
@@ -111,7 +111,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> CreateFramework([FromBody] FrameworkRequestDto dto)
         {
             var r = await _catalog.CreateFrameworkAsync(dto);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpPut("frameworks/{id:int}")]
@@ -119,7 +119,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> UpdateFramework(int id, [FromBody] FrameworkRequestDto dto)
         {
             var r = await _catalog.UpdateFrameworkAsync(id, dto);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
     }
 }

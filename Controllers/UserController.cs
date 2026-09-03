@@ -27,7 +27,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> GetAll([FromQuery] PagedRequest request)
         {
             var response = await _userService.GetPagedAsync(request);
-            return response.Success ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         // GET: api/user/5 — admin or the user themselves
@@ -38,10 +38,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
                 return this.Forbidden();
 
             var response = await _userService.GetByIdAsync(id);
-            if (!response.Success)
-                return BadRequest(response);
-
-            return Ok(response);
+            return response.ToActionResult();
         }
 
         // GET: api/user/email/test@gmail.com — admin or the user themselves
@@ -53,10 +50,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
                 return this.Forbidden();
 
             var response = await _userService.GetByEmailAsync(email);
-            if (!response.Success)
-                return NotFound(response);
-
-            return Ok(response);
+            return response.ToActionResult();
         }
 
         // POST: api/user
@@ -68,10 +62,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
                 return BadRequest(ModelState);
 
             var response = await _userService.CreateUserAsync(user);
-            if (!response.Success)
-                return BadRequest(response);
-
-            return Ok(response);
+            return response.ToActionResult();
         }
 
         // PUT: api/user/5 — admin or the user themselves
@@ -82,10 +73,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
                 return this.Forbidden();
 
             var response = await _userService.UpdateUserAsync(id, user);
-            if (!response.Success)
-                return BadRequest(response);
-
-            return Ok(response);
+            return response.ToActionResult();
         }
 
         // DELETE: api/user/5 — admin only
@@ -94,10 +82,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             var response = await _userService.DeleteUserAsync(id);
-            if (!response.Success)
-                return BadRequest(response);
-
-            return Ok(response);
+            return response.ToActionResult();
         }
 
         [HttpPost("update-profile/{id:int}")]
@@ -107,9 +92,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
                 return this.Forbidden();
 
             var response = await _userService.UpdateProfileAsync(id, model);
-            if (!response.Success) return BadRequest(response);
-
-            return Ok(response);
+            return response.ToActionResult();
         }
     }
 }

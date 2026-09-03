@@ -40,7 +40,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> GetAll([FromQuery] PagedRequest request, [FromQuery] SubscriptionStatus? status)
         {
             var response = await _service.GetPagedAsync(request, status);
-            return response.Success ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         // GET: api/subscription/me — the caller's current package (Free when none)
@@ -68,10 +68,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
                 return this.Forbidden();
 
             var response = await _service.GetByIdAsync(id);
-            if (!response.Success)
-                return NotFound(response);
-
-            return Ok(response);
+            return response.ToActionResult();
         }
 
         [HttpPost]
@@ -107,10 +104,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
                 return this.Forbidden();
 
             var response = await _service.CancelAsync(id);
-            if (!response.Success)
-                return BadRequest(response);
-
-            return Ok(response);
+            return response.ToActionResult();
         }
 
         // GET: api/subscription/check-premium/10
@@ -153,9 +147,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateSubscriptionStatusDto dto)
         {
             var response = await _service.UpdateStatusAsync(id, dto.Status);
-            if (!response.Success)
-                return BadRequest(response);
-            return Ok(response);
+            return response.ToActionResult();
         }
     }
 }

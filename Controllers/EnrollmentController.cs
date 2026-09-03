@@ -33,7 +33,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
             if (studentId == null) return this.Forbidden("Only students can enrol");
 
             var r = await _enrollment.EnrollAsync(studentId.Value, courseId);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
     }
 }

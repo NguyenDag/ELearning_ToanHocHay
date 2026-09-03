@@ -82,7 +82,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
                 return BadRequest(ApiResponse<bool>.ErrorResponse("Dữ liệu không hợp lệ", ModelErrors()));
 
             var result = await _authService.RegisterAsync(request);
-            return result.Success ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpPost("refresh-token")]
@@ -101,7 +101,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
             if (!userId.HasValue) return Unauthorized();
 
             var result = await _authService.ChangePasswordAsync(userId.Value, request);
-            return result.Success ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpGet("confirm-email")]
@@ -112,7 +112,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
                 return BadRequest(ApiResponse<bool>.ErrorResponse("Token không hợp lệ"));
 
             var result = await _authService.ConfirmEmailAsync(token);
-            return result.Success ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpPost("resend-confirmation")]
@@ -121,7 +121,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> ResendConfirmation([FromBody] ResendConfirmationDto request)
         {
             var result = await _authService.ResendConfirmationEmailAsync(request.Email);
-            return result.Success ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpPost("forgot-password")]
@@ -139,7 +139,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto request)
         {
             var result = await _authService.ResetPasswordAsync(request.Token, request.NewPassword);
-            return result.Success ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         private List<string> ModelErrors() =>

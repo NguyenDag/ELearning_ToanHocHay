@@ -37,7 +37,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> SetConfig(string key, [FromBody] Models.DTOs.SetConfigDto dto)
         {
             var r = await _config.SetAsync(key, dto.Value, User.GetUserId()!.Value);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         private string? Ip => HttpContext.Connection.RemoteIpAddress?.ToString();
@@ -47,21 +47,21 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> Lock(int id, [FromBody] LockUserDto dto)
         {
             var r = await _admin.LockUserAsync(id, AdminId, dto.Reason, Ip);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpPost("users/{id:int}/unlock")]
         public async Task<IActionResult> Unlock(int id)
         {
             var r = await _admin.UnlockUserAsync(id, AdminId, Ip);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpPost("users/{id:int}/role")]
         public async Task<IActionResult> ChangeRole(int id, [FromBody] ChangeRoleDto dto)
         {
             var r = await _admin.ChangeRoleAsync(id, dto.NewRole, AdminId, Ip);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpGet("audit-logs")]

@@ -117,11 +117,14 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             // ── Cập nhật ────────────────────────────────────────────────────────
             sub.Status = newStatus;
 
-            // Khi Active: ghi nhận ngày bắt đầu/kết thúc
+            // Khi Active: ghi nhận ngày bắt đầu/kết thúc theo Package.DurationDays
             if (newStatus == SubscriptionStatus.Active)
             {
+                var package = await _packageRepository.GetByIdAsync(sub.PackageId);
+                var durationDays = package is { DurationDays: > 0 } ? package.DurationDays : 30;
+
                 sub.StartDate = DateTime.UtcNow;
-                sub.EndDate = DateTime.UtcNow.AddMonths(1);
+                sub.EndDate = DateTime.UtcNow.AddDays(durationDays);
 
                 if (sub.Payment != null)
                 {

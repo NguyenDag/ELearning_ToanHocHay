@@ -459,6 +459,21 @@ AI với dữ liệu thật (kiểm qua mock). Không còn `Contains("premium")`
 Chạy lại toàn bộ payload IPN mẫu → trạng thái hệ thống ổn định & idempotent. Có báo cáo đối
 soát: tổng `Payment.Completed` == tổng subscription `Active` hợp lệ.
 
+**Trạng thái triển khai (cập nhật)** — nhánh `feat/p5-payments-subscription`, migration `P5_SePayIpnLog`, test `P5PaymentTests` (8):
+
+| Hạng mục P5 | Trạng thái | Ghi chú |
+|---|---|---|
+| IPN async + transaction + `SePayIpnLog` payload thô (A2-10) | ✅ | `SePayIpnService` — 1 dòng log / `referenceCode` (idempotent theo giao dịch), transaction bao Payment + Subscription + guard |
+| `referenceCode` duy nhất | ✅ | unique index; replay → `Duplicate`, không kích hoạt lại |
+| `EndDate` theo `Package.DurationDays` | ✅ | fallback 30 ngày nếu 0 |
+| Dung sai số tiền cấu hình được | ✅ | `SePay:AmountToleranceVnd` (mặc định 0) |
+| Job nền: `Active` quá hạn → `Expired`; `Pending` quá hạn → `Cancelled` (+ Payment `Failed`) | ✅ | `SubscriptionLifecycleHostedService` (`SePay:LifecycleIntervalMinutes`, ≤0 tắt) + `POST /api/finance/subscriptions/run-lifecycle` |
+| Guard 1 subscription `Active` / học sinh + tie-break (A2-11) | ✅ | IPN kích hoạt sub mới → expire sub Active cũ; tie-break "tier cao nhất, hết hạn muộn nhất" ở `PackageRepository` / `SubscriptionRepository` |
+| Endpoint "gói của tôi" / "lịch sử thanh toán của tôi" | ✅ | `GET /api/subscription/me`, `GET /api/payment/me` (payer hoặc beneficiary) |
+| Phụ huynh đứng tên trả (`Payment.PaidByUserId`) | ✅ | set từ token khi tạo pending (từ đợt A1/A2); `payment/me` bao gồm khoản phụ huynh trả |
+| Báo cáo đối soát | ✅ | `GET /api/finance/subscriptions/reconciliation` |
+| **Còn lại** | ⏳ | `Order` / `OrderItem` mua khoá lẻ (ngoài phạm vi đợt này); IPN mismatch trả 200 (không cho SePay retry) — cân nhắc trả 4xx; chưa có luồng refund |
+
 ---
 
 ### P6 — AI, Phụ huynh, Thông báo

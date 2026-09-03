@@ -26,6 +26,23 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
                 .Include(x => x.Subscription)
                 .FirstOrDefaultAsync(x => x.PaymentId == id);
 
+        public async Task<(List<Payment> Items, int Total)> GetForUserAsync(int userId, int page, int pageSize)
+        {
+            var q = _context.Payments
+                .AsNoTracking()
+                .Include(p => p.Student)
+                .Where(p => p.PaidByUserId == userId
+                            || (p.Student != null && p.Student.UserId == userId));
+
+            var total = await q.CountAsync();
+            var items = await q
+                .OrderByDescending(p => p.PaymentDate)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+            return (items, total);
+        }
+
         public async Task<Payment> AddAsync(Payment payment)
         {
             _context.Payments.Add(payment);

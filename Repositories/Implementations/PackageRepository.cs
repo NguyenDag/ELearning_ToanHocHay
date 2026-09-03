@@ -47,13 +47,15 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
 
         public async Task<Subscription?> GetActivePackageAsync(int studentId)
         {
+            // A2-11 — consistent tie-break: highest tier, then latest expiry.
             return await _context.Subscriptions
             .AsNoTracking()
             .Include(s => s.Package)
             .Where(s => s.StudentId == studentId &&
                        s.Status == SubscriptionStatus.Active &&
                        s.EndDate > DateTime.UtcNow)
-            .OrderByDescending(s => s.CreatedAt)
+            .OrderByDescending(s => s.Package!.Tier)
+            .ThenByDescending(s => s.EndDate)
             .FirstOrDefaultAsync();
         }
 
@@ -61,14 +63,18 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
         {
             var today = DateTime.UtcNow;
 
-            return await _context.Subscriptions
+            // A2-05 — tier from Package.Tier, not from the PackageId (row key).
+            var tier = await _context.Subscriptions
                 .AsNoTracking()
                 .Where(s => s.StudentId == studentId &&
+                            s.Status == SubscriptionStatus.Active &&
                             s.StartDate <= today &&
                             s.EndDate >= today)
-                .OrderByDescending(s => s.Package.PackageId) // lấy gói cao nhất
-                .Select(s => (PackageType?)s.Package.PackageId)
+                .OrderByDescending(s => s.Package!.Tier)
+                .Select(s => (PackageTier?)s.Package!.Tier)
                 .FirstOrDefaultAsync();
+
+            return tier.HasValue ? Services.Helpers.TierMap.ToDashboardType(tier.Value) : null;
         }
     }
 }

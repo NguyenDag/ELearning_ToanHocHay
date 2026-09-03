@@ -37,6 +37,15 @@ namespace ELearning_ToanHocHay_Control.Controllers
             return Ok(response);
         }
 
+        // GET: api/payment/me — the caller's own payment history (payer or beneficiary)
+        [HttpGet("me")]
+        public async Task<IActionResult> GetMine([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        {
+            var userId = User.GetUserId();
+            if (userId == null) return Unauthorized();
+            return Ok(await _service.GetMyPaymentsAsync(userId.Value, page, pageSize));
+        }
+
         // GET: api/payment/5 — payer / beneficiary / Finance / Admin
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetById(int id)

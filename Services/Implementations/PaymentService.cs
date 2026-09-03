@@ -57,6 +57,30 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             return ApiResponse<PaymentDto>.SuccessResponse(dto);
         }
 
+        public async Task<ApiResponse<PagedResult<PaymentDto>>> GetMyPaymentsAsync(int userId, int page, int pageSize)
+        {
+            page = Math.Max(1, page);
+            pageSize = Math.Clamp(pageSize, 1, 100);
+
+            var (items, total) = await _repository.GetForUserAsync(userId, page, pageSize);
+            return ApiResponse<PagedResult<PaymentDto>>.SuccessResponse(new PagedResult<PaymentDto>
+            {
+                Items = items.Select(x => new PaymentDto
+                {
+                    PaymentId = x.PaymentId,
+                    StudentId = x.StudentId ?? 0,
+                    Amount = x.Amount,
+                    PaymentMethod = x.PaymentMethod,
+                    Status = x.Status,
+                    PaymentDate = x.PaymentDate,
+                    TransactionId = x.TransactionId
+                }).ToList(),
+                Total = total,
+                Page = page,
+                PageSize = pageSize
+            });
+        }
+
         public async Task<ApiResponse<bool>> UpdateStatusAsync(int id, UpdatePaymentStatusDto dto)
         {
             var payment = await _repository.GetByIdAsync(id);

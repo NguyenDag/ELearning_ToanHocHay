@@ -1,17 +1,9 @@
-﻿using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using System.Web;
 using ELearning_ToanHocHay_Control.Attributes;
-using ELearning_ToanHocHay_Control.Data;
 using ELearning_ToanHocHay_Control.Data.Entities;
 using ELearning_ToanHocHay_Control.Models.DTOs.Sepay;
-using ELearning_ToanHocHay_Control.Repositories.Interfaces;
-using ELearning_ToanHocHay_Control.Services.Implementations;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
 
 namespace ELearning_ToanHocHay_Control.Controllers
 {
@@ -19,65 +11,35 @@ namespace ELearning_ToanHocHay_Control.Controllers
     [ApiController]
     public class SepayController : ControllerBase
     {
-        private readonly SePayOptions _options;
-        private readonly ISePayService _sePayService;
-        private readonly ISubscriptionRepository _subscriptionRepository;
-        private readonly AppDbContext _context;
+        private readonly ISePayIpnService _ipnService;
+        private readonly ILogger<SepayController> _logger;
 
-        public SepayController(IOptions<SePayOptions> options, ISePayService sePayService, ISubscriptionRepository subscriptionRepository, AppDbContext context)
+        public SepayController(ISePayIpnService ipnService, ILogger<SepayController> logger)
         {
-            _options = options.Value;
-            _sePayService = sePayService;
-            _subscriptionRepository = subscriptionRepository;
-            _context = context;
+            _ipnService = ipnService;
+            _logger = logger;
         }
 
+        /// <summary>
+        /// SePay IPN callback. Authenticated by SePay's API key (not JWT). Always returns 200
+        /// with a message; the raw payload + outcome are persisted to SePayIpnLog.
+        /// </summary>
         [HttpPost]
-        [AllowAnonymous] // no JWT — authenticated via SePay's API key
-        [SePayApiKey] // attribute validates the API key automatically
-        public async Task<IActionResult> IPN(
-            [FromBody] SePayIpnRequest request
-        )
+        [AllowAnonymous]
+        [SePayApiKey]
+        public async Task<IActionResult> IPN([FromBody] SePayIpnRequest request)
         {
-            // 1. Only handle incoming transfers
-            if (request.transferType != "in")
-                return Ok("Ignore out transaction");
-
-            // 2. Parse subscriptionId
-            var subscriptionId = _sePayService.ExtractSubscriptionId(request.content);
-            if (subscriptionId == null)
-                return Ok("Invalid content");
-
-            var subscription = await _subscriptionRepository.GetByIdAsync((int)subscriptionId);
-
-            if (subscription == null)
-                return Ok("Subscription not found");
-
-            // 3. Guard against duplicate IPN
-            if (subscription.Status == SubscriptionStatus.Active)
-                return Ok("Already processed");
-
-            // 4. Check amount
-            if (!_sePayService.IsValidAmount(
-                request.transferAmount,
-                subscription.AmountPaid))
+            try
             {
-                return Ok("Amount mismatch");
+                var result = await _ipnService.ProcessAsync(request);
+                return Ok(new { outcome = result.Outcome.ToString(), message = result.Message });
             }
-
-            // 5. Update Payment
-            subscription.Payment.Status = PaymentStatus.Completed;
-            subscription.Payment.TransactionId = request.referenceCode;
-            subscription.Payment.PaymentDate = DateTime.UtcNow;
-
-            // 6. Active Subscription
-            subscription.Status = SubscriptionStatus.Active;
-            subscription.StartDate = DateTime.UtcNow;
-            subscription.EndDate = DateTime.UtcNow.AddMonths(1);
-
-            _context.SaveChanges();
-
-            return Ok("Success");
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "IPN processing failed for referenceCode {Ref}", request.referenceCode);
+                // 500 so SePay retries — the log row (if written) records the failure.
+                return StatusCode(500, new { outcome = IpnOutcome.Error.ToString(), message = "Processing error" });
+            }
         }
     }
 }

@@ -46,6 +46,23 @@ namespace ELearning_ToanHocHay_Control.Controllers
             return Ok(response);
         }
 
+        // GET: api/subscription/me — the caller's current package (Free when none)
+        [HttpGet("me")]
+        public async Task<IActionResult> GetMine()
+        {
+            var studentId = User.GetStudentId();
+            if (studentId == null)
+                return this.Forbidden("Only students have a personal subscription — parents use /api/student/{id}/subscription/current");
+
+            var info = await _service.GetActiveSubscriptionInfoAsync(studentId.Value);
+            return Ok(new
+            {
+                success = true,
+                data = info,
+                message = info.IsActive ? $"Đang dùng gói {info.PackageName}" : "Đang dùng gói Free"
+            });
+        }
+
         // GET: api/subscription/5
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetById(int id)

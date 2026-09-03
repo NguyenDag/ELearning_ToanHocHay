@@ -415,6 +415,19 @@ kể số câu sai.
 Không còn field dashboard trả 0/rỗng do thiếu projection. `ai-assessment` / `ai-roadmap` gọi
 AI với dữ liệu thật (kiểm qua mock). Không còn `Contains("premium")` trong codebase.
 
+**Trạng thái triển khai (cập nhật)** — nhánh `feat/p4-progress-dashboard`, test `P4ProgressTests` (4):
+
+| Hạng mục P4 | Trạng thái | Ghi chú |
+|---|---|---|
+| `ProgressProjectionService` (A2-06) | ✅ | `ProjectAttemptAsync` gọi sau mỗi submit; cập nhật `NodeProgress` node + roll-up tổ tiên theo `MaterializedPath`; cập nhật `StudentCourse.ProgressPercent` |
+| API "đánh dấu hoàn thành bài học" | ✅ | `POST /api/progress/lessons/{id}/complete` — ngưỡng 20s xem bài, kiểm ghi danh, bỏ hard-code `isCompleted` |
+| `GetWeakTopicsAsync` / `GetFullPerformanceAsync` dữ liệu thật | ✅ | truy vấn `NodeProgress` + attempt roll-up → mở khoá nhánh thật của `ai-assessment` / `ai-roadmap` |
+| Thay chuỗi tên gói bằng `Package.Tier` (A2-05) | ✅ | `Services/Helpers/TierMap` — không còn `Contains("premium")` |
+| N+1 dashboard (A2-14) | ✅ | `GetDashboardStatsAsync` load exercise 1 lần, bucket trong RAM |
+| `DailyActivitySnapshot` + streak từ snapshot + heatmap | ✅ | snapshot cập nhật khi submit / hoàn thành bài; `GetStreakDataAsync` đọc snapshot; `GET /api/progress/students/{id}/heatmap` (guard chủ sở hữu) |
+| `ChapterName` rỗng (A4) | ✅ | `GetRecentLessonsAsync` / `GetChapterComparisonAsync` điền tên chương |
+| **Còn lại** | ⏳ | chưa gộp `StudentController.GetDashboardStats` với `DashboardController` (giữ 2 endpoint để không vỡ frontend); `SkillProgress` chưa được ghi; `ChartData`/`ScoreChartItemDto` vẫn theo node id chưa gộp chương; test "so sánh 2 tuần cố định" chưa có |
+
 ---
 
 ### P5 — Thanh toán & Subscription hoàn chỉnh
@@ -445,6 +458,21 @@ AI với dữ liệu thật (kiểm qua mock). Không còn `Contains("premium")`
 
 Chạy lại toàn bộ payload IPN mẫu → trạng thái hệ thống ổn định & idempotent. Có báo cáo đối
 soát: tổng `Payment.Completed` == tổng subscription `Active` hợp lệ.
+
+**Trạng thái triển khai (cập nhật)** — nhánh `feat/p5-payments-subscription`, migration `P5_SePayIpnLog`, test `P5PaymentTests` (8):
+
+| Hạng mục P5 | Trạng thái | Ghi chú |
+|---|---|---|
+| IPN async + transaction + `SePayIpnLog` payload thô (A2-10) | ✅ | `SePayIpnService` — 1 dòng log / `referenceCode` (idempotent theo giao dịch), transaction bao Payment + Subscription + guard |
+| `referenceCode` duy nhất | ✅ | unique index; replay → `Duplicate`, không kích hoạt lại |
+| `EndDate` theo `Package.DurationDays` | ✅ | fallback 30 ngày nếu 0 |
+| Dung sai số tiền cấu hình được | ✅ | `SePay:AmountToleranceVnd` (mặc định 0) |
+| Job nền: `Active` quá hạn → `Expired`; `Pending` quá hạn → `Cancelled` (+ Payment `Failed`) | ✅ | `SubscriptionLifecycleHostedService` (`SePay:LifecycleIntervalMinutes`, ≤0 tắt) + `POST /api/finance/subscriptions/run-lifecycle` |
+| Guard 1 subscription `Active` / học sinh + tie-break (A2-11) | ✅ | IPN kích hoạt sub mới → expire sub Active cũ; tie-break "tier cao nhất, hết hạn muộn nhất" ở `PackageRepository` / `SubscriptionRepository` |
+| Endpoint "gói của tôi" / "lịch sử thanh toán của tôi" | ✅ | `GET /api/subscription/me`, `GET /api/payment/me` (payer hoặc beneficiary) |
+| Phụ huynh đứng tên trả (`Payment.PaidByUserId`) | ✅ | set từ token khi tạo pending (từ đợt A1/A2); `payment/me` bao gồm khoản phụ huynh trả |
+| Báo cáo đối soát | ✅ | `GET /api/finance/subscriptions/reconciliation` |
+| **Còn lại** | ⏳ | `Order` / `OrderItem` mua khoá lẻ (ngoài phạm vi đợt này); IPN mismatch trả 200 (không cho SePay retry) — cân nhắc trả 4xx; chưa có luồng refund |
 
 ---
 

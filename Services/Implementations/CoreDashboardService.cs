@@ -4,6 +4,7 @@ using ELearning_ToanHocHay_Control.Models.DTOs.Student.Dashboard;
 using ELearning_ToanHocHay_Control.Models.DTOs.AI;
 using ELearning_ToanHocHay_Control.Data.Entities;
 using ELearning_ToanHocHay_Control.Repositories.Interfaces;
+using ELearning_ToanHocHay_Control.Services.Helpers;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using SendGrid.Helpers.Errors.Model;
 
@@ -159,16 +160,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         public async Task<PackageType> GetPackageTypeAsync(int studentId)
         {
             var subscription = await _packageRepo.GetActivePackageAsync(studentId);
-            if (subscription?.Package == null) return PackageType.Free;
-
-            var name = subscription.Package.PackageName.ToLower().Trim();
-            return name switch
-            {
-                var n when n.Contains("premium") => PackageType.Premium,
-                var n when n.Contains("tiêu chuẩn") || n.Contains("standard")
-                        || n.Contains("tieu chuan") => PackageType.Standard,
-                _ => PackageType.Free
-            };
+            return TierMap.ToDashboardType(subscription?.Package); // A2-05
         }
 
         private DashboardLinksDto GenerateDashboardLinks(int studentId, PackageType packageType)

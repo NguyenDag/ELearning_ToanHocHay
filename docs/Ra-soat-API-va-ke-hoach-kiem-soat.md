@@ -499,8 +499,24 @@ soát: tổng `Payment.Completed` == tổng subscription `Active` hợp lệ.
 | Endpoint "gói của tôi" / "lịch sử thanh toán của tôi" | ✅ | `GET /api/subscription/me`, `GET /api/payment/me` (payer hoặc beneficiary) |
 | Phụ huynh đứng tên trả (`Payment.PaidByUserId`) | ✅ | set từ token khi tạo pending (từ đợt A1/A2); `payment/me` bao gồm khoản phụ huynh trả |
 | Báo cáo đối soát | ✅ | `GET /api/finance/subscriptions/reconciliation` |
-| Luồng refund | ✅ | `POST /api/payment/{id}/refund` (Finance/Admin) — Payment → Refunded + huỷ subscription tương ứng |
+| Luồng refund | ✅ | Thay refund một-bước bằng **workflow hoàn tiền bán tự động** — xem bảng dưới. `POST /api/payment/{id}/refund` cũ đã **xoá** (breaking) |
 | **Còn lại** | ⏳ | `Order` / `OrderItem` mua khoá lẻ (feature riêng, lớn); IPN mismatch trả 200 — cân nhắc 4xx để SePay retry |
+
+**Hoàn tiền bán tự động** (chi tiết: [Luồng hoàn tiền](Luong-hoan-tien.md)) — nhánh `feat/refund-workflow`, migration `P8_RefundWorkflow`, test `RefundWorkflowTests` (16) + `RemainingFeaturesTests`:
+
+| Hạng mục | Trạng thái | Ghi chú |
+|---|---|---|
+| Vòng đời `RefundRequest` (tạo → duyệt → gộp lô → xuất CSV → chi tay → xác nhận) | ✅ | `RefundRequest` / `RefundBatch` / `RefundEvent`; state machine `PendingReview → … → Completed` |
+| Học sinh/phụ huynh tự gửi yêu cầu + Finance tạo hộ | ✅ | `POST /api/refunds` (chủ sở hữu), `POST /api/finance/refunds`; `GET /api/refunds/me`, `/api/refunds/{id}` |
+| **Trần hoàn tiền/ngày** | ✅ | `refund.dailyCapVnd` (SystemConfig, mặc định 20tr), mốc "ngày" theo `refund.timezoneOffsetHours`; kiểm khi duyệt; `GET /api/finance/refunds/daily-usage` |
+| **Rate-limit theo người dùng** | ✅ | 2 lớp: policy `"refund"` (`RateLimiting:RefundPermitLimit`, mặc định 5/phút) + `refund.maxRequestsPerUserPer30d` (mặc định 3, theo người thụ hưởng) |
+| **Ghi log rõ ràng** | ✅ | `RefundEvent` timeline (actor + IP + correlation-id + from/to) trả kèm `GET /api/finance/refunds/{id}`; `AuditSaveChangesInterceptor` theo dõi `RefundRequest.Status/Amount` + `RefundBatch.Status`; Serilog structured |
+| Phê duyệt + dual-control | ✅ | 1 người Finance duyệt; `refund.dualControlThresholdVnd` (mặc định 0 = tắt) → `≥` ngưỡng cần 2 người khác nhau |
+| Gộp lô + xuất file chi hộ CSV | ✅ | `POST /api/finance/refund-batches`, `GET .../{id}/export` (text/csv, mẫu generic: STT, SoTaiKhoan, TenNguoiHuong, MaNganHang, SoTien, NoiDung) |
+| Xác nhận đã chuyển + hoàn một phần | ✅ | `.../confirm` (đơn) / `.../confirm-all` (lô) → `Payment.RefundAmount` tích luỹ, `Refunded` / `PartiallyRefunded`, huỷ subscription khi hoàn toàn phần |
+| Mã hoá số TK ngân hàng người nhận (PII) | ✅ | ASP.NET Data Protection, key ring persist vào DB (`DataProtectionKeys`); API chỉ trả 4 số cuối; giải mã chỉ khi build CSV |
+| Đối soát hoàn tiền + cảnh báo quá hạn | ✅ | `GET /api/finance/refunds/reconciliation`; sweep nền cảnh báo Finance yêu cầu `Disbursed` quá `refund.staleDisbursedDays` |
+| **Còn lại** | ⏳ | payout API (chi tự động); name-inquiry xác thực tên chủ TK; mẫu CSV riêng theo ngân hàng; auto-refund B2 overpay / B8 orphan |
 
 ---
 

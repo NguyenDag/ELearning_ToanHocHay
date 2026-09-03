@@ -136,9 +136,9 @@ public class RemainingFeaturesTests
         status.Should().Be(CommentStatus.Resolved);
     }
 
-    // ---------------- P5: refund ----------------
+    // ---------------- Pha 2: semi-automatic refund — a full refund cancels the subscription ----------------
     [SkippableFact]
-    public async Task Finance_can_refund_a_completed_payment_and_it_cancels_the_subscription()
+    public async Task A_confirmed_full_refund_cancels_the_subscription_it_paid_for()
     {
         RequireDocker();
 
@@ -148,7 +148,8 @@ public class RemainingFeaturesTests
             var p = new Payment
             {
                 PaidByUserId = Id.StudentBUserId, StudentId = Id.StudentBId, Amount = pkg.Price,
-                Status = PaymentStatus.Completed, PaymentMethod = PaymentMethod.BankTransfer
+                Status = PaymentStatus.Completed, PaymentMethod = PaymentMethod.BankTransfer,
+                PaymentDate = DateTime.UtcNow
             };
             db.Payments.Add(p);
             await db.SaveChangesAsync();
@@ -163,9 +164,20 @@ public class RemainingFeaturesTests
             return (p.PaymentId, s.SubscriptionId);
         });
 
-        var res = await _f.ClientFor(Id.FinanceUserId)
-            .PostAsJsonAsync($"/api/payments/{paymentId}/refund", new { Reason = "customer request" });
-        res.StatusCode.Should().Be(HttpStatusCode.OK, await res.Content.ReadAsStringAsync());
+        var finance = _f.ClientFor(Id.FinanceUserId);
+        var createRes = await finance.PostAsJsonAsync("/api/finance/refunds", new
+        {
+            PaymentId = paymentId, ReasonCode = "CustomerRequest",
+            BankBin = "970436", BankAccountNumber = "0071000999888", BankAccountHolderName = "TRAN THI B"
+        });
+        createRes.StatusCode.Should().Be(HttpStatusCode.Created, await createRes.Content.ReadAsStringAsync());
+        var refundId = JsonDocument.Parse(await createRes.Content.ReadAsStringAsync())
+            .RootElement.GetProperty("Data").GetProperty("RefundRequestId").GetInt32();
+
+        (await finance.PostAsJsonAsync($"/api/finance/refunds/{refundId}/approve", new { }))
+            .StatusCode.Should().Be(HttpStatusCode.OK);
+        (await finance.PostAsJsonAsync($"/api/finance/refunds/{refundId}/confirm", new { BankTransactionRef = "FT999" }))
+            .StatusCode.Should().Be(HttpStatusCode.OK);
 
         var state = await _f.QueryDbAsync(db => db.Payments.AsNoTracking()
             .Where(p => p.PaymentId == paymentId)

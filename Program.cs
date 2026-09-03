@@ -11,6 +11,7 @@ using ELearning_ToanHocHay_Control.Services.Implementations;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.Tokens;
@@ -54,6 +55,12 @@ namespace ELearning_ToanHocHay_Control
             builder.Services.AddDbContext<AppDbContext>((sp, options) =>
                 options.UseNpgsql(connectionString)
                        .AddInterceptors(sp.GetRequiredService<AuditSaveChangesInterceptor>()));
+
+            // Data Protection — key ring persisted to the DB so it survives redeploys.
+            // Used to encrypt the beneficiary bank account number on RefundRequest (PII).
+            builder.Services.AddDataProtection()
+                .PersistKeysToDbContext<AppDbContext>()
+                .SetApplicationName("elearning-toanhochay");
 
             // 2. App base URL & email config
             var appBaseUrl = Environment.GetEnvironmentVariable("APP_BASE_URL") ?? "https://localhost:5001";
@@ -210,6 +217,22 @@ namespace ELearning_ToanHocHay_Control
                         factory: _ => new FixedWindowRateLimiterOptions
                         {
                             PermitLimit = 20,
+                            Window = TimeSpan.FromMinutes(1),
+                            QueueLimit = 0
+                        }));
+
+                // N refund requests / minute / user (default 5). Business-level 30-day
+                // per-user limit is enforced separately in RefundService.
+                var refundPermitLimit = int.TryParse(
+                    builder.Configuration["RateLimiting:RefundPermitLimit"], out var rpl) ? rpl : 5;
+                options.AddPolicy("refund", context =>
+                    RateLimitPartition.GetFixedWindowLimiter(
+                        partitionKey: context.User.GetUserId()?.ToString()
+                                      ?? context.Connection.RemoteIpAddress?.ToString()
+                                      ?? "unknown",
+                        factory: _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = refundPermitLimit,
                             Window = TimeSpan.FromMinutes(1),
                             QueueLimit = 0
                         }));
@@ -371,6 +394,10 @@ namespace ELearning_ToanHocHay_Control
             services.AddScoped<ISePayIpnService, SePayIpnService>();
             services.AddScoped<ISubscriptionLifecycleService, SubscriptionLifecycleService>();
             services.AddHostedService<SubscriptionLifecycleHostedService>();
+            services.AddScoped<Services.Helpers.IRefundFieldProtector, Services.Helpers.RefundFieldProtector>();
+            services.AddScoped<Services.Helpers.IRefundEventWriter, Services.Helpers.RefundEventWriter>();
+            services.AddScoped<IRefundService, RefundService>();
+            services.AddScoped<IRefundBatchService, RefundBatchService>();
             services.AddScoped<IAIHintService, AIHintService>();
             services.AddScoped<IAIFeedbackService, AIFeedbackService>();
             services.AddScoped<IAiQuotaService, AiQuotaService>();

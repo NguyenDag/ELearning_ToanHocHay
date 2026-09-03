@@ -104,32 +104,6 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             });
         }
 
-        public async Task<ApiResponse<bool>> RefundAsync(int paymentId, RefundPaymentDto dto)
-        {
-            var payment = await _repository.GetByIdAsync(paymentId);
-            if (payment == null)
-                return ApiResponse<bool>.ErrorResponse("Payment không tồn tại");
-            if (payment.Status != PaymentStatus.Completed)
-                return ApiResponse<bool>.ErrorResponse("Chỉ hoàn tiền được giao dịch đã Completed");
-
-            var amount = dto.Amount ?? payment.Amount;
-            if (amount <= 0 || amount > payment.Amount)
-                return ApiResponse<bool>.ErrorResponse("Số tiền hoàn không hợp lệ");
-
-            payment.Status = PaymentStatus.Refunded;
-            payment.RefundedAt = DateTime.UtcNow;
-            payment.RefundAmount = amount;
-            if (!string.IsNullOrWhiteSpace(dto.Reason))
-                payment.Notes = $"{payment.Notes} | Refund: {dto.Reason}".Trim(' ', '|');
-
-            // Cancel the subscription this payment activated (if still active).
-            if (payment.Subscription is { Status: SubscriptionStatus.Active or SubscriptionStatus.Pending })
-                payment.Subscription.Status = SubscriptionStatus.Cancelled;
-
-            await _repository.UpdateAsync(payment);
-            return ApiResponse<bool>.SuccessResponse(true, "Đã hoàn tiền");
-        }
-
         public async Task<ApiResponse<bool>> UpdateStatusAsync(int id, UpdatePaymentStatusDto dto)
         {
             var payment = await _repository.GetByIdAsync(id);

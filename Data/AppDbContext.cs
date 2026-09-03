@@ -1,9 +1,10 @@
 using ELearning_ToanHocHay_Control.Data.Entities;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace ELearning_ToanHocHay_Control.Data
 {
-    public class AppDbContext : DbContext
+    public class AppDbContext : DbContext, IDataProtectionKeyContext
     {
         public AppDbContext(DbContextOptions options) : base(options)
         {
@@ -93,6 +94,9 @@ namespace ELearning_ToanHocHay_Control.Data
         public DbSet<OrderItem> OrderItems { get; set; }
         public DbSet<Payment> Payments { get; set; }
         public DbSet<SePayIpnLog> SePayIpnLogs { get; set; }
+        public DbSet<RefundRequest> RefundRequests { get; set; }
+        public DbSet<RefundBatch> RefundBatches { get; set; }
+        public DbSet<RefundEvent> RefundEvents { get; set; }
         public DbSet<Promotion> Promotions { get; set; }
         public DbSet<PromotionScope> PromotionScopes { get; set; }
         public DbSet<PromotionRedemption> PromotionRedemptions { get; set; }
@@ -107,6 +111,9 @@ namespace ELearning_ToanHocHay_Control.Data
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<SystemConfig> SystemConfigs { get; set; }
         public DbSet<StaticPage> StaticPages { get; set; }
+
+        // --- ASP.NET Data Protection key ring (bảo vệ số tài khoản ngân hàng ở RefundRequest) ---
+        public DbSet<DataProtectionKey> DataProtectionKeys { get; set; }
 
         #endregion
 
@@ -733,6 +740,47 @@ namespace ELearning_ToanHocHay_Control.Data
                 e.Property(x => x.Outcome).HasConversion<string>();
             });
 
+            // --- Hoàn tiền bán tự động ---
+            modelBuilder.Entity<RefundRequest>(e =>
+            {
+                e.ToTable("RefundRequest");
+                e.HasKey(x => x.RefundRequestId);
+                e.HasIndex(x => x.PublicId).IsUnique();
+                e.HasIndex(x => x.PaymentId);
+                e.HasIndex(x => x.Status);
+                e.HasIndex(x => x.RefundBatchId);
+                e.HasIndex(x => x.BeneficiaryUserId);
+                e.Property(x => x.ReasonCode).HasConversion<string>();
+                e.Property(x => x.Status).HasConversion<string>();
+                e.HasOne(x => x.Payment).WithMany().HasForeignKey(x => x.PaymentId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                e.HasOne(x => x.RefundBatch).WithMany(b => b.Items).HasForeignKey(x => x.RefundBatchId)
+                    .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            modelBuilder.Entity<RefundBatch>(e =>
+            {
+                e.ToTable("RefundBatch");
+                e.HasKey(x => x.RefundBatchId);
+                e.HasIndex(x => x.PublicId).IsUnique();
+                e.HasIndex(x => x.Status);
+                e.Property(x => x.Status).HasConversion<string>();
+            });
+
+            modelBuilder.Entity<RefundEvent>(e =>
+            {
+                e.ToTable("RefundEvent");
+                e.HasKey(x => x.RefundEventId);
+                e.HasIndex(x => x.RefundRequestId);
+                e.HasIndex(x => x.RefundBatchId);
+                e.HasIndex(x => x.CreatedAt);
+                e.Property(x => x.EventType).HasConversion<string>();
+                e.HasOne(x => x.RefundRequest).WithMany(r => r.Events).HasForeignKey(x => x.RefundRequestId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                e.HasOne(x => x.RefundBatch).WithMany().HasForeignKey(x => x.RefundBatchId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
             modelBuilder.Entity<Promotion>(e =>
             {
                 e.ToTable("Promotion");
@@ -922,6 +970,12 @@ namespace ELearning_ToanHocHay_Control.Data
                 ("ipHash.rotationDays", "90", ConfigValueType.Int, "security", ""),
                 ("referral.qualifyingOrderMinAmount", "99000", ConfigValueType.Int, "referral", "đồng"),
                 ("referral.maxQualifiedPerReferrerPer30Days", "10", ConfigValueType.Int, "referral", ""),
+                ("refund.dailyCapVnd", "20000000", ConfigValueType.Decimal, "refund", "Trần tổng tiền hoàn được duyệt trong 1 ngày (giờ VN)"),
+                ("refund.maxRequestsPerUserPer30d", "3", ConfigValueType.Int, "refund", "Giới hạn số yêu cầu hoàn / người thụ hưởng / 30 ngày trượt"),
+                ("refund.maxPaymentAgeDays", "180", ConfigValueType.Int, "refund", "Không hoàn payment cũ hơn X ngày"),
+                ("refund.dualControlThresholdVnd", "0", ConfigValueType.Decimal, "refund", ">= ngưỡng cần 2 người Finance duyệt; 0 = tắt"),
+                ("refund.timezoneOffsetHours", "7", ConfigValueType.Int, "refund", "Mốc 'ngày' (Asia/Ho_Chi_Minh) để tính trần"),
+                ("refund.staleDisbursedDays", "3", ConfigValueType.Int, "refund", "Disbursed quá X ngày chưa Completed -> cảnh báo Finance"),
             };
 
             var seed = new List<SystemConfig>();

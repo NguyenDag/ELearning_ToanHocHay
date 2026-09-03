@@ -64,13 +64,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
             return response.ToActionResult();
         }
 
-        // POST: api/payment/5/refund — Finance/Admin only
-        [HttpPost("{id:int}/refund")]
-        [AuthorizeUserType(UserType.FinanceManager, UserType.SystemAdmin)]
-        public async Task<IActionResult> Refund(int id, [FromBody] RefundPaymentDto dto)
-        {
-            var response = await _service.RefundAsync(id, dto);
-            return response.ToActionResult();
-        }
+        // Refund flow moved to the semi-automatic workflow — POST /api/refunds (student)
+        // and POST /api/finance/refunds + /api/finance/refund-batches (Finance).
     }
 }

@@ -24,6 +24,8 @@ namespace ELearning_ToanHocHay_Control.Data
             [typeof(Payment)] = new[] { nameof(Payment.Status) },
             [typeof(Package)] = new[] { nameof(Package.Price), nameof(Package.IsActive) },
             [typeof(Question)] = new[] { nameof(Question.Status) },
+            [typeof(RefundRequest)] = new[] { nameof(RefundRequest.Status), nameof(RefundRequest.Amount) },
+            [typeof(RefundBatch)] = new[] { nameof(RefundBatch.Status) },
         };
 
         public AuditSaveChangesInterceptor(IHttpContextAccessor http)

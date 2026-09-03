@@ -4,7 +4,6 @@ using ELearning_ToanHocHay_Control.Models.DTOs.Student.Dashboard;
 using ELearning_ToanHocHay_Control.Models.DTOs.AI;
 using ELearning_ToanHocHay_Control.Data.Entities;
 using ELearning_ToanHocHay_Control.Repositories.Interfaces;
-using ELearning_ToanHocHay_Control.Services.Helpers;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using SendGrid.Helpers.Errors.Model;
 
@@ -53,7 +52,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             var statsTask = await GetOverviewStatsAsync(studentId);
             var recentLessonsTask = await GetRecentLessonsAsync(studentId, 5);
             var chapterProgressTask = await GetChapterProgressSummaryAsync(studentId);
-            var packageTypeTask = await GetPackageTypeAsync(studentId);
+            var packageTier = await GetPackageTierAsync(studentId);
 
             // ✅ THÊM DÒNG NÀY
             var subscription = await _packageRepo.GetActivePackageAsync(studentId);
@@ -64,10 +63,10 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 Stats = statsTask,
                 RecentLessons = recentLessonsTask,
                 ChapterProgress = chapterProgressTask,
-                PackageType = packageTypeTask,
+                PackageTier = packageTier,
                 // ✅ SỬA DÒNG NÀY — truyền subscription thật thay vì null
                 SubscriptionInfo = await _subscriptionInfoHelper.BuildSubscriptionInfo(subscription),
-                Links = GenerateDashboardLinks(studentId, packageTypeTask)
+                Links = GenerateDashboardLinks(studentId, packageTier)
             };
 
             return dashboard;
@@ -157,21 +156,21 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             .ToList();
         }
 
-        public async Task<PackageType> GetPackageTypeAsync(int studentId)
+        public async Task<PackageTier> GetPackageTierAsync(int studentId)
         {
             var subscription = await _packageRepo.GetActivePackageAsync(studentId);
-            return TierMap.ToDashboardType(subscription?.Package); // A2-05
+            return subscription?.Package?.Tier ?? PackageTier.Free; // A2-05 — tier from Package.Tier only
         }
 
-        private DashboardLinksDto GenerateDashboardLinks(int studentId, PackageType packageType)
+        private DashboardLinksDto GenerateDashboardLinks(int studentId, PackageTier tier)
         {
             var baseUrl = $"/api/student/{studentId}/dashboard";
             return new DashboardLinksDto
             {
                 ExerciseHistory = $"{baseUrl}/exercise-history",
-                Charts = packageType >= PackageType.Standard ? $"{baseUrl}/charts" : null,
-                AIInsights = packageType >= PackageType.Premium ? $"{baseUrl}/ai-insights" : null,
-                Notifications = packageType >= PackageType.Standard ? $"{baseUrl}/notifications" : null
+                Charts = tier >= PackageTier.Standard ? $"{baseUrl}/charts" : null,
+                AIInsights = tier >= PackageTier.Premium ? $"{baseUrl}/ai-insights" : null,
+                Notifications = tier >= PackageTier.Standard ? $"{baseUrl}/notifications" : null
             };
         }
 

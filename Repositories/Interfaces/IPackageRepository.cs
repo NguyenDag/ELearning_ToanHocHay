@@ -1,5 +1,4 @@
 ﻿using ELearning_ToanHocHay_Control.Data.Entities;
-using ELearning_ToanHocHay_Control.Models.DTOs.Student.Dashboard;
 
 namespace ELearning_ToanHocHay_Control.Repositories.Interfaces
 {
@@ -11,6 +10,6 @@ namespace ELearning_ToanHocHay_Control.Repositories.Interfaces
         Task UpdateAsync(Package package);
         Task DeleteAsync(Package package);
         Task<Subscription?> GetActivePackageAsync(int studentId);
-        Task<PackageType?> GetActivePackageTypeAsync(int studentId);
+        Task<PackageTier?> GetActivePackageTierAsync(int studentId);
     }
 }

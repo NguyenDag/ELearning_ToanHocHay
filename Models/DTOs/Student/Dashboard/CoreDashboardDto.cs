@@ -1,15 +1,8 @@
-﻿using ELearning_ToanHocHay_Control.Services.Implementations;
+using ELearning_ToanHocHay_Control.Data.Entities;
 using ELearning_ToanHocHay_Control.Models.DTOs.Subscription;
 
 namespace ELearning_ToanHocHay_Control.Models.DTOs.Student.Dashboard
 {
-    public enum PackageType
-    {
-        Free = 0,
-        Standard = 1,
-        Premium = 2,
-        Yearly = 3
-    }
     public class CoreDashboardDto
     {
         // Essential data only
@@ -17,7 +10,7 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs.Student.Dashboard
         public OverviewStatsDto Stats { get; set; }
         public List<RecentLessonDto> RecentLessons { get; set; }  // Max 5
         public List<ChapterProgressSummaryDto> ChapterProgress { get; set; }
-        public PackageType PackageType { get; set; }
+        public PackageTier PackageTier { get; set; }
         public SubscriptionInfoDto SubscriptionInfo { get; set; } = new();
 
         // Links to lazy-load endpoints

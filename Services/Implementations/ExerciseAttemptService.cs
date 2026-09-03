@@ -840,7 +840,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
             return tier switch
             {
-                PackageTier.Premium => AccessTier.Premium,
+                PackageTier.Premium or PackageTier.Yearly => AccessTier.Premium,
                 PackageTier.Standard => AccessTier.Standard,
                 _ => AccessTier.Free
             };

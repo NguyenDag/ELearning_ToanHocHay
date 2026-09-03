@@ -1,6 +1,5 @@
 ﻿using ELearning_ToanHocHay_Control.Data;
 using ELearning_ToanHocHay_Control.Data.Entities;
-using ELearning_ToanHocHay_Control.Models.DTOs.Student.Dashboard;
 using ELearning_ToanHocHay_Control.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -59,12 +58,12 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             .FirstOrDefaultAsync();
         }
 
-        public async Task<PackageType?> GetActivePackageTypeAsync(int studentId)
+        public async Task<PackageTier?> GetActivePackageTierAsync(int studentId)
         {
             var today = DateTime.UtcNow;
 
             // A2-05 — tier from Package.Tier, not from the PackageId (row key).
-            var tier = await _context.Subscriptions
+            return await _context.Subscriptions
                 .AsNoTracking()
                 .Where(s => s.StudentId == studentId &&
                             s.Status == SubscriptionStatus.Active &&
@@ -73,8 +72,6 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
                 .OrderByDescending(s => s.Package!.Tier)
                 .Select(s => (PackageTier?)s.Package!.Tier)
                 .FirstOrDefaultAsync();
-
-            return tier.HasValue ? Services.Helpers.TierMap.ToDashboardType(tier.Value) : null;
         }
     }
 }

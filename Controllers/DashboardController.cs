@@ -1,4 +1,5 @@
 using ELearning_ToanHocHay_Control.Common;
+using ELearning_ToanHocHay_Control.Data.Entities;
 using ELearning_ToanHocHay_Control.Models.DTOs.Student.Dashboard;
 using ELearning_ToanHocHay_Control.Services.Implementations;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
@@ -74,9 +75,9 @@ namespace ELearning_ToanHocHay_Control.Controllers
             var guard = await GuardAsync(studentId);
             if (guard != null) return guard;
 
-            var package = await _coreDashboardService.GetPackageTypeAsync(studentId);
+            var tier = await _coreDashboardService.GetPackageTierAsync(studentId);
 
-            if (package < PackageType.Standard)
+            if (tier < PackageTier.Standard)
                 return StatusCode(403, new { message = "Gói của bạn không hỗ trợ tính năng này." });
 
             var result = await _coreDashboardService.GetChapterScoreComparisonAsync(studentId);
@@ -90,8 +91,8 @@ namespace ELearning_ToanHocHay_Control.Controllers
             var guard = await GuardAsync(studentId);
             if (guard != null) return guard;
 
-            var package = await _coreDashboardService.GetPackageTypeAsync(studentId);
-            if (package < PackageType.Premium)
+            var tier = await _coreDashboardService.GetPackageTierAsync(studentId);
+            if (tier < PackageTier.Premium)
                 return StatusCode(403, new { message = "Tính năng này chỉ dành cho tài khoản Premium." });
 
             var result = await _coreDashboardService.GetAIInsightAsync(studentId);
@@ -104,8 +105,8 @@ namespace ELearning_ToanHocHay_Control.Controllers
             var guard = await GuardAsync(studentId);
             if (guard != null) return guard;
 
-            var package = await _coreDashboardService.GetPackageTypeAsync(studentId);
-            if (package < PackageType.Premium)
+            var tier = await _coreDashboardService.GetPackageTierAsync(studentId);
+            if (tier < PackageTier.Premium)
                 return StatusCode(403, new { message = "Tính năng này chỉ dành cho tài khoản Premium." });
 
             var result = await _coreDashboardService.GetAIRoadmapAsync(studentId);

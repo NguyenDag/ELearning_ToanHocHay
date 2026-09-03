@@ -15,7 +15,7 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs
         public string? RefreshToken { get; set; }
         public DateTime? RefreshTokenExpiration { get; set; }
         public string AvatarUrl { get; set; }
-        public int PackageType { get; set; } = 0; // ← THÊM
+        public PackageTier PackageTier { get; set; } = PackageTier.Free;
     }
 
     public class TokenPairDto

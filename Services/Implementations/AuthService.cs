@@ -93,7 +93,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
                 int? studentId = null;
                 int? parentId = null;
-                int packageType = 0;
+                var packageTier = PackageTier.Free;
 
                 if (user.UserType == UserType.Student)
                 {
@@ -101,7 +101,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     if (student == null)
                         return ApiResponse<LoginResponseDto>.ErrorResponse("Không tìm thấy thông tin học sinh");
                     studentId = student.StudentId;
-                    packageType = await ResolvePackageTypeAsync(student.StudentId);
+                    packageTier = await ResolvePackageTierAsync(student.StudentId);
                 }
                 else if (user.UserType == UserType.Parent)
                 {
@@ -128,7 +128,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     RefreshToken = pair.RefreshToken,
                     RefreshTokenExpiration = pair.RefreshTokenExpiration,
                     AvatarUrl = user.AvatarUrl,
-                    PackageType = packageType
+                    PackageTier = packageTier
                 }, "Đăng nhập thành công");
             }
             catch (Exception ex)
@@ -150,22 +150,18 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             await _userRepository.UpdateUserAsync(user);
         }
 
-        private async Task<int> ResolvePackageTypeAsync(int studentId)
+        private async Task<PackageTier> ResolvePackageTierAsync(int studentId)
         {
             var now = DateTime.UtcNow;
             var tier = await _context.Subscriptions
                 .Where(s => s.StudentId == studentId && s.Status == SubscriptionStatus.Active && s.EndDate > now)
                 .Include(s => s.Package)
-                .OrderByDescending(s => s.EndDate)
+                .OrderByDescending(s => s.Package!.Tier)
+                .ThenByDescending(s => s.EndDate)
                 .Select(s => (PackageTier?)s.Package!.Tier)
                 .FirstOrDefaultAsync();
 
-            return tier switch
-            {
-                PackageTier.Premium => 2,
-                PackageTier.Standard => 1,
-                _ => 0
-            };
+            return tier ?? PackageTier.Free;
         }
 
         // ==================================================================

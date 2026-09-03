@@ -3,11 +3,16 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ELearning_ToanHocHay_Control.Data.Entities
 {
+    /// <summary>
+    /// The single package-tier standard (entity + DTOs). Numeric order matters:
+    /// higher value = more access (used with >= comparisons).
+    /// </summary>
     public enum PackageTier
     {
-        Free,
-        Standard,
-        Premium
+        Free = 0,
+        Standard = 1,
+        Premium = 2,
+        Yearly = 3
     }
 
     [Table("Package")]

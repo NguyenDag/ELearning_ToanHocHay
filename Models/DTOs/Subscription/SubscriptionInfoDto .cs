@@ -1,15 +1,17 @@
 ﻿// ============================================================
 // FILE: ELearning_ToanHocHay_Control/Models/DTOs/Subscription/SubscriptionInfoDto.cs
 // ============================================================
+using ELearning_ToanHocHay_Control.Data.Entities;
+
 namespace ELearning_ToanHocHay_Control.Models.DTOs.Subscription
 {
     /// <summary>
     /// Thông tin gói hiện tại của học sinh, embed vào CoreDashboardDto.
-    /// PackageType: 0 = Free, 1 = Standard, 2 = Premium
+    /// PackageTier: Free / Standard / Premium / Yearly (số 0..3).
     /// </summary>
     public class SubscriptionInfoDto
     {
-        public int PackageType { get; set; } = 0;          // 0=Free, 1=Standard, 2=Premium
+        public PackageTier PackageTier { get; set; } = PackageTier.Free;
         public string PackageName { get; set; } = "Free";
         public DateTime? EndDate { get; set; }
         public bool IsActive { get; set; } = false;

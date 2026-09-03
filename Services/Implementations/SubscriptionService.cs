@@ -153,7 +153,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             {
                 return new SubscriptionInfoDto
                 {
-                    PackageType = 0,
+                    PackageTier = PackageTier.Free,
                     PackageName = "Free",
                     IsActive = false,
                     EndDate = null,
@@ -174,18 +174,16 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             {
                 return new SubscriptionInfoDto
                 {
-                    PackageType = 0,
+                    PackageTier = PackageTier.Free,
                     PackageName = "Free",
                     IsActive = false,
                 };
             }
 
-            int packageType = (int)Helpers.TierMap.ToDashboardType(package.Tier); // A2-05
-
             DateTime now = DateTime.Now;
             return new SubscriptionInfoDto
             {
-                PackageType = packageType,
+                PackageTier = package.Tier,
                 PackageName = package.PackageName,
                 IsActive = activeSubscription.Status == SubscriptionStatus.Active
                            && activeSubscription.EndDate > now,

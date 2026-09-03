@@ -180,8 +180,10 @@ có controller/service nào:
 - `AI/AI_main.py` (port 5000, thiếu route chatbot/insights/batch) — đã bị
   `Main_AI_Service.py` (port 5001) thay thế. Xoá để tránh nhầm; sửa default URL trong
   `AIService.cs` (`localhost:5000`) cho khớp `5001`.
-- `PackageRepository.GetActivePackageTypeAsync` — ép `PackageId` (khoá dòng) thành
-  `PackageType`, sai khái niệm; có vẻ không được dùng.
+- ~~`PackageRepository.GetActivePackageTypeAsync` — ép `PackageId` (khoá dòng) thành
+  `PackageType`, sai khái niệm~~ → **đã sửa (P4):** đổi tên `GetActivePackageTierAsync`,
+  trả `PackageTier` thật. Enum `PackageType` (DTO) đã bị xoá, thống nhất dùng
+  `PackageTier { Free, Standard, Premium, Yearly }` ở cả entity lẫn DTO.
 - `Program.cs` — đăng ký `IParentRepository` hai lần.
 - `CoreDashboardService.GetAIInsightAsync` / `GetAIRoadmapAsync` — hiện là code chết vì dữ
   liệu đầu vào rỗng (A2-06).

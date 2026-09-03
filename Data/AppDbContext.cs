@@ -91,6 +91,7 @@ namespace ELearning_ToanHocHay_Control.Data
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
         public DbSet<Payment> Payments { get; set; }
+        public DbSet<SePayIpnLog> SePayIpnLogs { get; set; }
         public DbSet<Promotion> Promotions { get; set; }
         public DbSet<PromotionScope> PromotionScopes { get; set; }
         public DbSet<PromotionRedemption> PromotionRedemptions { get; set; }
@@ -708,6 +709,15 @@ namespace ELearning_ToanHocHay_Control.Data
                 e.HasOne(x => x.Order).WithMany(o => o.Payments).HasForeignKey(x => x.OrderId);
                 e.HasOne(x => x.PaidByUser).WithMany().HasForeignKey(x => x.PaidByUserId);
                 e.HasOne(x => x.Student).WithMany().HasForeignKey(x => x.StudentId);
+            });
+
+            modelBuilder.Entity<SePayIpnLog>(e =>
+            {
+                e.ToTable("SePayIpnLog");
+                e.HasKey(x => x.IpnLogId);
+                e.HasIndex(x => x.ReferenceCode).IsUnique();
+                e.HasIndex(x => x.SubscriptionId);
+                e.Property(x => x.Outcome).HasConversion<string>();
             });
 
             modelBuilder.Entity<Promotion>(e =>

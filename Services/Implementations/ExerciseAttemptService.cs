@@ -30,6 +30,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         private readonly IAiFeedbackQueue _aiFeedbackQueue;
         private readonly AppDbContext _context;
         private readonly IEmailService _emailService;
+        private readonly IProgressProjectionService _projection;
 
         public ExerciseAttemptService(
             IExerciseAttemptRepository attemptRepository,
@@ -42,8 +43,10 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             IAiFeedbackQueue aiFeedbackQueue,
             IMapper mapper,
             AppDbContext context,
-            IEmailService emailService)
+            IEmailService emailService,
+            IProgressProjectionService projection)
         {
+            _projection = projection;
             _attemptRepository = attemptRepository;
             _exerciseRepository = exerciseRepository;
             _answerRepository = answerRepository;
@@ -184,6 +187,9 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
                 foreach (var w in wrongAnswerDetails)
                     _aiFeedbackQueue.Enqueue(attempt.AttemptId, w.QuestionId, w.StudentAnswer);
+
+                // P4 (A2-06): fold this attempt into NodeProgress + the activity snapshot.
+                await _projection.ProjectAttemptAsync(attempt.AttemptId);
 
                 // 8. Return the result immediately (AI fields fill in later via /result)
                 var result = new ExerciseResultDto

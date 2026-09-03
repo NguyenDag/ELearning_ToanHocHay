@@ -196,24 +196,42 @@ có controller/service nào:
 
 ## A5 — Vấn đề xuyên suốt
 
-- **Vỏ response không nhất quán.** Chỗ trả `ApiResponse<T>`, chỗ trả object ẩn danh
-  (`SubscriptionController.status`, `StudentSubscriptionController`, `DashboardController`).
-  Frontend phải xử lý hai kiểu.
-- **Mã HTTP không đúng ngữ nghĩa.** Nhiều action trả `Ok()` (200) kể cả khi
-  `Success = false` hoặc không tìm thấy (`ParentController`,
-  `AIFeedbackController.GetByAttempt`, các filter của `ExercisesController`).
-  `UserController.GetByEmail` trả `404` còn `GetById` trả `400` cho cùng tình huống.
-- **Route lộn xộn.** `api/auth`, `api/User`, `api/Questions`, `api/Subscription`; ba gốc
-  route khác nhau cho "student": `api/Student`, `api/student/{id}/dashboard`,
-  `api/student/{id:int}`. Thống nhất kebab-case số nhiều.
-- **Không phân trang.** Mọi `GetAll` (user, payment, subscription, exercise, lịch sử làm
-  bài) trả toàn bộ.
-- **Không có `AuditLog` interceptor** dù schema đã có — nền cho yêu cầu "admin xem toàn bộ
-  log".
-- **Bí mật trong `appsettings.json`** (JWT SecretKey commit vào repo). Chuyển hẳn sang biến
-  môi trường / secret store; xoay khoá.
-- **Chatbot không lưu hội thoại phía C#;** Python giữ `UserState` trong RAM, mất khi restart
-  và không chia sẻ giữa 2 worker gunicorn.
+- ~~**Vỏ response không nhất quán**~~ → **đã xử lý:** mọi endpoint trả `ApiResponse<T>`;
+  `ApiResponse` có `StatusCode` + factory `NotFound/Forbidden/Conflict/Created`;
+  `ApiResponse.ToActionResult()` map sang mã HTTP (suy 404 từ message "không tìm thấy" nếu
+  chưa set). `AuthorizeUserType`, `SePayApiKey`, JWT `OnChallenge/OnForbidden`, và
+  `InvalidModelStateResponseFactory` đều dùng vỏ này.
+- ~~**Mã HTTP không đúng ngữ nghĩa**~~ → **đã xử lý:** không còn `Ok()` khi `Success=false`;
+  `GetById` / `GetByEmail` cùng trả 404; 403 cho nội dung trả phí; 400 + `Errors` cho lỗi
+  validation. Test `A5NormalizationTests`.
+- ~~**Route lộn xộn**~~ → **đã xử lý:** kebab-case số nhiều. **Breaking — WebApp phải đổi:**
+
+  | Cũ | Mới |
+  |---|---|
+  | `api/User` | `api/users` |
+  | `api/Questions` | `api/questions` |
+  | `api/Subscription` | `api/subscriptions` |
+  | `api/Payment` | `api/payments` |
+  | `api/Package` | `api/packages` |
+  | `api/Parent` | `api/parents` |
+  | `api/ExerciseAttempts` | `api/exercise-attempts` |
+  | `api/AIHint` | `api/ai-hints` |
+  | `api/AIFeedback` | `api/ai-feedback` |
+  | `api/Student` · `api/student/{id}/dashboard` · `api/student/{id}` | `api/students` · `api/students/{id}/dashboard` · `api/students/{id}` |
+  | `api/Sepay/IPN` | `api/sepay/ipn` — ⚠️ đổi URL webhook trong cổng SePay |
+
+  Giữ nguyên (đã chuẩn): `api/auth`, `api/catalog`, `api/courses`, `api/content`, `api/learn`,
+  `api/progress`, `api/enrollments`, `api/question-banks`, `api/notifications`, `api/admin`,
+  `api/finance`, `api/chatbot`, `api/exercises`.
+
+- ~~**Không phân trang**~~ → một phần (P7): user / subscription / payment / question-bank /
+  notification. Còn: exercise list, attempt history.
+- ~~**Không có `AuditLog` interceptor**~~ → **đã xử lý (P7):** `AuditSaveChangesInterceptor`.
+- **Bí mật trong `appsettings.json`** (JWT SecretKey) → vẫn cần chuyển sang env / secret store
+  + xoay khoá trước launch (P0 đã hỗ trợ đọc từ env, chỉ cần bỏ giá trị khỏi repo).
+- ~~**Chatbot không lưu hội thoại phía C#**~~ → **đã xử lý (P6):** `ChatService`.
+- **Còn lại:** `JsonStringEnumConverter` (enum đang serialize dạng số — breaking); contract/
+  snapshot test; load test 200 user; `/security-review` cuối.
 
 ---
 
@@ -574,7 +592,9 @@ dev. Có dashboard log/metric cơ bản.
 | Tinh chỉnh index DB | ✅ | `ExerciseAttempt (StudentId,ExerciseId,Status)` + `(StudentId,Status,SubmittedAt)`; `TabSwitchLog (AttemptId)`; `Notification (UserId,IsRead)` |
 | Xoá `AI_main.py` | ✅ | (`ExampleController` đã xoá từ P0) |
 | Fix double-register `IParentRepository` (A4) | ✅ | |
-| **Còn lại (cần phối hợp frontend / hạ tầng)** | ⏳ | chuẩn hoá `ApiResponse` + mã HTTP cho **mọi** endpoint (A5) & route kebab-case → cần sửa đồng bộ WebApp; `JsonStringEnumConverter` (enum đang là số) → breaking; contract/snapshot test; load test 200 user (cần harness); `/security-review` cuối trên nhánh release |
+| Chuẩn hoá `ApiResponse` + mã HTTP cho mọi endpoint (A5) | ✅ | `ToActionResult()` + factory; authz filter + JWT + model-validation cùng vỏ; test `A5NormalizationTests` |
+| Route kebab-case số nhiều | ✅ | xem bảng ánh xạ ở mục A5 — **breaking cho WebApp** |
+| **Còn lại (cần phối hợp / hạ tầng)** | ⏳ | `JsonStringEnumConverter` (enum đang là số) → breaking; contract/snapshot test; load test 200 user (cần harness); `/security-review` cuối; chuyển JWT SecretKey ra khỏi repo |
 
 ---
 

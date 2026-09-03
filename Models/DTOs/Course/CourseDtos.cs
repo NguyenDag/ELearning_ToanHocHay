@@ -70,5 +70,36 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs.Course
     {
         [Required] public ReviewDecision Decision { get; set; }
         public string? Summary { get; set; }
+        public List<ReviewCommentInputDto> Comments { get; set; } = new();
+    }
+
+    public class ReviewCommentInputDto
+    {
+        public int? NodeId { get; set; }
+        public int? BlockId { get; set; }
+        [Required] public string Body { get; set; } = "";
+    }
+
+    public class ContentReviewDto
+    {
+        public int ReviewId { get; set; }
+        public int CourseVersionId { get; set; }
+        public int ReviewerId { get; set; }
+        public ReviewDecision Decision { get; set; }
+        public string? Summary { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public List<ReviewCommentDto> Comments { get; set; } = new();
+    }
+
+    public class ReviewCommentDto
+    {
+        public int CommentId { get; set; }
+        public int? NodeId { get; set; }
+        public int? BlockId { get; set; }
+        public string Body { get; set; } = "";
+        public CommentStatus Status { get; set; }
+        public int? ResolvedBy { get; set; }
+        public DateTime? ResolvedAt { get; set; }
+        public DateTime CreatedAt { get; set; }
     }
 }

@@ -137,5 +137,21 @@ namespace ELearning_ToanHocHay_Control.Controllers
             var r = await _courses.ArchiveVersionAsync(versionId);
             return r.Success ? Ok(r) : BadRequest(r);
         }
+
+        [HttpGet("versions/{versionId:int}/reviews")]
+        [AuthorizeContentRole]
+        public async Task<IActionResult> GetVersionReviews(int versionId)
+        {
+            var r = await _courses.GetVersionReviewsAsync(versionId);
+            return r.Success ? Ok(r) : NotFound(r);
+        }
+
+        [HttpPost("reviews/comments/{commentId:int}/resolve")]
+        [AuthorizeContentRole]
+        public async Task<IActionResult> ResolveComment(int commentId)
+        {
+            var r = await _courses.ResolveReviewCommentAsync(commentId, User.GetUserId()!.Value);
+            return r.Success ? Ok(r) : BadRequest(r);
+        }
     }
 }

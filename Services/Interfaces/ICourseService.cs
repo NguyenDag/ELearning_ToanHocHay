@@ -18,5 +18,8 @@ namespace ELearning_ToanHocHay_Control.Services.Interfaces
         Task<ApiResponse<CourseVersionDto>> ReviewVersionAsync(int versionId, ReviewCourseVersionDto dto, int reviewerId);
         Task<ApiResponse<CourseVersionDto>> PublishVersionAsync(int versionId, int userId);
         Task<ApiResponse<CourseVersionDto>> ArchiveVersionAsync(int versionId);
+
+        Task<ApiResponse<List<ContentReviewDto>>> GetVersionReviewsAsync(int versionId);
+        Task<ApiResponse<bool>> ResolveReviewCommentAsync(int commentId, int userId);
     }
 }

@@ -2269,6 +2269,242 @@ namespace ELearning_ToanHocHay_Control.Migrations
                     b.ToTable("RefreshToken", (string)null);
                 });
 
+            modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.RefundBatch", b =>
+                {
+                    b.Property<int>("RefundBatchId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("RefundBatchId"));
+
+                    b.Property<DateTime?>("CancelledAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CreatedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("DisbursedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("DisbursedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("DisbursementNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime?>("ExportedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("ExportedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ItemCount")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("PublicId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("RefundBatchId");
+
+                    b.HasIndex("PublicId")
+                        .IsUnique();
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("RefundBatch", (string)null);
+                });
+
+            modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.RefundEvent", b =>
+                {
+                    b.Property<long>("RefundEventId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("RefundEventId"));
+
+                    b.Property<int?>("ActorUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ActorUserType")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<decimal?>("AmountSnapshot")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("CorrelationId")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("FromStatus")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int?>("RefundBatchId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("RefundRequestId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ToStatus")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.HasKey("RefundEventId");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("RefundBatchId");
+
+                    b.HasIndex("RefundRequestId");
+
+                    b.ToTable("RefundEvent", (string)null);
+                });
+
+            modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.RefundRequest", b =>
+                {
+                    b.Property<int>("RefundRequestId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("RefundRequestId"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("ApprovedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("ApprovedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("BankAccountHolderName")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<string>("BankAccountNumberLast4")
+                        .IsRequired()
+                        .HasMaxLength(4)
+                        .HasColumnType("character varying(4)");
+
+                    b.Property<string>("BankAccountNumberProtected")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("BankBin")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)");
+
+                    b.Property<string>("BankTransactionRef")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<int>("BeneficiaryUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("FailedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FailureReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime?>("FirstApprovedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("FirstApprovedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("OnBehalf")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("PaymentId")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("PublicId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ReasonCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ReasonNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int?>("RefundBatchId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("RejectedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("RejectedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("RequestedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("RefundRequestId");
+
+                    b.HasIndex("BeneficiaryUserId");
+
+                    b.HasIndex("PaymentId");
+
+                    b.HasIndex("PublicId")
+                        .IsUnique();
+
+                    b.HasIndex("RefundBatchId");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("RefundRequest", (string)null);
+                });
+
             modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.ReviewComment", b =>
                 {
                     b.Property<int>("CommentId")
@@ -3079,6 +3315,66 @@ namespace ELearning_ToanHocHay_Control.Migrations
                             ConfigType = "Int",
                             ConfigValue = "10",
                             UpdatedAt = new DateTime(2026, 8, 31, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ConfigId = 24,
+                            ConfigGroup = "refund",
+                            ConfigKey = "refund.dailyCapVnd",
+                            ConfigType = "Decimal",
+                            ConfigValue = "20000000",
+                            Description = "Trần tổng tiền hoàn được duyệt trong 1 ngày (giờ VN)",
+                            UpdatedAt = new DateTime(2026, 8, 31, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ConfigId = 25,
+                            ConfigGroup = "refund",
+                            ConfigKey = "refund.maxRequestsPerUserPer30d",
+                            ConfigType = "Int",
+                            ConfigValue = "3",
+                            Description = "Giới hạn số yêu cầu hoàn / người thụ hưởng / 30 ngày trượt",
+                            UpdatedAt = new DateTime(2026, 8, 31, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ConfigId = 26,
+                            ConfigGroup = "refund",
+                            ConfigKey = "refund.maxPaymentAgeDays",
+                            ConfigType = "Int",
+                            ConfigValue = "180",
+                            Description = "Không hoàn payment cũ hơn X ngày",
+                            UpdatedAt = new DateTime(2026, 8, 31, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ConfigId = 27,
+                            ConfigGroup = "refund",
+                            ConfigKey = "refund.dualControlThresholdVnd",
+                            ConfigType = "Decimal",
+                            ConfigValue = "0",
+                            Description = ">= ngưỡng cần 2 người Finance duyệt; 0 = tắt",
+                            UpdatedAt = new DateTime(2026, 8, 31, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ConfigId = 28,
+                            ConfigGroup = "refund",
+                            ConfigKey = "refund.timezoneOffsetHours",
+                            ConfigType = "Int",
+                            ConfigValue = "7",
+                            Description = "Mốc 'ngày' (Asia/Ho_Chi_Minh) để tính trần",
+                            UpdatedAt = new DateTime(2026, 8, 31, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ConfigId = 29,
+                            ConfigGroup = "refund",
+                            ConfigKey = "refund.staleDisbursedDays",
+                            ConfigType = "Int",
+                            ConfigValue = "3",
+                            Description = "Disbursed quá X ngày chưa Completed -> cảnh báo Finance",
+                            UpdatedAt = new DateTime(2026, 8, 31, 0, 0, 0, 0, DateTimeKind.Utc)
                         });
                 });
 
@@ -3206,6 +3502,25 @@ namespace ELearning_ToanHocHay_Control.Migrations
                         .IsUnique();
 
                     b.ToTable("User", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("FriendlyName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Xml")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DataProtectionKeys");
                 });
 
             modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.AIFeedback", b =>
@@ -4057,6 +4372,41 @@ namespace ELearning_ToanHocHay_Control.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.RefundEvent", b =>
+                {
+                    b.HasOne("ELearning_ToanHocHay_Control.Data.Entities.RefundBatch", "RefundBatch")
+                        .WithMany()
+                        .HasForeignKey("RefundBatchId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("ELearning_ToanHocHay_Control.Data.Entities.RefundRequest", "RefundRequest")
+                        .WithMany("Events")
+                        .HasForeignKey("RefundRequestId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("RefundBatch");
+
+                    b.Navigation("RefundRequest");
+                });
+
+            modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.RefundRequest", b =>
+                {
+                    b.HasOne("ELearning_ToanHocHay_Control.Data.Entities.Payment", "Payment")
+                        .WithMany()
+                        .HasForeignKey("PaymentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ELearning_ToanHocHay_Control.Data.Entities.RefundBatch", "RefundBatch")
+                        .WithMany("Items")
+                        .HasForeignKey("RefundBatchId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Payment");
+
+                    b.Navigation("RefundBatch");
+                });
+
             modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.ReviewComment", b =>
                 {
                     b.HasOne("ELearning_ToanHocHay_Control.Data.Entities.ContentBlock", "Block")
@@ -4438,6 +4788,16 @@ namespace ELearning_ToanHocHay_Control.Migrations
             modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.QuestionBank", b =>
                 {
                     b.Navigation("Questions");
+                });
+
+            modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.RefundBatch", b =>
+                {
+                    b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.RefundRequest", b =>
+                {
+                    b.Navigation("Events");
                 });
 
             modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.Skill", b =>

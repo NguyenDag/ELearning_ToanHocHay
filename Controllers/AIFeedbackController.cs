@@ -1,5 +1,6 @@
 using ELearning_ToanHocHay_Control.Attributes;
 using ELearning_ToanHocHay_Control.Common;
+using ELearning_ToanHocHay_Control.Models.DTOs;
 using ELearning_ToanHocHay_Control.Models.DTOs.AIFeedback;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -9,7 +10,7 @@ using Microsoft.AspNetCore.RateLimiting;
 
 namespace ELearning_ToanHocHay_Control.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/ai-feedback")]
     [ApiController]
     [Authorize]
     [EnableRateLimiting("ai")]
@@ -30,8 +31,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
             if (!await _access.CanViewAttemptAsync(User, attemptId))
                 return this.Forbidden();
 
-            var result = await _feedbackService.GetByAttemptAsync(attemptId);
-            return Ok(result);
+            return (await _feedbackService.GetByAttemptAsync(attemptId)).ToActionResult();
         }
 
         [HttpGet("{id:int}")]
@@ -39,7 +39,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> GetById(int id)
         {
             var result = await _feedbackService.GetByIdAsync(id);
-            return result.Success ? Ok(result) : NotFound(result);
+            return result.ToActionResult();
         }
 
         [HttpPost]
@@ -49,7 +49,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
                 return this.Forbidden();
 
             var result = await _feedbackService.CreateAsync(dto);
-            return result.Success ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpPut("{id:int}")]
@@ -57,7 +57,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> Update(int id, UpdateAIFeedbackDto dto)
         {
             var result = await _feedbackService.UpdateAsync(id, dto);
-            return result.Success ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpDelete("{id:int}")]
@@ -65,7 +65,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             var result = await _feedbackService.DeleteAsync(id);
-            return result.Success ? Ok(result) : NotFound(result);
+            return result.ToActionResult();
         }
     }
 }

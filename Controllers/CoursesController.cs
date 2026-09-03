@@ -1,6 +1,7 @@
 using ELearning_ToanHocHay_Control.Attributes;
 using ELearning_ToanHocHay_Control.Common;
 using ELearning_ToanHocHay_Control.Data.Entities;
+using ELearning_ToanHocHay_Control.Models.DTOs;
 using ELearning_ToanHocHay_Control.Models.DTOs.Course;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -33,7 +34,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
             [FromQuery] int? subjectId, [FromQuery] int? gradeLevelId, [FromQuery] bool includeUnpublished = false)
         {
             var publishedOnly = !(includeUnpublished && IsContentRole);
-            return Ok(await _courses.GetCoursesAsync(subjectId, gradeLevelId, publishedOnly));
+            return (await _courses.GetCoursesAsync(subjectId, gradeLevelId, publishedOnly)).ToActionResult();
         }
 
         [HttpGet("{id:int}")]
@@ -41,9 +42,9 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> GetCourse(int id)
         {
             var r = await _courses.GetCourseAsync(id);
-            if (!r.Success) return NotFound(r);
-            if (r.Data!.Status != CourseStatus.Published && !IsContentRole) return NotFound(r);
-            return Ok(r);
+            if (!r.Success || (r.Data!.Status != CourseStatus.Published && !IsContentRole))
+                return ApiResponse<object>.NotFound(r.Success ? "Không tìm thấy khoá học" : r.Message).ToActionResult();
+            return r.ToActionResult();
         }
 
         [HttpGet("by-slug/{slug}")]
@@ -51,9 +52,9 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> GetCourseBySlug(string slug)
         {
             var r = await _courses.GetCourseBySlugAsync(slug);
-            if (!r.Success) return NotFound(r);
-            if (r.Data!.Status != CourseStatus.Published && !IsContentRole) return NotFound(r);
-            return Ok(r);
+            if (!r.Success || (r.Data!.Status != CourseStatus.Published && !IsContentRole))
+                return ApiResponse<object>.NotFound(r.Success ? "Không tìm thấy khoá học" : r.Message).ToActionResult();
+            return r.ToActionResult();
         }
 
         // ---------------- Authoring ----------------
@@ -62,7 +63,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> CreateCourse([FromBody] CourseRequestDto dto)
         {
             var r = await _courses.CreateCourseAsync(dto, User.GetUserId()!.Value);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpPut("{id:int}")]
@@ -70,7 +71,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> UpdateCourse(int id, [FromBody] CourseRequestDto dto)
         {
             var r = await _courses.UpdateCourseAsync(id, dto);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpPost("{id:int}/archive")]
@@ -78,7 +79,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> ArchiveCourse(int id)
         {
             var r = await _courses.SetCourseArchivedAsync(id, true);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpPost("{id:int}/unarchive")]
@@ -86,7 +87,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> UnarchiveCourse(int id)
         {
             var r = await _courses.SetCourseArchivedAsync(id, false);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         // ---------------- Versions ----------------
@@ -95,7 +96,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> GetVersions(int courseId)
         {
             var r = await _courses.GetVersionsAsync(courseId);
-            return r.Success ? Ok(r) : NotFound(r);
+            return r.ToActionResult();
         }
 
         [HttpPost("{courseId:int}/versions")]
@@ -103,7 +104,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> CreateVersion(int courseId, [FromBody] CreateCourseVersionDto dto)
         {
             var r = await _courses.CreateVersionAsync(courseId, dto, User.GetUserId()!.Value);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpPost("versions/{versionId:int}/submit")]
@@ -111,7 +112,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> SubmitVersion(int versionId)
         {
             var r = await _courses.SubmitVersionAsync(versionId, User.GetUserId()!.Value);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpPost("versions/{versionId:int}/review")]
@@ -119,7 +120,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> ReviewVersion(int versionId, [FromBody] ReviewCourseVersionDto dto)
         {
             var r = await _courses.ReviewVersionAsync(versionId, dto, User.GetUserId()!.Value);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpPost("versions/{versionId:int}/publish")]
@@ -127,7 +128,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> PublishVersion(int versionId)
         {
             var r = await _courses.PublishVersionAsync(versionId, User.GetUserId()!.Value);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpPost("versions/{versionId:int}/archive")]
@@ -135,7 +136,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> ArchiveVersion(int versionId)
         {
             var r = await _courses.ArchiveVersionAsync(versionId);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpGet("versions/{versionId:int}/reviews")]
@@ -143,7 +144,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> GetVersionReviews(int versionId)
         {
             var r = await _courses.GetVersionReviewsAsync(versionId);
-            return r.Success ? Ok(r) : NotFound(r);
+            return r.ToActionResult();
         }
 
         [HttpPost("reviews/comments/{commentId:int}/resolve")]
@@ -151,7 +152,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> ResolveComment(int commentId)
         {
             var r = await _courses.ResolveReviewCommentAsync(commentId, User.GetUserId()!.Value);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
     }
 }

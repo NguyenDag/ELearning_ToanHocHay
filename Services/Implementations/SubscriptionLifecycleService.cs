@@ -117,6 +117,8 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     await scope.ServiceProvider.GetRequiredService<ISubscriptionLifecycleService>().RunSweepAsync();
                     // P6 — piggy-back the daily inactivity notification sweep on the same timer.
                     await scope.ServiceProvider.GetRequiredService<INotificationRuleEngine>().RunInactivitySweepAsync();
+                    // Pha 2 — warn Finance about refunds stuck in Disbursed past the stale window.
+                    await scope.ServiceProvider.GetRequiredService<IRefundService>().RunStaleSweepAsync();
                 }
                 catch (Exception ex)
                 {

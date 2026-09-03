@@ -41,15 +41,15 @@ public class P6Tests
         // First 3 consume the quota (the AI call itself fails in tests — no Flask — that's fine).
         for (var i = 0; i < 3; i++)
         {
-            var r = await client.PostAsJsonAsync("/api/aihint", body);
+            var r = await client.PostAsJsonAsync("/api/ai-hints", body);
             r.StatusCode.Should().NotBe(HttpStatusCode.TooManyRequests);
         }
 
-        var quota = await Root(await client.GetAsync("/api/aihint/quota"));
-        quota.GetProperty("Used").GetInt32().Should().Be(3);
-        quota.GetProperty("Remaining").GetInt32().Should().Be(0);
+        var quota = await Root(await client.GetAsync("/api/ai-hints/quota"));
+        quota.GetProperty("Data").GetProperty("Used").GetInt32().Should().Be(3);
+        quota.GetProperty("Data").GetProperty("Remaining").GetInt32().Should().Be(0);
 
-        (await client.PostAsJsonAsync("/api/aihint", body))
+        (await client.PostAsJsonAsync("/api/ai-hints", body))
             .StatusCode.Should().Be(HttpStatusCode.TooManyRequests);
     }
 
@@ -64,11 +64,11 @@ public class P6Tests
         var body = new { AttemptId = Id.AttemptAId, QuestionId = Id.McQuestionId, HintLevel = 1 };
 
         for (var i = 0; i < 6; i++)
-            (await client.PostAsJsonAsync("/api/aihint", body))
+            (await client.PostAsJsonAsync("/api/ai-hints", body))
                 .StatusCode.Should().NotBe(HttpStatusCode.TooManyRequests);
 
-        (await Root(await client.GetAsync("/api/aihint/quota")))
-            .GetProperty("Unlimited").GetBoolean().Should().BeTrue();
+        (await Root(await client.GetAsync("/api/ai-hints/quota")))
+            .GetProperty("Data").GetProperty("Unlimited").GetBoolean().Should().BeTrue();
 
         await SetSubscriptionAsync(SubscriptionStatus.Pending);
     }
@@ -86,27 +86,27 @@ public class P6Tests
 
         // parent mints an invite
         var inviteRes = await _f.ClientFor(Id.ParentUnlinkedUserId)
-            .PostAsJsonAsync($"/api/parent/{parentId}/invites", new { Relationship = (int)ParentRelationship.Mother });
+            .PostAsJsonAsync($"/api/parents/{parentId}/invites", new { Relationship = (int)ParentRelationship.Mother });
         inviteRes.StatusCode.Should().Be(HttpStatusCode.OK, await inviteRes.Content.ReadAsStringAsync());
         var token = (await Root(inviteRes)).GetProperty("Data").GetProperty("Token").GetString()!;
 
         // student B accepts
         var linkRes = await _f.ClientFor(Id.StudentBUserId)
-            .PostAsJsonAsync("/api/parent/link", new { Code = token, Relationship = (int)ParentRelationship.Mother });
+            .PostAsJsonAsync("/api/parents/link", new { Code = token, Relationship = (int)ParentRelationship.Mother });
         linkRes.StatusCode.Should().Be(HttpStatusCode.OK, await linkRes.Content.ReadAsStringAsync());
 
         // parent can now see the child's dashboard + overview
-        (await _f.ClientFor(Id.ParentUnlinkedUserId).GetAsync($"/api/student/{Id.StudentBId}/dashboard/overview"))
+        (await _f.ClientFor(Id.ParentUnlinkedUserId).GetAsync($"/api/students/{Id.StudentBId}/dashboard/overview"))
             .StatusCode.Should().Be(HttpStatusCode.OK);
-        (await Root(await _f.ClientFor(Id.ParentUnlinkedUserId).GetAsync($"/api/parent/{parentId}/children/overview")))
+        (await Root(await _f.ClientFor(Id.ParentUnlinkedUserId).GetAsync($"/api/parents/{parentId}/children/overview")))
             .GetProperty("Data").GetArrayLength().Should().BeGreaterThanOrEqualTo(1);
 
         // revoke -> immediate loss of access
         (await _f.ClientFor(Id.ParentUnlinkedUserId)
-            .DeleteAsync($"/api/parent/{parentId}/children/{Id.StudentBId}"))
+            .DeleteAsync($"/api/parents/{parentId}/children/{Id.StudentBId}"))
             .StatusCode.Should().Be(HttpStatusCode.OK);
 
-        (await _f.ClientFor(Id.ParentUnlinkedUserId).GetAsync($"/api/student/{Id.StudentBId}/dashboard/overview"))
+        (await _f.ClientFor(Id.ParentUnlinkedUserId).GetAsync($"/api/students/{Id.StudentBId}/dashboard/overview"))
             .StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
@@ -289,11 +289,11 @@ public class P6Tests
     private async Task SubmitZeroScoreAsync(int exerciseId)
     {
         var client = _f.ClientFor(Id.StudentAUserId);
-        var start = await client.PostAsJsonAsync("/api/exerciseattempts/start", new { ExerciseId = exerciseId });
+        var start = await client.PostAsJsonAsync("/api/exercise-attempts/start", new { ExerciseId = exerciseId });
         start.StatusCode.Should().Be(HttpStatusCode.OK, await start.Content.ReadAsStringAsync());
         var attemptId = (await Root(start)).GetProperty("Data").GetProperty("AttemptId").GetInt32();
 
-        var complete = await client.PostAsJsonAsync("/api/exerciseattempts/complete", new { AttemptId = attemptId });
+        var complete = await client.PostAsJsonAsync("/api/exercise-attempts/complete", new { AttemptId = attemptId });
         complete.StatusCode.Should().Be(HttpStatusCode.OK, await complete.Content.ReadAsStringAsync());
     }
 }

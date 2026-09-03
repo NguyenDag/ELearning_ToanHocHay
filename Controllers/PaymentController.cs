@@ -1,6 +1,7 @@
 using ELearning_ToanHocHay_Control.Attributes;
 using ELearning_ToanHocHay_Control.Common;
 using ELearning_ToanHocHay_Control.Data.Entities;
+using ELearning_ToanHocHay_Control.Models.DTOs;
 using ELearning_ToanHocHay_Control.Models.DTOs.Payment;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -9,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ELearning_ToanHocHay_Control.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/payments")]
     [ApiController]
     [Authorize]
     public class PaymentController : ControllerBase
@@ -31,7 +32,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> GetAll([FromQuery] PagedRequest request, [FromQuery] PaymentStatus? status)
         {
             var response = await _service.GetPagedAsync(request, status);
-            return response.Success ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         // GET: api/payment/me — the caller's own payment history (payer or beneficiary)
@@ -39,8 +40,8 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> GetMine([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
             var userId = User.GetUserId();
-            if (userId == null) return Unauthorized();
-            return Ok(await _service.GetMyPaymentsAsync(userId.Value, page, pageSize));
+            if (userId == null) return Unauthorized(ApiResponse<object>.ErrorResponse("Token không hợp lệ"));
+            return (await _service.GetMyPaymentsAsync(userId.Value, page, pageSize)).ToActionResult();
         }
 
         // GET: api/payment/5 — payer / beneficiary / Finance / Admin
@@ -51,10 +52,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
                 return this.Forbidden();
 
             var response = await _service.GetByIdAsync(id);
-            if (!response.Success)
-                return NotFound(response);
-
-            return Ok(response);
+            return response.ToActionResult();
         }
 
         // PUT: api/payment/update-status/5 — Finance/Admin only
@@ -63,19 +61,10 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> UpdateStatus(int id, UpdatePaymentStatusDto dto)
         {
             var response = await _service.UpdateStatusAsync(id, dto);
-            if (!response.Success)
-                return BadRequest(response);
-
-            return Ok(response);
+            return response.ToActionResult();
         }
 
-        // POST: api/payment/5/refund — Finance/Admin only
-        [HttpPost("{id:int}/refund")]
-        [AuthorizeUserType(UserType.FinanceManager, UserType.SystemAdmin)]
-        public async Task<IActionResult> Refund(int id, [FromBody] RefundPaymentDto dto)
-        {
-            var response = await _service.RefundAsync(id, dto);
-            return response.Success ? Ok(response) : BadRequest(response);
-        }
+        // Refund flow moved to the semi-automatic workflow — POST /api/refunds (student)
+        // and POST /api/finance/refunds + /api/finance/refund-batches (Finance).
     }
 }

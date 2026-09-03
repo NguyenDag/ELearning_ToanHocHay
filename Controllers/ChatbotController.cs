@@ -1,6 +1,7 @@
 using ELearning_ToanHocHay_Control.Attributes;
 using ELearning_ToanHocHay_Control.Common;
 using ELearning_ToanHocHay_Control.Data.Entities;
+using ELearning_ToanHocHay_Control.Models.DTOs;
 using ELearning_ToanHocHay_Control.Models.DTOs.Chatbot;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -9,7 +10,7 @@ using Microsoft.AspNetCore.RateLimiting;
 
 namespace ELearning_ToanHocHay_Control.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/chatbot")]
     [ApiController]
     [Authorize]
     [EnableRateLimiting("ai")]
@@ -32,14 +33,14 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> Message([FromBody] SendChatMessageDto request)
         {
             var r = await _chat.SendUserTurnAsync(Uid, User.GetStudentId(), request.Text, isQuickReply: false);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpPost("quick-reply")]
         public async Task<IActionResult> QuickReply([FromBody] SendChatMessageDto request)
         {
             var r = await _chat.SendUserTurnAsync(Uid, User.GetStudentId(), request.Text, isQuickReply: true);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpPost("trigger")]
@@ -48,24 +49,24 @@ namespace ELearning_ToanHocHay_Control.Controllers
             try
             {
                 request.UserId = Uid.ToString();
-                return Ok(await _aiService.SendChatbotTriggerAsync(request));
+                return Ok(ApiResponse<object>.SuccessResponse(await _aiService.SendChatbotTriggerAsync(request)));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Chatbot trigger failed");
-                return StatusCode(503, new { success = false, error = "AI service unavailable" });
+                return StatusCode(503, ApiResponse<object>.ErrorResponse("AI service unavailable"));
             }
         }
 
         [HttpGet("conversations")]
         public async Task<IActionResult> Conversations()
-            => Ok(await _chat.GetMyConversationsAsync(Uid));
+            => (await _chat.GetMyConversationsAsync(Uid)).ToActionResult();
 
         [HttpGet("conversations/{id:int}/messages")]
         public async Task<IActionResult> Messages(int id)
         {
             var r = await _chat.GetMessagesAsync(Uid, id);
-            return r.Success ? Ok(r) : NotFound(r);
+            return r.ToActionResult();
         }
 
         [HttpGet("health")]
@@ -81,28 +82,28 @@ namespace ELearning_ToanHocHay_Control.Controllers
         // ---------------- escalation ----------------
         [HttpPost("request-human")]
         public async Task<IActionResult> RequestHuman()
-            => Ok(await _chat.RequestHumanAsync(Uid));
+            => (await _chat.RequestHumanAsync(Uid)).ToActionResult();
 
         [HttpPost("conversations/{id:int}/close")]
         public async Task<IActionResult> Close(int id)
         {
             var isStaff = User.HasUserType(UserType.SupportStaff, UserType.SystemAdmin);
             var r = await _chat.CloseAsync(Uid, id, isStaff);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         // ---------------- staff ----------------
         [HttpGet("staff/queue")]
         [AuthorizeUserType(UserType.SupportStaff, UserType.SystemAdmin)]
         public async Task<IActionResult> Queue()
-            => Ok(await _chat.GetQueueAsync());
+            => (await _chat.GetQueueAsync()).ToActionResult();
 
         [HttpPost("staff/conversations/{id:int}/assign")]
         [AuthorizeUserType(UserType.SupportStaff, UserType.SystemAdmin)]
         public async Task<IActionResult> Assign(int id)
         {
             var r = await _chat.AssignToMeAsync(Uid, id);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpPost("staff/conversations/{id:int}/reply")]
@@ -110,7 +111,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> StaffReply(int id, [FromBody] SendChatMessageDto dto)
         {
             var r = await _chat.StaffReplyAsync(Uid, id, dto.Text, User.IsSystemAdmin());
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
     }
 }

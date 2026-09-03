@@ -29,63 +29,63 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> GetTree(int versionId)
         {
             var r = await _content.GetVersionTreeAsync(versionId);
-            return r.Success ? Ok(r) : NotFound(r);
+            return r.ToActionResult();
         }
 
         [HttpGet("nodes/{nodeId:int}")]
         public async Task<IActionResult> GetNode(int nodeId)
         {
             var r = await _content.GetNodeAsync(nodeId);
-            return r.Success ? Ok(r) : NotFound(r);
+            return r.ToActionResult();
         }
 
         [HttpPost("versions/{versionId:int}/nodes")]
         public async Task<IActionResult> CreateNode(int versionId, [FromBody] CreateContentNodeDto dto)
         {
             var r = await _content.CreateNodeAsync(versionId, dto, Uid);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpPut("nodes/{nodeId:int}")]
         public async Task<IActionResult> UpdateNode(int nodeId, [FromBody] UpdateContentNodeDto dto)
         {
             var r = await _content.UpdateNodeAsync(nodeId, dto, Uid);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpDelete("nodes/{nodeId:int}")]
         public async Task<IActionResult> DeleteNode(int nodeId)
         {
             var r = await _content.DeleteNodeAsync(nodeId);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpPost("versions/{versionId:int}/nodes/reorder")]
         public async Task<IActionResult> Reorder(int versionId, [FromQuery] int? parentNodeId, [FromBody] ReorderNodesDto dto)
         {
             var r = await _content.ReorderChildrenAsync(versionId, parentNodeId, dto);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpPatch("nodes/{nodeId:int}/move")]
         public async Task<IActionResult> MoveNode(int nodeId, [FromBody] MoveNodeDto dto)
         {
             var r = await _content.MoveNodeAsync(nodeId, dto, Uid);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpGet("nodes/{nodeId:int}/revisions")]
         public async Task<IActionResult> GetRevisions(int nodeId)
         {
             var r = await _content.GetRevisionsAsync(nodeId);
-            return r.Success ? Ok(r) : NotFound(r);
+            return r.ToActionResult();
         }
 
         [HttpPost("nodes/{nodeId:int}/revisions/{revisionNumber:int}/restore")]
         public async Task<IActionResult> RestoreRevision(int nodeId, int revisionNumber)
         {
             var r = await _content.RestoreRevisionAsync(nodeId, revisionNumber, Uid);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         // ---------------- blocks ----------------
@@ -93,21 +93,21 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> AddBlock(int nodeId, [FromBody] ContentBlockRequestDto dto)
         {
             var r = await _content.AddBlockAsync(nodeId, dto);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpPut("blocks/{blockId:int}")]
         public async Task<IActionResult> UpdateBlock(int blockId, [FromBody] ContentBlockRequestDto dto)
         {
             var r = await _content.UpdateBlockAsync(blockId, dto);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpDelete("blocks/{blockId:int}")]
         public async Task<IActionResult> DeleteBlock(int blockId)
         {
             var r = await _content.DeleteBlockAsync(blockId);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         // ---------------- resources ----------------
@@ -115,21 +115,21 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> AddResource(int nodeId, [FromBody] LessonResourceRequestDto dto)
         {
             var r = await _content.AddResourceAsync(nodeId, dto);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpPut("resources/{resourceId:int}")]
         public async Task<IActionResult> UpdateResource(int resourceId, [FromBody] LessonResourceRequestDto dto)
         {
             var r = await _content.UpdateResourceAsync(resourceId, dto);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpDelete("resources/{resourceId:int}")]
         public async Task<IActionResult> DeleteResource(int resourceId)
         {
             var r = await _content.DeleteResourceAsync(resourceId);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         // ---------------- flashcards ----------------
@@ -137,35 +137,35 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> AddDeck(int nodeId, [FromBody] FlashcardDeckRequestDto dto)
         {
             var r = await _content.AddDeckAsync(nodeId, dto);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpDelete("flashcard-decks/{deckId:int}")]
         public async Task<IActionResult> DeleteDeck(int deckId)
         {
             var r = await _content.DeleteDeckAsync(deckId);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpPost("flashcard-decks/{deckId:int}/cards")]
         public async Task<IActionResult> AddCard(int deckId, [FromBody] FlashcardRequestDto dto)
         {
             var r = await _content.AddCardAsync(deckId, dto);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpPut("flashcards/{cardId:int}")]
         public async Task<IActionResult> UpdateCard(int cardId, [FromBody] FlashcardRequestDto dto)
         {
             var r = await _content.UpdateCardAsync(cardId, dto);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpDelete("flashcards/{cardId:int}")]
         public async Task<IActionResult> DeleteCard(int cardId)
         {
             var r = await _content.DeleteCardAsync(cardId);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
     }
 }

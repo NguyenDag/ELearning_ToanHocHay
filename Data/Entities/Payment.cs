@@ -17,7 +17,8 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         Pending,
         Completed,
         Failed,
-        Refunded
+        Refunded,
+        PartiallyRefunded
     }
 
     [Table("Payment")]

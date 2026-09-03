@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ELearning_ToanHocHay_Control.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/parents")]
     [ApiController]
     [Authorize]
     public class ParentController : ControllerBase
@@ -30,20 +30,20 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> GetById(int id)
         {
             if (!CanAccess(id)) return this.Forbidden();
-            return Ok(await _service.GetByIdAsync(id));
+            return (await _service.GetByIdAsync(id)).ToActionResult();
         }
 
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Update(int id, UpdateParentDto dto)
         {
             if (!CanAccess(id)) return this.Forbidden();
-            return Ok(await _service.UpdateAsync(id, dto));
+            return (await _service.UpdateAsync(id, dto)).ToActionResult();
         }
 
         [HttpDelete("{id:int}")]
         [AuthorizeUserType(UserType.SystemAdmin)]
         public async Task<IActionResult> Delete(int id)
-            => Ok(await _service.DeleteAsync(id));
+            => (await _service.DeleteAsync(id)).ToActionResult();
 
         // ---------------- P6 — parent ⇄ child linking ----------------
 
@@ -53,7 +53,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         {
             if (!CanAccess(id)) return this.Forbidden();
             var r = await _links.CreateInviteAsync(id, dto);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         /// <summary>Student links to a parent using an invite code or the parent's connection code.</summary>
@@ -63,14 +63,14 @@ namespace ELearning_ToanHocHay_Control.Controllers
             var studentId = User.GetStudentId();
             if (studentId == null) return this.Forbidden("Only a student can accept a parent link");
             var r = await _links.LinkByCodeAsync(studentId.Value, dto);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpGet("{id:int}/children")]
         public async Task<IActionResult> GetChildren(int id)
         {
             if (!CanAccess(id)) return this.Forbidden();
-            return Ok(await _links.GetLinksAsync(id));
+            return (await _links.GetLinksAsync(id)).ToActionResult();
         }
 
         [HttpDelete("{id:int}/children/{studentId:int}")]
@@ -78,14 +78,14 @@ namespace ELearning_ToanHocHay_Control.Controllers
         {
             if (!CanAccess(id)) return this.Forbidden();
             var r = await _links.RevokeAsync(id, studentId);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
 
         [HttpGet("{id:int}/children/overview")]
         public async Task<IActionResult> ChildrenOverview(int id)
         {
             if (!CanAccess(id)) return this.Forbidden();
-            return Ok(await _links.GetChildrenOverviewAsync(id));
+            return (await _links.GetChildrenOverviewAsync(id)).ToActionResult();
         }
     }
 }

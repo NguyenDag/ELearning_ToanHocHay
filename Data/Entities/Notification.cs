@@ -16,7 +16,8 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
     {
         Student,
         Parent,
-        Both
+        Both,
+        Staff
     }
 
     [Table("Notification")]

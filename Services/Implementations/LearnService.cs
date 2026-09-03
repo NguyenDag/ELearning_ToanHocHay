@@ -76,8 +76,8 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 return ApiResponse<ContentNodeDetailDto>.ErrorResponse("Node not found");
 
             if (level == ContentAccessLevel.FreeOnly && !node.IsFree)
-                return ApiResponse<ContentNodeDetailDto>.ErrorResponse(
-                    "This lesson requires an active subscription or enrolment");
+                return ApiResponse<ContentNodeDetailDto>.Forbidden(
+                    "Bài học này cần gói đang hoạt động hoặc đã ghi danh");
 
             return ApiResponse<ContentNodeDetailDto>.SuccessResponse(ContentMapping.MapNodeDetail(node));
         }

@@ -1,18 +1,15 @@
 using ELearning_ToanHocHay_Control.Attributes;
 using ELearning_ToanHocHay_Control.Common;
 using ELearning_ToanHocHay_Control.Data.Entities;
+using ELearning_ToanHocHay_Control.Models.DTOs;
 using ELearning_ToanHocHay_Control.Models.DTOs.Subscription;
-using ELearning_ToanHocHay_Control.Services.Implementations;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
-using SendGrid;
 
 namespace ELearning_ToanHocHay_Control.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/subscriptions")]
     [ApiController]
     [Authorize]
     public class SubscriptionController : ControllerBase
@@ -40,7 +37,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> GetAll([FromQuery] PagedRequest request, [FromQuery] SubscriptionStatus? status)
         {
             var response = await _service.GetPagedAsync(request, status);
-            return response.Success ? Ok(response) : BadRequest(response);
+            return response.ToActionResult();
         }
 
         // GET: api/subscription/me — the caller's current package (Free when none)
@@ -52,12 +49,8 @@ namespace ELearning_ToanHocHay_Control.Controllers
                 return this.Forbidden("Only students have a personal subscription — parents use /api/student/{id}/subscription/current");
 
             var info = await _service.GetActiveSubscriptionInfoAsync(studentId.Value);
-            return Ok(new
-            {
-                success = true,
-                data = info,
-                message = info.IsActive ? $"Đang dùng gói {info.PackageName}" : "Đang dùng gói Free"
-            });
+            return Ok(ApiResponse<SubscriptionInfoDto>.SuccessResponse(info,
+                info.IsActive ? $"Đang dùng gói {info.PackageName}" : "Đang dùng gói Free"));
         }
 
         // GET: api/subscription/5
@@ -68,10 +61,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
                 return this.Forbidden();
 
             var response = await _service.GetByIdAsync(id);
-            if (!response.Success)
-                return NotFound(response);
-
-            return Ok(response);
+            return response.ToActionResult();
         }
 
         [HttpPost]
@@ -84,18 +74,16 @@ namespace ELearning_ToanHocHay_Control.Controllers
             if (payerId == null) return this.Forbidden();
 
             var result = await _subscriptionPaymentService.CreatePendingAsync(dto, payerId.Value);
-
             if (!result.Success)
-                return BadRequest(result);
+                return result.ToActionResult();
 
             var qrUrl = _sePayService.GenerateQrUrl(result.Data.SubscriptionId, result.Data.Amount);
-
-            return Ok(new
+            return Ok(ApiResponse<object>.SuccessResponse(new
             {
                 subscriptionId = result.Data.SubscriptionId,
                 amount = result.Data.Amount,
                 qrUrl
-            });
+            }, "Đã tạo yêu cầu thanh toán"));
         }
 
 
@@ -107,10 +95,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
                 return this.Forbidden();
 
             var response = await _service.CancelAsync(id);
-            if (!response.Success)
-                return BadRequest(response);
-
-            return Ok(response);
+            return response.ToActionResult();
         }
 
         // GET: api/subscription/check-premium/10
@@ -121,27 +106,25 @@ namespace ELearning_ToanHocHay_Control.Controllers
                 return this.Forbidden();
 
             var response = await _service.CheckPremiumAsync(studentId);
-            return Ok(response);
+            return response.ToActionResult();
         }
 
-        [HttpGet("status/{id}")]
+        [HttpGet("status/{id:int}")]
         public async Task<IActionResult> GetStatus(int id)
         {
             if (!await _access.CanAccessSubscriptionAsync(User, id))
                 return this.Forbidden();
 
             var response = await _service.GetByIdAsync(id);
-            if (response == null || response.Data == null)
-                return NotFound();
+            if (!response.Success || response.Data == null)
+                return response.ToActionResult();
 
             var sub = response.Data;
-            return Ok(new
+            return Ok(ApiResponse<object>.SuccessResponse(new
             {
-                status = sub.Status.ToString(),   // "Active" / "Pending" / "Expired" / "Cancelled"
-                endDate = sub.Status == SubscriptionStatus.Active
-                            ? sub.EndDate.ToString("dd/MM/yyyy")
-                            : (string?)null
-            });
+                status = sub.Status.ToString(),
+                endDate = sub.Status == SubscriptionStatus.Active ? sub.EndDate.ToString("dd/MM/yyyy") : null
+            }));
         }
 
         /// <summary>
@@ -153,9 +136,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateSubscriptionStatusDto dto)
         {
             var response = await _service.UpdateStatusAsync(id, dto.Status);
-            if (!response.Success)
-                return BadRequest(response);
-            return Ok(response);
+            return response.ToActionResult();
         }
     }
 }

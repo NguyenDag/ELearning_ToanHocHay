@@ -32,13 +32,13 @@ public class P3P4RemainingTests
             .Where(e => e.ExerciseName == "Graded quiz").Select(e => e.ExerciseId).FirstAsync());
 
         var client = _f.ClientFor(Id.StudentAUserId);
-        var start = await client.PostAsJsonAsync("/api/exerciseattempts/start", new { ExerciseId = exerciseId });
+        var start = await client.PostAsJsonAsync("/api/exercise-attempts/start", new { ExerciseId = exerciseId });
         // start resumes the seeded in-progress attempt or makes a new one — either way it is InProgress
         var attemptId = (await Root(start)).GetProperty("Data").GetProperty("AttemptId").GetInt32();
 
         var body = new { AttemptId = attemptId };
-        var t1 = client.PostAsJsonAsync("/api/exerciseattempts/complete", body);
-        var t2 = _f.ClientFor(Id.StudentAUserId).PostAsJsonAsync("/api/exerciseattempts/complete", body);
+        var t1 = client.PostAsJsonAsync("/api/exercise-attempts/complete", body);
+        var t2 = _f.ClientFor(Id.StudentAUserId).PostAsJsonAsync("/api/exercise-attempts/complete", body);
         var results = await Task.WhenAll(t1, t2);
 
         results.Count(r => r.StatusCode == HttpStatusCode.OK).Should().Be(1);
@@ -100,10 +100,10 @@ public class P3P4RemainingTests
             return true;
         });
 
-        var res = await _f.ClientFor(userId).GetAsync($"/api/student/{studentId}/dashboard/overview");
+        var res = await _f.ClientFor(userId).GetAsync($"/api/students/{studentId}/dashboard/overview");
         res.StatusCode.Should().Be(HttpStatusCode.OK, await res.Content.ReadAsStringAsync());
 
-        var stats = (await Root(res)).GetProperty("Stats");
+        var stats = (await Root(res)).GetProperty("Data").GetProperty("Stats");
         stats.GetProperty("WeeklyExercisesCompleted").GetInt32().Should().Be(3);
         var cmp = stats.GetProperty("WeekComparison");
         cmp.GetProperty("ExerciseCountChange").GetInt32().Should().Be(1);  // 3 this week - 2 last week

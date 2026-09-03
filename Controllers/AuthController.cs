@@ -70,8 +70,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
             if (!userId.HasValue)
                 return Unauthorized(ApiResponse<bool>.ErrorResponse("Token không hợp lệ"));
 
-            var result = await _authService.LogoutAsync(userId.Value, request?.RefreshToken);
-            return Ok(result);
+            return (await _authService.LogoutAsync(userId.Value, request?.RefreshToken)).ToActionResult();
         }
 
         [HttpPost("register")]
@@ -82,7 +81,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
                 return BadRequest(ApiResponse<bool>.ErrorResponse("Dữ liệu không hợp lệ", ModelErrors()));
 
             var result = await _authService.RegisterAsync(request);
-            return result.Success ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpPost("refresh-token")]
@@ -98,10 +97,10 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> ChangePassword(ChangePasswordDto request)
         {
             var userId = User.GetUserId();
-            if (!userId.HasValue) return Unauthorized();
+            if (!userId.HasValue) return Unauthorized(ApiResponse<object>.ErrorResponse("Token không hợp lệ"));
 
             var result = await _authService.ChangePasswordAsync(userId.Value, request);
-            return result.Success ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpGet("confirm-email")]
@@ -112,7 +111,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
                 return BadRequest(ApiResponse<bool>.ErrorResponse("Token không hợp lệ"));
 
             var result = await _authService.ConfirmEmailAsync(token);
-            return result.Success ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpPost("resend-confirmation")]
@@ -121,7 +120,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> ResendConfirmation([FromBody] ResendConfirmationDto request)
         {
             var result = await _authService.ResendConfirmationEmailAsync(request.Email);
-            return result.Success ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpPost("forgot-password")]
@@ -129,8 +128,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         [EnableRateLimiting("auth")]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto request)
         {
-            var result = await _authService.ForgotPasswordAsync(request.Email);
-            return Ok(result);
+            return (await _authService.ForgotPasswordAsync(request.Email)).ToActionResult();
         }
 
         [HttpPost("reset-password")]
@@ -139,7 +137,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto request)
         {
             var result = await _authService.ResetPasswordAsync(request.Token, request.NewPassword);
-            return result.Success ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         private List<string> ModelErrors() =>

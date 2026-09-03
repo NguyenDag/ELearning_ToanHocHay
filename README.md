@@ -38,23 +38,14 @@ json{
 
 3\. Cấu Hình JWT Settings
 
-Trong appsettings.json, đảm bảo SecretKey có ít nhất 32 ký tự:
+`JwtSettings:SecretKey` (>= 32 ký tự) KHÔNG được đặt trong appsettings.json. App sẽ
+throw khi khởi động nếu thiếu.
 
-json{
+- Local: `dotnet user-secrets set "JwtSettings:SecretKey" "<chuỗi ngẫu nhiên >= 32 ký tự>"`
+- Server: biến môi trường `JwtSettings__SecretKey`
 
-&nbsp; "JwtSettings": {
-
-&nbsp;   "SecretKey": "YOUR\_SECRET\_KEY\_MINIMUM\_32\_CHARACTERS\_LONG\_FOR\_SECURITY",
-
-&nbsp;   "Issuer": "ELearning\_ToanHocHay",
-
-&nbsp;   "Audience": "ELearning\_ToanHocHay\_Users",
-
-&nbsp;   "ExpirationMinutes": 1440
-
-&nbsp; }
-
-}
+Các khoá còn lại (`Issuer`, `Audience`, `ExpirationMinutes`, `RefreshTokenDays`) vẫn nằm
+trong appsettings.json. Xem `appsettings.Example.json`.
 
 4\. Chạy Migration
 

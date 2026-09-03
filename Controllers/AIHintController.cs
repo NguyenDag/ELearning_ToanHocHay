@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.RateLimiting;
 
 namespace ELearning_ToanHocHay_Control.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/ai-hints")]
     [ApiController]
     [Authorize]
     [EnableRateLimiting("ai")]
@@ -35,7 +35,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
             if (studentId == null) return this.Forbidden("Only students have an AI hint quota");
 
             var q = await _quota.PeekHintAsync(studentId.Value);
-            return Ok(new { q.Used, q.Limit, q.Unlimited, q.Remaining });
+            return Ok(ApiResponse<object>.SuccessResponse(new { q.Used, q.Limit, q.Unlimited, q.Remaining }));
         }
 
         [HttpGet("by-attempt/{attemptId:int}")]
@@ -44,8 +44,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
             if (!await _access.CanViewAttemptAsync(User, attemptId))
                 return this.Forbidden();
 
-            var result = await _hintService.GetByAttemptAsync(attemptId);
-            return Ok(result);
+            return (await _hintService.GetByAttemptAsync(attemptId)).ToActionResult();
         }
 
         [HttpGet("by-attempt-question")]
@@ -56,8 +55,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
             if (!await _access.CanViewAttemptAsync(User, attemptId))
                 return this.Forbidden();
 
-            var result = await _hintService.GetByAttemptAndQuestionAsync(attemptId, questionId);
-            return Ok(result);
+            return (await _hintService.GetByAttemptAndQuestionAsync(attemptId, questionId)).ToActionResult();
         }
 
         [HttpGet("{id:int}")]
@@ -65,7 +63,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> GetById(int id)
         {
             var result = await _hintService.GetByIdAsync(id);
-            return result.Success ? Ok(result) : NotFound(result);
+            return result.ToActionResult();
         }
 
         [HttpPost]
@@ -86,7 +84,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
             }
 
             var result = await _hintService.CreateAsync(dto);
-            return result.Success ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpPut("{id:int}")]
@@ -94,7 +92,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> Update(int id, UpdateAIHintDto dto)
         {
             var result = await _hintService.UpdateAsync(id, dto);
-            return result.Success ? Ok(result) : BadRequest(result);
+            return result.ToActionResult();
         }
 
         [HttpDelete("{id:int}")]
@@ -102,7 +100,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             var result = await _hintService.DeleteAsync(id);
-            return result.Success ? Ok(result) : NotFound(result);
+            return result.ToActionResult();
         }
     }
 }

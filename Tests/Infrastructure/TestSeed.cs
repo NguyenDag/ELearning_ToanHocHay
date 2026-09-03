@@ -23,7 +23,8 @@ public record SeededIds
     public int PackageId { get; init; }
     public decimal PackagePrice { get; init; }
     public int SubscriptionAId { get; init; }
-    public int PaymentAId { get; init; }
+    public int PaymentAId { get; init; }             // Student A, Status = Pending
+    public int CompletedPaymentAId { get; init; }    // Student A, Status = Completed, no subscription (refundable)
 
     public int BankId { get; init; }
     public int McQuestionId { get; init; }
@@ -74,8 +75,12 @@ public static class TestSeed
         var essay = qs.Single(q => q.QuestionType == QuestionType.Essay);
         var mcCorrect = await db.QuestionOptions.AsNoTracking().FirstAsync(o => o.QuestionId == mc.QuestionId && o.IsCorrect);
         var tfTrue = await db.QuestionOptions.AsNoTracking().FirstAsync(o => o.QuestionId == tf.QuestionId && o.IsCorrect);
-        var subscriptionA = await db.Subscriptions.AsNoTracking().FirstAsync(s => s.StudentId == studentA.StudentId);
-        var paymentA = await db.Payments.AsNoTracking().FirstAsync(p => p.StudentId == studentA.StudentId);
+        var subscriptionA = await db.Subscriptions.AsNoTracking()
+            .OrderBy(s => s.SubscriptionId).FirstAsync(s => s.StudentId == studentA.StudentId);
+        var paymentA = await db.Payments.AsNoTracking()
+            .OrderBy(p => p.PaymentId).FirstAsync(p => p.StudentId == studentA.StudentId && p.Status == PaymentStatus.Pending);
+        var completedPaymentA = await db.Payments.AsNoTracking()
+            .FirstAsync(p => p.StudentId == studentA.StudentId && p.Status == PaymentStatus.Completed);
 
         return new SeededIds
         {
@@ -95,6 +100,7 @@ public static class TestSeed
             PackagePrice = package.Price,
             SubscriptionAId = subscriptionA.SubscriptionId,
             PaymentAId = paymentA.PaymentId,
+            CompletedPaymentAId = completedPaymentA.PaymentId,
             BankId = bank.BankId,
             McQuestionId = mc.QuestionId,
             McCorrectOptionId = mcCorrect.OptionId,
@@ -267,6 +273,21 @@ public static class TestSeed
         db.Subscriptions.Add(subscriptionA);
         await db.SaveChangesAsync();
 
+        // A standalone completed payment for Student A (no subscription, so it doesn't affect
+        // tier/Free assertions) — gives the refund workflow tests something refundable.
+        var completedPaymentA = new Payment
+        {
+            PaidByUserId = studentAUser.UserId,
+            StudentId = studentA.StudentId,
+            Amount = 199000,
+            Status = PaymentStatus.Completed,
+            PaymentMethod = PaymentMethod.BankTransfer,
+            PaymentDate = DateTime.UtcNow,
+            TransactionId = "SEED-COMPLETED-A"
+        };
+        db.Payments.Add(completedPaymentA);
+        await db.SaveChangesAsync();
+
         return new SeededIds
         {
             StudentAUserId = studentAUser.UserId,
@@ -285,6 +306,7 @@ public static class TestSeed
             PackagePrice = package.Price,
             SubscriptionAId = subscriptionA.SubscriptionId,
             PaymentAId = paymentA.PaymentId,
+            CompletedPaymentAId = completedPaymentA.PaymentId,
             BankId = bank.BankId,
             McQuestionId = mc.QuestionId,
             McCorrectOptionId = mcA.OptionId,

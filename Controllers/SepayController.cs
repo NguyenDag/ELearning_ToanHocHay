@@ -1,5 +1,7 @@
+using ELearning_ToanHocHay_Control.Common;
 using ELearning_ToanHocHay_Control.Attributes;
 using ELearning_ToanHocHay_Control.Data.Entities;
+using ELearning_ToanHocHay_Control.Models.DTOs;
 using ELearning_ToanHocHay_Control.Models.DTOs.Sepay;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -7,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ELearning_ToanHocHay_Control.Controllers
 {
-    [Route("api/[controller]/[action]")]
+    [Route("api/sepay/[action]")]
     [ApiController]
     public class SepayController : ControllerBase
     {
@@ -32,13 +34,14 @@ namespace ELearning_ToanHocHay_Control.Controllers
             try
             {
                 var result = await _ipnService.ProcessAsync(request);
-                return Ok(new { outcome = result.Outcome.ToString(), message = result.Message });
+                return Ok(ApiResponse<object>.SuccessResponse(new { outcome = result.Outcome.ToString() }, result.Message));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "IPN processing failed for referenceCode {Ref}", request.referenceCode);
                 // 500 so SePay retries — the log row (if written) records the failure.
-                return StatusCode(500, new { outcome = IpnOutcome.Error.ToString(), message = "Processing error" });
+                return StatusCode(500, ApiResponse<object>.ErrorResponse("Processing error",
+                    new List<string> { $"outcome: {IpnOutcome.Error}" }));
             }
         }
     }

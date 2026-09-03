@@ -196,24 +196,42 @@ có controller/service nào:
 
 ## A5 — Vấn đề xuyên suốt
 
-- **Vỏ response không nhất quán.** Chỗ trả `ApiResponse<T>`, chỗ trả object ẩn danh
-  (`SubscriptionController.status`, `StudentSubscriptionController`, `DashboardController`).
-  Frontend phải xử lý hai kiểu.
-- **Mã HTTP không đúng ngữ nghĩa.** Nhiều action trả `Ok()` (200) kể cả khi
-  `Success = false` hoặc không tìm thấy (`ParentController`,
-  `AIFeedbackController.GetByAttempt`, các filter của `ExercisesController`).
-  `UserController.GetByEmail` trả `404` còn `GetById` trả `400` cho cùng tình huống.
-- **Route lộn xộn.** `api/auth`, `api/User`, `api/Questions`, `api/Subscription`; ba gốc
-  route khác nhau cho "student": `api/Student`, `api/student/{id}/dashboard`,
-  `api/student/{id:int}`. Thống nhất kebab-case số nhiều.
-- **Không phân trang.** Mọi `GetAll` (user, payment, subscription, exercise, lịch sử làm
-  bài) trả toàn bộ.
-- **Không có `AuditLog` interceptor** dù schema đã có — nền cho yêu cầu "admin xem toàn bộ
-  log".
-- **Bí mật trong `appsettings.json`** (JWT SecretKey commit vào repo). Chuyển hẳn sang biến
-  môi trường / secret store; xoay khoá.
-- **Chatbot không lưu hội thoại phía C#;** Python giữ `UserState` trong RAM, mất khi restart
-  và không chia sẻ giữa 2 worker gunicorn.
+- ~~**Vỏ response không nhất quán**~~ → **đã xử lý:** mọi endpoint trả `ApiResponse<T>`;
+  `ApiResponse` có `StatusCode` + factory `NotFound/Forbidden/Conflict/Created`;
+  `ApiResponse.ToActionResult()` map sang mã HTTP (suy 404 từ message "không tìm thấy" nếu
+  chưa set). `AuthorizeUserType`, `SePayApiKey`, JWT `OnChallenge/OnForbidden`, và
+  `InvalidModelStateResponseFactory` đều dùng vỏ này.
+- ~~**Mã HTTP không đúng ngữ nghĩa**~~ → **đã xử lý:** không còn `Ok()` khi `Success=false`;
+  `GetById` / `GetByEmail` cùng trả 404; 403 cho nội dung trả phí; 400 + `Errors` cho lỗi
+  validation. Test `A5NormalizationTests`.
+- ~~**Route lộn xộn**~~ → **đã xử lý:** kebab-case số nhiều. **Breaking — WebApp phải đổi:**
+
+  | Cũ | Mới |
+  |---|---|
+  | `api/User` | `api/users` |
+  | `api/Questions` | `api/questions` |
+  | `api/Subscription` | `api/subscriptions` |
+  | `api/Payment` | `api/payments` |
+  | `api/Package` | `api/packages` |
+  | `api/Parent` | `api/parents` |
+  | `api/ExerciseAttempts` | `api/exercise-attempts` |
+  | `api/AIHint` | `api/ai-hints` |
+  | `api/AIFeedback` | `api/ai-feedback` |
+  | `api/Student` · `api/student/{id}/dashboard` · `api/student/{id}` | `api/students` · `api/students/{id}/dashboard` · `api/students/{id}` |
+  | `api/Sepay/IPN` | `api/sepay/ipn` — ⚠️ đổi URL webhook trong cổng SePay |
+
+  Giữ nguyên (đã chuẩn): `api/auth`, `api/catalog`, `api/courses`, `api/content`, `api/learn`,
+  `api/progress`, `api/enrollments`, `api/question-banks`, `api/notifications`, `api/admin`,
+  `api/finance`, `api/chatbot`, `api/exercises`.
+
+- ~~**Không phân trang**~~ → một phần (P7): user / subscription / payment / question-bank /
+  notification. Còn: exercise list, attempt history.
+- ~~**Không có `AuditLog` interceptor**~~ → **đã xử lý (P7):** `AuditSaveChangesInterceptor`.
+- **Bí mật trong `appsettings.json`** (JWT SecretKey) → vẫn cần chuyển sang env / secret store
+  + xoay khoá trước launch (P0 đã hỗ trợ đọc từ env, chỉ cần bỏ giá trị khỏi repo).
+- ~~**Chatbot không lưu hội thoại phía C#**~~ → **đã xử lý (P6):** `ChatService`.
+- **Còn lại:** `JsonStringEnumConverter` (enum đang serialize dạng số — breaking); contract/
+  snapshot test; load test 200 user; `/security-review` cuối.
 
 ---
 
@@ -481,8 +499,24 @@ soát: tổng `Payment.Completed` == tổng subscription `Active` hợp lệ.
 | Endpoint "gói của tôi" / "lịch sử thanh toán của tôi" | ✅ | `GET /api/subscription/me`, `GET /api/payment/me` (payer hoặc beneficiary) |
 | Phụ huynh đứng tên trả (`Payment.PaidByUserId`) | ✅ | set từ token khi tạo pending (từ đợt A1/A2); `payment/me` bao gồm khoản phụ huynh trả |
 | Báo cáo đối soát | ✅ | `GET /api/finance/subscriptions/reconciliation` |
-| Luồng refund | ✅ | `POST /api/payment/{id}/refund` (Finance/Admin) — Payment → Refunded + huỷ subscription tương ứng |
+| Luồng refund | ✅ | Thay refund một-bước bằng **workflow hoàn tiền bán tự động** — xem bảng dưới. `POST /api/payment/{id}/refund` cũ đã **xoá** (breaking) |
 | **Còn lại** | ⏳ | `Order` / `OrderItem` mua khoá lẻ (feature riêng, lớn); IPN mismatch trả 200 — cân nhắc 4xx để SePay retry |
+
+**Hoàn tiền bán tự động** (chi tiết: [Luồng hoàn tiền](Luong-hoan-tien.md)) — nhánh `feat/refund-workflow`, migration `P8_RefundWorkflow`, test `RefundWorkflowTests` (16) + `RemainingFeaturesTests`:
+
+| Hạng mục | Trạng thái | Ghi chú |
+|---|---|---|
+| Vòng đời `RefundRequest` (tạo → duyệt → gộp lô → xuất CSV → chi tay → xác nhận) | ✅ | `RefundRequest` / `RefundBatch` / `RefundEvent`; state machine `PendingReview → … → Completed` |
+| Học sinh/phụ huynh tự gửi yêu cầu + Finance tạo hộ | ✅ | `POST /api/refunds` (chủ sở hữu), `POST /api/finance/refunds`; `GET /api/refunds/me`, `/api/refunds/{id}` |
+| **Trần hoàn tiền/ngày** | ✅ | `refund.dailyCapVnd` (SystemConfig, mặc định 20tr), mốc "ngày" theo `refund.timezoneOffsetHours`; kiểm khi duyệt; `GET /api/finance/refunds/daily-usage` |
+| **Rate-limit theo người dùng** | ✅ | 2 lớp: policy `"refund"` (`RateLimiting:RefundPermitLimit`, mặc định 5/phút) + `refund.maxRequestsPerUserPer30d` (mặc định 3, theo người thụ hưởng) |
+| **Ghi log rõ ràng** | ✅ | `RefundEvent` timeline (actor + IP + correlation-id + from/to) trả kèm `GET /api/finance/refunds/{id}`; `AuditSaveChangesInterceptor` theo dõi `RefundRequest.Status/Amount` + `RefundBatch.Status`; Serilog structured |
+| Phê duyệt + dual-control | ✅ | 1 người Finance duyệt; `refund.dualControlThresholdVnd` (mặc định 0 = tắt) → `≥` ngưỡng cần 2 người khác nhau |
+| Gộp lô + xuất file chi hộ CSV | ✅ | `POST /api/finance/refund-batches`, `GET .../{id}/export` (text/csv, mẫu generic: STT, SoTaiKhoan, TenNguoiHuong, MaNganHang, SoTien, NoiDung) |
+| Xác nhận đã chuyển + hoàn một phần | ✅ | `.../confirm` (đơn) / `.../confirm-all` (lô) → `Payment.RefundAmount` tích luỹ, `Refunded` / `PartiallyRefunded`, huỷ subscription khi hoàn toàn phần |
+| Mã hoá số TK ngân hàng người nhận (PII) | ✅ | ASP.NET Data Protection, key ring persist vào DB (`DataProtectionKeys`); API chỉ trả 4 số cuối; giải mã chỉ khi build CSV |
+| Đối soát hoàn tiền + cảnh báo quá hạn | ✅ | `GET /api/finance/refunds/reconciliation`; sweep nền cảnh báo Finance yêu cầu `Disbursed` quá `refund.staleDisbursedDays` |
+| **Còn lại** | ⏳ | payout API (chi tự động); name-inquiry xác thực tên chủ TK; mẫu CSV riêng theo ngân hàng; auto-refund B2 overpay / B8 orphan |
 
 ---
 
@@ -574,7 +608,9 @@ dev. Có dashboard log/metric cơ bản.
 | Tinh chỉnh index DB | ✅ | `ExerciseAttempt (StudentId,ExerciseId,Status)` + `(StudentId,Status,SubmittedAt)`; `TabSwitchLog (AttemptId)`; `Notification (UserId,IsRead)` |
 | Xoá `AI_main.py` | ✅ | (`ExampleController` đã xoá từ P0) |
 | Fix double-register `IParentRepository` (A4) | ✅ | |
-| **Còn lại (cần phối hợp frontend / hạ tầng)** | ⏳ | chuẩn hoá `ApiResponse` + mã HTTP cho **mọi** endpoint (A5) & route kebab-case → cần sửa đồng bộ WebApp; `JsonStringEnumConverter` (enum đang là số) → breaking; contract/snapshot test; load test 200 user (cần harness); `/security-review` cuối trên nhánh release |
+| Chuẩn hoá `ApiResponse` + mã HTTP cho mọi endpoint (A5) | ✅ | `ToActionResult()` + factory; authz filter + JWT + model-validation cùng vỏ; test `A5NormalizationTests` |
+| Route kebab-case số nhiều | ✅ | xem bảng ánh xạ ở mục A5 — **breaking cho WebApp** |
+| **Còn lại (cần phối hợp / hạ tầng)** | ⏳ | `JsonStringEnumConverter` (enum đang là số) → breaking; contract/snapshot test; load test 200 user (cần harness); `/security-review` cuối; chuyển JWT SecretKey ra khỏi repo |
 
 ---
 

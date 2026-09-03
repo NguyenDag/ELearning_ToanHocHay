@@ -23,7 +23,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         {
             var studentId = User.GetStudentId();
             if (studentId == null) return this.Forbidden("Only students have enrolments");
-            return Ok(await _enrollment.GetMyEnrolmentsAsync(studentId.Value));
+            return (await _enrollment.GetMyEnrolmentsAsync(studentId.Value)).ToActionResult();
         }
 
         [HttpPost("courses/{courseId:int}")]
@@ -33,7 +33,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
             if (studentId == null) return this.Forbidden("Only students can enrol");
 
             var r = await _enrollment.EnrollAsync(studentId.Value, courseId);
-            return r.Success ? Ok(r) : BadRequest(r);
+            return r.ToActionResult();
         }
     }
 }

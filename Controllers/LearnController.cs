@@ -1,3 +1,4 @@
+using ELearning_ToanHocHay_Control.Common;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -24,16 +25,14 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> GetCourseContent(int courseId)
         {
             var r = await _learn.GetCourseContentAsync(User, courseId);
-            return r.Success ? Ok(r) : NotFound(r);
+            return r.ToActionResult();
         }
 
         [HttpGet("nodes/{nodeId:int}")]
         [AllowAnonymous]
         public async Task<IActionResult> GetNode(int nodeId)
         {
-            var r = await _learn.GetNodeAsync(User, nodeId);
-            if (r.Success) return Ok(r);
-            return r.Message.Contains("subscription") ? StatusCode(403, r) : NotFound(r);
+            return (await _learn.GetNodeAsync(User, nodeId)).ToActionResult();
         }
     }
 }

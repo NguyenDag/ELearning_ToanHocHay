@@ -1,15 +1,13 @@
-﻿using ELearning_ToanHocHay_Control.Attributes;
+using ELearning_ToanHocHay_Control.Attributes;
 using ELearning_ToanHocHay_Control.Common;
 using ELearning_ToanHocHay_Control.Models.DTOs.Exercise;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ELearning_ToanHocHay_Control.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/exercises")]
     [ApiController]
     [Authorize]
     public class ExercisesController : ControllerBase
@@ -21,156 +19,77 @@ namespace ELearning_ToanHocHay_Control.Controllers
             _exerciseService = exerciseService;
         }
 
-        // ============================
-        // POST: /api/exercises
-        // Create an exercise
-        // ============================
         [HttpPost]
         [AuthorizeContentRole]
         public async Task<IActionResult> CreateExercise([FromBody] ExerciseRequestDto dto)
-        {
-            var result = await _exerciseService.CreateExerciseAsync(dto, User.GetUserId()!.Value);
-            if (!result.Success)
-                return BadRequest(result);
+            => (await _exerciseService.CreateExerciseAsync(dto, User.GetUserId()!.Value)).ToActionResult();
 
-            return Ok(result);
-        }
-
-        // ============================
-        // GET: /api/exercises
-        // List exercises
-        // ============================
         [HttpGet]
         public async Task<IActionResult> GetAll()
-        {
-            var result = await _exerciseService.GetAllAsync();
-            if (!result.Success)
-                return BadRequest(result);
+            => (await _exerciseService.GetAllAsync()).ToActionResult();
 
-            return Ok(result);
-        }
-
-        // ============================
-        // GET: /api/exercises/{id}
-        // Get exercise detail
-        // ============================
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
-        {
-            var result = await _exerciseService.GetByIdAsync(id);
-            if (!result.Success)
-                return NotFound(result);
+            => (await _exerciseService.GetByIdAsync(id)).ToActionResult();
 
-            return Ok(result);
-        }
-
-        // ============================
-        // PUT: /api/exercises/{id}
-        // Update an exercise
-        // ============================
         [HttpPut("{id}")]
         [AuthorizeContentRole]
         public async Task<IActionResult> UpdateExercise(int id, [FromBody] ExerciseRequestDto dto)
-        {
-            var result = await _exerciseService.UpdateExerciseAsync(id, dto);
-            if (!result.Success)
-                return BadRequest(result);
+            => (await _exerciseService.UpdateExerciseAsync(id, dto)).ToActionResult();
 
-            return Ok(result);
-        }
-
-        // ============================
-        // DELETE: /api/exercises/{id}
-        // Delete an exercise
-        // ============================
         [HttpDelete("{id}")]
         [AuthorizeContentRole]
         public async Task<IActionResult> DeleteExercise(int id)
-        {
-            var result = await _exerciseService.DeleteExerciseAsync(id);
-            if (!result.Success)
-                return BadRequest(result);
+            => (await _exerciseService.DeleteExerciseAsync(id)).ToActionResult();
 
-            return Ok(result);
-        }
-
-        // ============================
-        // POST: /api/exercises/{id}/questions
-        // Add questions to an exercise
-        // ============================
         [HttpPost("{exerciseId}/questions")]
         [AuthorizeContentRole]
         public async Task<IActionResult> AddQuestions(int exerciseId, [FromBody] AddQuestionsToExerciseDto dto)
-        {
-            var result = await _exerciseService.AddQuestionsToExerciseAsync(exerciseId, dto);
-            if (!result.Success)
-                return BadRequest(result);
-
-            return Ok(result);
-        }
+            => (await _exerciseService.AddQuestionsToExerciseAsync(exerciseId, dto)).ToActionResult();
 
         // =================== FILTER ===================
         [HttpGet("by-lesson/{lessonId}")]
         public async Task<IActionResult> GetByLesson(int lessonId)
-            => Ok(await _exerciseService.GetByLessonIdAsync(lessonId));
+            => (await _exerciseService.GetByLessonIdAsync(lessonId)).ToActionResult();
 
         [HttpGet("by-chapter/{chapterId}")]
         public async Task<IActionResult> GetByChapter(int chapterId)
-            => Ok(await _exerciseService.GetByChapterIdAsync(chapterId));
+            => (await _exerciseService.GetByChapterIdAsync(chapterId)).ToActionResult();
 
         [HttpGet("by-topic/{topicId}")]
         public async Task<IActionResult> GetByTopic(int topicId)
-            => Ok(await _exerciseService.GetByTopicIdAsync(topicId));
+            => (await _exerciseService.GetByTopicIdAsync(topicId)).ToActionResult();
 
-        // =================== PUBLISH WORKFLOW (A3/P2) ===================
+        // =================== PUBLISH WORKFLOW ===================
         [HttpPost("{id}/publish")]
         [AuthorizeContentRole]
         public async Task<IActionResult> Publish(int id)
-        {
-            var result = await _exerciseService.SetPublishedAsync(id, true);
-            return result.Success ? Ok(result) : BadRequest(result);
-        }
+            => (await _exerciseService.SetPublishedAsync(id, true)).ToActionResult();
 
         [HttpPost("{id}/unpublish")]
         [AuthorizeContentRole]
         public async Task<IActionResult> Unpublish(int id)
-        {
-            var result = await _exerciseService.SetPublishedAsync(id, false);
-            return result.Success ? Ok(result) : BadRequest(result);
-        }
+            => (await _exerciseService.SetPublishedAsync(id, false)).ToActionResult();
 
-        // Full exercise incl. answer keys — for the editor (A3/P2)
         [HttpGet("{id}/for-edit")]
         [AuthorizeContentRole]
         public async Task<IActionResult> GetForEdit(int id)
-        {
-            var result = await _exerciseService.GetForEditAsync(id);
-            return result.Success ? Ok(result) : NotFound(result);
-        }
+            => (await _exerciseService.GetForEditAsync(id)).ToActionResult();
 
         // =================== QUESTIONS ===================
         [HttpGet("{id}/questions")]
         [AuthorizeContentRole]
         public async Task<IActionResult> GetQuestions(int id)
-        {
-            var result = await _exerciseService.GetExerciseQuestionsAsync(id);
-            return result.Success ? Ok(result) : NotFound(result);
-        }
+            => (await _exerciseService.GetExerciseQuestionsAsync(id)).ToActionResult();
 
         [HttpDelete("{exerciseId}/questions/{questionId}")]
         [AuthorizeContentRole]
         public async Task<IActionResult> RemoveQuestion(int exerciseId, int questionId)
-            => Ok(await _exerciseService
-                .RemoveQuestionFromExerciseAsync(exerciseId, questionId));
+            => (await _exerciseService.RemoveQuestionFromExerciseAsync(exerciseId, questionId)).ToActionResult();
 
         [HttpPut("{exerciseId}/questions/{questionId}")]
         [AuthorizeContentRole]
-        public async Task<IActionResult> UpdateQuestionScore(
-            int exerciseId,
-            int questionId,
-            [FromBody] double score)
-            => Ok(await _exerciseService
-                .UpdateExerciseQuestionScoreAsync(exerciseId, questionId, score));
-
+        public async Task<IActionResult> UpdateQuestionScore(int exerciseId, int questionId, [FromBody] double score)
+            => (await _exerciseService.UpdateExerciseQuestionScoreAsync(exerciseId, questionId, score)).ToActionResult();
     }
 }

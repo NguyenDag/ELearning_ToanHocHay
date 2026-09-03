@@ -1,5 +1,6 @@
 using ELearning_ToanHocHay_Control.Attributes;
 using ELearning_ToanHocHay_Control.Common;
+using ELearning_ToanHocHay_Control.Models.DTOs;
 using ELearning_ToanHocHay_Control.Models.DTOs.Question;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -7,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ELearning_ToanHocHay_Control.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/questions")]
     [ApiController]
     [Authorize]
     public class QuestionsController : ControllerBase
@@ -25,14 +26,10 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> Create([FromBody] List<CreateQuestionDto> requests)
         {
             if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+                return BadRequest(ApiResponse<object>.ErrorResponse("Dữ liệu không hợp lệ",
+                    ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList()));
 
-            var result = await _questionService.CreateQuestionsAsync(requests, User.GetUserId()!.Value);
-
-            if (result.Success)
-                return Ok(result);
-
-            return BadRequest(result);
+            return (await _questionService.CreateQuestionsAsync(requests, User.GetUserId()!.Value)).ToActionResult();
         }
     }
 }

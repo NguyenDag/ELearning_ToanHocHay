@@ -11,6 +11,7 @@ using ELearning_ToanHocHay_Control.Services.Implementations;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.Tokens;
@@ -55,6 +56,12 @@ namespace ELearning_ToanHocHay_Control
                 options.UseNpgsql(connectionString)
                        .AddInterceptors(sp.GetRequiredService<AuditSaveChangesInterceptor>()));
 
+            // Data Protection — key ring persisted to the DB so it survives redeploys.
+            // Used to encrypt the beneficiary bank account number on RefundRequest (PII).
+            builder.Services.AddDataProtection()
+                .PersistKeysToDbContext<AppDbContext>()
+                .SetApplicationName("elearning-toanhochay");
+
             // 2. App base URL & email config
             var appBaseUrl = Environment.GetEnvironmentVariable("APP_BASE_URL") ?? "https://localhost:5001";
             builder.Services.Configure<AppSettings>(options => options.BaseUrl = appBaseUrl);
@@ -75,25 +82,32 @@ namespace ELearning_ToanHocHay_Control
             // 4. AutoMapper
             builder.Services.AddAutoMapper(typeof(UserProfile));
 
-            // 5. JWT config (flexible SecretKey resolution)
+            // 5. JWT config — SecretKey MUST come from a secret store, never appsettings.json in the repo.
+            //    Local dev : dotnet user-secrets set "JwtSettings:SecretKey" "<32+ character secret>"
+            //    Server    : environment variable  JwtSettings__SecretKey
             var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 
-            // Prefer an environment variable (server), fall back to appsettings (local)
             var secretKey = Environment.GetEnvironmentVariable("JwtSettings__SecretKey")
-                            ?? jwtSettings["SecretKey"]
                             ?? builder.Configuration["JwtSettings:SecretKey"];
-
 
             // Register SePay
             builder.Services.Configure<SePayOptions>(
                 builder.Configuration.GetSection("SePay")
             );
 
-            
             // Fail fast with a clear message instead of an ArgumentNullException if the key is missing
-            if (string.IsNullOrEmpty(secretKey))
+            if (string.IsNullOrWhiteSpace(secretKey))
             {
-                throw new Exception("CRITICAL ERROR: 'SecretKey' not found in configuration! Check appsettings.json or environment variables.");
+                throw new InvalidOperationException(
+                    "JWT SecretKey is not configured. For local development run "
+                    + "'dotnet user-secrets set \"JwtSettings:SecretKey\" \"<32+ character secret>\"'; "
+                    + "on the server set the 'JwtSettings__SecretKey' environment variable. "
+                    + "It must never be committed to appsettings.json.");
+            }
+            if (secretKey.Length < 32)
+            {
+                throw new InvalidOperationException(
+                    "JWT SecretKey must be at least 32 characters long for HMAC-SHA256 token signing.");
             }
 
             builder.Services.AddAuthentication(options =>
@@ -146,6 +160,23 @@ namespace ELearning_ToanHocHay_Control
 
                         if (current != null && current != stampClaim)
                             context.Fail("Security stamp mismatch");
+                    },
+
+                    // A5 — 401 / 403 challenges also carry the ApiResponse envelope.
+                    OnChallenge = async context =>
+                    {
+                        context.HandleResponse();
+                        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                        context.Response.ContentType = "application/json";
+                        await context.Response.WriteAsJsonAsync(
+                            Models.DTOs.ApiResponse<object>.ErrorResponse("Bạn cần đăng nhập để truy cập tài nguyên này"));
+                    },
+                    OnForbidden = async context =>
+                    {
+                        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                        context.Response.ContentType = "application/json";
+                        await context.Response.WriteAsJsonAsync(
+                            Models.DTOs.ApiResponse<object>.Forbidden());
                     }
                 };
             });
@@ -189,6 +220,22 @@ namespace ELearning_ToanHocHay_Control
                             Window = TimeSpan.FromMinutes(1),
                             QueueLimit = 0
                         }));
+
+                // N refund requests / minute / user (default 5). Business-level 30-day
+                // per-user limit is enforced separately in RefundService.
+                var refundPermitLimit = int.TryParse(
+                    builder.Configuration["RateLimiting:RefundPermitLimit"], out var rpl) ? rpl : 5;
+                options.AddPolicy("refund", context =>
+                    RateLimitPartition.GetFixedWindowLimiter(
+                        partitionKey: context.User.GetUserId()?.ToString()
+                                      ?? context.Connection.RemoteIpAddress?.ToString()
+                                      ?? "unknown",
+                        factory: _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = refundPermitLimit,
+                            Window = TimeSpan.FromMinutes(1),
+                            QueueLimit = 0
+                        }));
             });
 
             // 6. Controllers & JSON options (keep PascalCase to match the WebApp DTOs)
@@ -204,7 +251,26 @@ namespace ELearning_ToanHocHay_Control
 
         // 3. (Optional) Drop null fields to make the JSON smaller
         options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+
+        // 4. Serialize enums as their string names, not integers (A5). BREAKING for any
+        //    client that read enum values as numbers. Reading still accepts both names and numbers.
+        options.JsonSerializerOptions.Converters.Add(
+            new System.Text.Json.Serialization.JsonStringEnumConverter());
     });
+
+            // A5 — [ApiController] model-validation failures also use the ApiResponse envelope.
+            builder.Services.Configure<Microsoft.AspNetCore.Mvc.ApiBehaviorOptions>(o =>
+            {
+                o.InvalidModelStateResponseFactory = ctx =>
+                {
+                    var errors = ctx.ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => string.IsNullOrWhiteSpace(e.ErrorMessage) ? "Giá trị không hợp lệ" : e.ErrorMessage)
+                        .ToList();
+                    return new Microsoft.AspNetCore.Mvc.BadRequestObjectResult(
+                        Models.DTOs.ApiResponse<object>.ErrorResponse("Dữ liệu không hợp lệ", errors));
+                };
+            });
 
             // 7. Swagger & CORS
             builder.Services.AddEndpointsApiExplorer();
@@ -328,6 +394,10 @@ namespace ELearning_ToanHocHay_Control
             services.AddScoped<ISePayIpnService, SePayIpnService>();
             services.AddScoped<ISubscriptionLifecycleService, SubscriptionLifecycleService>();
             services.AddHostedService<SubscriptionLifecycleHostedService>();
+            services.AddScoped<Services.Helpers.IRefundFieldProtector, Services.Helpers.RefundFieldProtector>();
+            services.AddScoped<Services.Helpers.IRefundEventWriter, Services.Helpers.RefundEventWriter>();
+            services.AddScoped<IRefundService, RefundService>();
+            services.AddScoped<IRefundBatchService, RefundBatchService>();
             services.AddScoped<IAIHintService, AIHintService>();
             services.AddScoped<IAIFeedbackService, AIFeedbackService>();
             services.AddScoped<IAiQuotaService, AiQuotaService>();

@@ -223,7 +223,7 @@ public class A3ContentLayerTests
         bankRes.StatusCode.Should().Be(HttpStatusCode.OK, await bankRes.Content.ReadAsStringAsync());
         var bankId = Data(await Root(bankRes)).GetProperty("BankId").GetInt32();
 
-        var createRes = await editor.PostAsJsonAsync("/api/Questions", new[]
+        var createRes = await editor.PostAsJsonAsync("/api/questions", new[]
         {
             new { BankId = bankId, QuestionText = "1 + 1 = ?", QuestionType = (int)QuestionType.FillBlank, CorrectAnswer = "2" }
         });

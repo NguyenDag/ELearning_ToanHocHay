@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ELearning_ToanHocHay_Control.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/packages")]
     [ApiController]
     public class PackageController : ControllerBase
     {
@@ -27,10 +27,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         {
             var response = await _packageService.GetAllAsync();
 
-            if (!response.Success)
-                return BadRequest(response);
-
-            return Ok(response);
+            return response.ToActionResult();
         }
 
         // GET: api/package/5
@@ -40,10 +37,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         {
             var response = await _packageService.GetByIdAsync(id);
 
-            if (!response.Success)
-                return NotFound(response);
-
-            return Ok(response);
+            return response.ToActionResult();
         }
 
         // POST: api/package — Finance/Admin only
@@ -57,10 +51,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
 
             var response = await _packageService.CreateAsync(userId.Value, dto);
 
-            if (!response.Success)
-                return BadRequest(response);
-
-            return Ok(response);
+            return response.ToActionResult();
         }
 
         // PUT: api/package/5 — Finance/Admin only
@@ -72,10 +63,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         {
             var response = await _packageService.UpdateAsync(id, dto);
 
-            if (!response.Success)
-                return BadRequest(response);
-
-            return Ok(response);
+            return response.ToActionResult();
         }
 
         // DELETE: api/package/5 — Finance/Admin only
@@ -85,10 +73,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         {
             var response = await _packageService.DeleteAsync(id);
 
-            if (!response.Success)
-                return NotFound(response);
-
-            return Ok(response);
+            return response.ToActionResult();
         }
     }
 }

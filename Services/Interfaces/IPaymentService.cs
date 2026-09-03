@@ -6,6 +6,7 @@ namespace ELearning_ToanHocHay_Control.Services.Interfaces
     public interface IPaymentService
     {
         Task<ApiResponse<IEnumerable<PaymentDto>>> GetAllAsync();
+        Task<ApiResponse<PagedResult<PaymentDto>>> GetPagedAsync(Common.PagedRequest request, Data.Entities.PaymentStatus? status);
         Task<ApiResponse<PaymentDto>> GetByIdAsync(int id);
         Task<ApiResponse<bool>> UpdateStatusAsync(int id, UpdatePaymentStatusDto dto);
 

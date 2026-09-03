@@ -524,6 +524,8 @@ namespace ELearning_ToanHocHay_Control.Data
                 e.Property(x => x.Status).HasConversion<string>();
                 e.Property(x => x.CompletionPercentage).HasPrecision(18, 2);
                 e.HasIndex(x => new { x.StudentId, x.StartTime });
+                e.HasIndex(x => new { x.StudentId, x.ExerciseId, x.Status });     // P7 — resume / MaxAttempts
+                e.HasIndex(x => new { x.StudentId, x.Status, x.SubmittedAt });    // P7 — dashboard / history
                 e.HasIndex(x => x.GuestSessionId);
                 e.HasOne(x => x.Student).WithMany(s => s.ExerciseAttempts).HasForeignKey(x => x.StudentId);
                 e.HasOne(x => x.GuestSession).WithMany().HasForeignKey(x => x.GuestSessionId);
@@ -563,6 +565,7 @@ namespace ELearning_ToanHocHay_Control.Data
             {
                 e.ToTable("TabSwitchLog");
                 e.HasKey(x => x.Id);
+                e.HasIndex(x => x.AttemptId);   // P7
                 e.HasOne(x => x.Attempt).WithMany().HasForeignKey(x => x.AttemptId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
@@ -808,6 +811,7 @@ namespace ELearning_ToanHocHay_Control.Data
             {
                 e.ToTable("Notification");
                 e.HasKey(x => x.NotificationId);
+                e.HasIndex(x => new { x.UserId, x.IsRead });   // P7 — unread count / list
                 e.Property(x => x.NotificationType).HasConversion<string>();
                 e.Property(x => x.Audience).HasConversion<string>();
                 e.HasOne(x => x.User).WithMany(u => u.Notifications).HasForeignKey(x => x.UserId)

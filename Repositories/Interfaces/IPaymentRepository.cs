@@ -5,6 +5,7 @@ namespace ELearning_ToanHocHay_Control.Repositories.Interfaces
     public interface IPaymentRepository
     {
         Task<IEnumerable<Payment>> GetAllAsync();
+        IQueryable<Payment> Query();
         Task<Payment?> GetByIdAsync(int id);
         Task<Payment> AddAsync(Payment payment);
         Task<bool> UpdateAsync(Payment payment);

@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using ELearning_ToanHocHay_Control.Common;
 using ELearning_ToanHocHay_Control.Data.Entities;
 using ELearning_ToanHocHay_Control.Models.DTOs;
 using ELearning_ToanHocHay_Control.Repositories.Interfaces;
@@ -50,11 +51,11 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     "User created successfully"
                     );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return ApiResponse<UserDto>.ErrorResponse(
                     "Error creating user",
-                    new List<string> { ex.Message }
+                    new List<string>()
                     );
             }
         }
@@ -80,32 +81,37 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     "User deleted successfully"
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return ApiResponse<bool>.ErrorResponse(
                     "Error deleting user",
-                    new List<string> { ex.Message }
+                    new List<string>()
                 );
             }
         }
 
         public async Task<ApiResponse<IEnumerable<UserDto>>> GetAllAsync()
         {
-            try
+            var users = await _userRepository.GetAllAsync();
+            return ApiResponse<IEnumerable<UserDto>>.SuccessResponse(
+                _mapper.Map<IEnumerable<UserDto>>(users), "Users retrieved successfully");
+        }
+
+        public async Task<ApiResponse<PagedResult<UserDto>>> GetPagedAsync(Common.PagedRequest request)
+        {
+            var query = _userRepository.Query();
+
+            if (!string.IsNullOrWhiteSpace(request.Search))
             {
-                var _user = await _userRepository.GetAllAsync();
-                return ApiResponse<IEnumerable<UserDto>>.SuccessResponse(
-                    _mapper.Map<IEnumerable<UserDto>>(_user),
-                    "Users retrieved successfully"
-                    );
+                var s = request.Search.Trim().ToLower();
+                query = query.Where(u => u.Email.ToLower().Contains(s) || u.FullName.ToLower().Contains(s));
             }
-            catch (Exception ex)
-            {
-                return ApiResponse<IEnumerable<UserDto>>.ErrorResponse(
-                    "Error retrieving users",
-                    new List<string> { ex.Message }
-                );
-            }
+
+            var page = await query.OrderByDescending(u => u.CreatedAt)
+                .ToPagedResultAsync(request);
+
+            return ApiResponse<PagedResult<UserDto>>.SuccessResponse(
+                page.Map(u => _mapper.Map<UserDto>(u)));
         }
 
         public async Task<ApiResponse<UserDto>> GetByEmailAsync(string email)
@@ -123,11 +129,11 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     "User retrieved successfully"
                     );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return ApiResponse<UserDto>.ErrorResponse(
                     "Error retrieving user",
-                    new List<string> { ex.Message }
+                    new List<string>()
                 );
             }
         }
@@ -151,11 +157,11 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     "User retrieved successfully"
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return ApiResponse<UserDto>.ErrorResponse(
                     "Error retrieving user",
-                    new List<string> { ex.Message }
+                    new List<string>()
                 );
             }
         }
@@ -201,11 +207,11 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     "User updated successfully"
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return ApiResponse<UserDto>.ErrorResponse(
                     "Error updating user",
-                    new List<string> { ex.Message }
+                    new List<string>()
                 );
             }
         }
@@ -245,11 +251,11 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     _mapper.Map<UserDto>(user),
                     "Profile updated successfully");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return ApiResponse<UserDto>.ErrorResponse(
                     "Error updating profile",
-                    new List<string> { ex.Message });
+                    new List<string>());
             }
         }
     }

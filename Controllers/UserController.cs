@@ -21,17 +21,13 @@ namespace ELearning_ToanHocHay_Control.Controllers
             _userService = userService;
         }
 
-        // GET: api/user — only an admin may list every user
+        // GET: api/user — only an admin may list every user (paged)
         [HttpGet]
         [AuthorizeUserType(UserType.SystemAdmin)]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery] PagedRequest request)
         {
-            var response = await _userService.GetAllAsync();
-            if (!response.Success)
-            {
-                return BadRequest(response);
-            }
-            return Ok(response);
+            var response = await _userService.GetPagedAsync(request);
+            return response.Success ? Ok(response) : BadRequest(response);
         }
 
         // GET: api/user/5 — admin or the user themselves

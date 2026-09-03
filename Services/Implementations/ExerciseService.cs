@@ -79,11 +79,11 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     "Exercise created successfully"
                     );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return ApiResponse<ExerciseDto>.ErrorResponse(
                     "Error creating exercise",
-                    new List<string> { ex.Message }
+                    new List<string>()
                     );
             }
         }
@@ -121,10 +121,10 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 return ApiResponse<bool>.SuccessResponse(deleted,
                     "Exercise deleted successfully");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return ApiResponse<bool>.ErrorResponse("Error deleting exercise",
-                    new List<string> { ex.Message });
+                    new List<string>());
             }
         }
 
@@ -136,11 +136,11 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 var activeExercises = exercises.Where(e => e.IsActive == true);
                 return ApiResponse<IEnumerable<ExerciseDto>>.SuccessResponse(_mapper.Map<IEnumerable<ExerciseDto>>(activeExercises), "Exercises retrieved successfully");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return ApiResponse<IEnumerable<ExerciseDto>>.ErrorResponse(
                     "Error retrieving exercises",
-                    new List<string> { ex.Message }
+                    new List<string>()
                 );
             }
         }
@@ -247,11 +247,11 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
                 return ApiResponse<ExerciseDto>.SuccessResponse(_mapper.Map<ExerciseDto>(exercise), "Exercise updated successfully");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return ApiResponse<ExerciseDto>.ErrorResponse(
                     "Error updating exercise",
-                    new List<string> { ex.Message }
+                    new List<string>()
                 );
             }
         }

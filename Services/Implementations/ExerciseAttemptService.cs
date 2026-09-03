@@ -229,12 +229,12 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     isTimeout ? "Exercise auto-submitted due to timeout" : "Exercise submitted successfully"
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 await transaction.RollbackAsync();
                 return ApiResponse<ExerciseResultDto>.ErrorResponse(
                     "Error completing exercise",
-                    new List<string> { ex.Message }
+                    new List<string>()
                 );
             }
         }
@@ -336,9 +336,9 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
                 return ApiResponse<ExerciseResultDto>.SuccessResponse(result, "Lấy kết quả thành công");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return ApiResponse<ExerciseResultDto>.ErrorResponse("Lỗi hệ thống khi tính điểm", new List<string> { ex.Message });
+                return ApiResponse<ExerciseResultDto>.ErrorResponse("Lỗi hệ thống khi tính điểm", new List<string>());
             }
         }
 
@@ -376,11 +376,11 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     "History retrieved successfully"
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return ApiResponse<List<ExerciseResultDto>>.ErrorResponse(
                     "Error retrieving history",
-                    new List<string> { ex.Message }
+                    new List<string>()
                 );
             }
         }
@@ -451,11 +451,11 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     "Answer saved"
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return ApiResponse<bool>.ErrorResponse(
                     "Error saving answer",
-                    new List<string> { ex.Message, ex.InnerException?.Message ?? "no inner exception" }
+                    new List<string>()
                 );
             }
         }
@@ -547,7 +547,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             catch (Exception ex)
             {
                 Console.WriteLine($"[FATAL ERROR] StartExercise: {ex.Message}");
-                return ApiResponse<ExerciseAttemptDto>.ErrorResponse("Lỗi khởi tạo: " + ex.Message);
+                return ApiResponse<ExerciseAttemptDto>.ErrorResponse("Lỗi khởi tạo bài làm");
             }
         }
 
@@ -673,11 +673,11 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     "Random exercise created successfully"
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return ApiResponse<ExerciseAttemptDto>.ErrorResponse(
                     "Error creating random exercise",
-                    new List<string> { ex.Message }
+                    new List<string>()
                 );
             }
         }
@@ -700,9 +700,9 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     Pending = Math.Max(0, wrong - ready)
                 });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return ApiResponse<FeedbackStatusDto>.ErrorResponse("Error reading feedback status", new List<string> { ex.Message });
+                return ApiResponse<FeedbackStatusDto>.ErrorResponse("Error reading feedback status", new List<string>());
             }
         }
 
@@ -830,9 +830,9 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
                 return ApiResponse<StudentDashboardDto>.SuccessResponse(stats, "Thành công");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return ApiResponse<StudentDashboardDto>.ErrorResponse(ex.Message);
+                return ApiResponse<StudentDashboardDto>.ErrorResponse("Lỗi tải dashboard");
             }
         }
         /// <summary>Current access tier of a student, derived from their active subscription (default Free).</summary>
@@ -928,7 +928,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             catch (Exception ex)
             {
                 Console.WriteLine($"[ReportTabSwitch Error] {ex.Message}");
-                return ApiResponse<bool>.ErrorResponse("Lỗi khi gửi thông báo: " + ex.Message);
+                return ApiResponse<bool>.ErrorResponse("Lỗi khi gửi thông báo");
             }
         }
 
@@ -944,9 +944,9 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
                 return ApiResponse<List<DateTime>>.SuccessResponse(logs, "Thành công");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return ApiResponse<List<DateTime>>.ErrorResponse("Lỗi truy xuất lịch sử: " + ex.Message);
+                return ApiResponse<List<DateTime>>.ErrorResponse("Lỗi truy xuất lịch sử");
             }
         }
     }

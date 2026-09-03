@@ -7,6 +7,7 @@ namespace ELearning_ToanHocHay_Control.Services.Interfaces
     public interface ISubscriptionService
     {
         Task<ApiResponse<IEnumerable<SubscriptionDto>>> GetAllAsync();
+        Task<ApiResponse<PagedResult<SubscriptionDto>>> GetPagedAsync(Common.PagedRequest request, Data.Entities.SubscriptionStatus? status);
         Task<ApiResponse<SubscriptionDto>> GetByIdAsync(int id);
         //Task<ApiResponse<SubscriptionDto>> CreateAsync(CreateSubscriptionDto dto);
         Task<ApiResponse<bool>> CancelAsync(int id);

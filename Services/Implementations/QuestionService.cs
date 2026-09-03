@@ -29,9 +29,9 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 var result = await _questionRepository.CreateAsync(question);
                 return ApiResponse<QuestionDto>.SuccessResponse(ToDto(result), "Tạo câu hỏi thành công!");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return ApiResponse<QuestionDto>.ErrorResponse("Lỗi khi tạo câu hỏi", new List<string> { ex.Message });
+                return ApiResponse<QuestionDto>.ErrorResponse("Lỗi khi tạo câu hỏi", new List<string>());
             }
         }
 
@@ -60,9 +60,9 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 return ApiResponse<List<QuestionDto>>.SuccessResponse(
                     result.Select(ToDto).ToList(), "Tạo các câu hỏi thành công!");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return ApiResponse<List<QuestionDto>>.ErrorResponse("Lỗi khi tạo các câu hỏi", new List<string> { ex.Message });
+                return ApiResponse<List<QuestionDto>>.ErrorResponse("Lỗi khi tạo các câu hỏi", new List<string>());
             }
         }
 

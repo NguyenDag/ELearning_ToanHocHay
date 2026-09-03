@@ -49,6 +49,8 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
                 .ToListAsync();
         }
 
+        public IQueryable<User> Query() => _context.Users.AsNoTracking();
+
         public async Task<User?> GetByEmailAsync(string email)
         {
             return await _context.Users

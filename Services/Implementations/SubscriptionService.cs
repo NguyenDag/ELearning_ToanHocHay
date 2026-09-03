@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using ELearning_ToanHocHay_Control.Data.Entities;
 using ELearning_ToanHocHay_Control.Models.DTOs;
 using ELearning_ToanHocHay_Control.Models.DTOs.Subscription;
+using ELearning_ToanHocHay_Control.Common;
 using ELearning_ToanHocHay_Control.Repositories.Interfaces;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -42,6 +43,30 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
             return ApiResponse<IEnumerable<SubscriptionDto>>
                 .SuccessResponse(data, "Lấy danh sách subscription thành công");
+        }
+
+        public async Task<ApiResponse<PagedResult<SubscriptionDto>>> GetPagedAsync(
+            Common.PagedRequest request, SubscriptionStatus? status)
+        {
+            var query = _repository.Query();
+            if (status.HasValue) query = query.Where(s => s.Status == status.Value);
+
+            var page = await query
+                .OrderByDescending(s => s.CreatedAt)
+                .ToPagedResultAsync(request);
+
+            return ApiResponse<PagedResult<SubscriptionDto>>.SuccessResponse(page.Map(x => new SubscriptionDto
+            {
+                SubscriptionId = x.SubscriptionId,
+                StudentId = x.StudentId ?? 0,
+                PackageId = x.PackageId,
+                PaymentId = x.PaymentId ?? 0,
+                StartDate = x.StartDate,
+                EndDate = x.EndDate,
+                Status = x.Status,
+                AmountPaid = x.AmountPaid,
+                CreatedAt = x.CreatedAt
+            }));
         }
 
         public async Task<ApiResponse<SubscriptionDto>> GetByIdAsync(int id)

@@ -6,6 +6,7 @@ namespace ELearning_ToanHocHay_Control.Repositories.Interfaces
     public interface ISubscriptionRepository
     {
         Task<IEnumerable<Subscription>> GetAllAsync();
+        IQueryable<Subscription> Query();
         Task<Subscription?> GetByIdAsync(int id);
         Task<Subscription?> GetActiveByStudentAsync(int studentId);
         Task AddAsync(Subscription subscription);

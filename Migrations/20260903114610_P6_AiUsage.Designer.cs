@@ -3,6 +3,7 @@ using System;
 using ELearning_ToanHocHay_Control.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ELearning_ToanHocHay_Control.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260903114610_P6_AiUsage")]
+    partial class P6_AiUsage
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1433,23 +1436,6 @@ namespace ELearning_ToanHocHay_Control.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Notification", (string)null);
-                });
-
-            modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.NotificationPreference", b =>
-                {
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("RuleKey")
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
-
-                    b.Property<bool>("Enabled")
-                        .HasColumnType("boolean");
-
-                    b.HasKey("UserId", "RuleKey");
-
-                    b.ToTable("NotificationPreference", (string)null);
                 });
 
             modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.Order", b =>
@@ -3677,17 +3663,6 @@ namespace ELearning_ToanHocHay_Control.Migrations
                         .IsRequired();
 
                     b.Navigation("Student");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.NotificationPreference", b =>
-                {
-                    b.HasOne("ELearning_ToanHocHay_Control.Data.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
 
                     b.Navigation("User");
                 });

@@ -114,12 +114,13 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 try
                 {
                     using var scope = _services.CreateScope();
-                    var svc = scope.ServiceProvider.GetRequiredService<ISubscriptionLifecycleService>();
-                    await svc.RunSweepAsync();
+                    await scope.ServiceProvider.GetRequiredService<ISubscriptionLifecycleService>().RunSweepAsync();
+                    // P6 — piggy-back the daily inactivity notification sweep on the same timer.
+                    await scope.ServiceProvider.GetRequiredService<INotificationRuleEngine>().RunInactivitySweepAsync();
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Subscription lifecycle sweep failed");
+                    _logger.LogError(ex, "Background maintenance sweep failed");
                 }
             }
             while (await timer.WaitForNextTickAsync(stoppingToken));

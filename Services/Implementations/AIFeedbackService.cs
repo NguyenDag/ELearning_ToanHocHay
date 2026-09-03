@@ -13,6 +13,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         private readonly IExerciseAttemptRepository _attemptRepository;
         private readonly IQuestionRepository _questionRepository;
         private readonly IAIService _aiService;
+        private readonly IAiQuotaService _quota;
         private readonly ILogger<AIFeedbackService> _logger;
 
         public AIFeedbackService(
@@ -20,12 +21,14 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             IExerciseAttemptRepository attemptRepository,
             IQuestionRepository questionRepository,
             IAIService aiService,
+            IAiQuotaService quota,
             ILogger<AIFeedbackService> logger)
         {
             _feedbackRepository = feedbackRepository;
             _attemptRepository = attemptRepository;
             _questionRepository = questionRepository;
             _aiService = aiService;
+            _quota = quota;
             _logger = logger;
         }
 
@@ -109,6 +112,10 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             };
 
             var created = await _feedbackRepository.CreateAsync(feedback);
+
+            // P6 — cost visibility (not gated: auto feedback is part of the result flow).
+            if (attempt.StudentId is int sid)
+                await _quota.RecordFeedbackAsync(sid);
 
             return ApiResponse<AIFeedbackDto>.SuccessResponse(
                 MapToDto(created),

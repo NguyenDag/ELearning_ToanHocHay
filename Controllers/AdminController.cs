@@ -14,11 +14,17 @@ namespace ELearning_ToanHocHay_Control.Controllers
     public class AdminController : ControllerBase
     {
         private readonly IAdminUserService _admin;
+        private readonly INotificationRuleEngine _rules;
 
-        public AdminController(IAdminUserService admin)
+        public AdminController(IAdminUserService admin, INotificationRuleEngine rules)
         {
             _admin = admin;
+            _rules = rules;
         }
+
+        [HttpPost("notifications/run-inactivity-check")]
+        public async Task<IActionResult> RunInactivityCheck()
+            => Ok(new { created = await _rules.RunInactivitySweepAsync() });
 
         private string? Ip => HttpContext.Connection.RemoteIpAddress?.ToString();
         private int AdminId => User.GetUserId()!.Value;

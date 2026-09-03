@@ -1,5 +1,6 @@
 using ELearning_ToanHocHay_Control.Attributes;
 using ELearning_ToanHocHay_Control.Common;
+using ELearning_ToanHocHay_Control.Models.DTOs;
 using ELearning_ToanHocHay_Control.Models.DTOs.AIHint;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -17,11 +18,24 @@ namespace ELearning_ToanHocHay_Control.Controllers
     {
         private readonly IAIHintService _hintService;
         private readonly IResourceAccessService _access;
+        private readonly IAiQuotaService _quota;
 
-        public AIHintController(IAIHintService hintService, IResourceAccessService access)
+        public AIHintController(IAIHintService hintService, IResourceAccessService access, IAiQuotaService quota)
         {
             _hintService = hintService;
             _access = access;
+            _quota = quota;
+        }
+
+        /// <summary>Remaining AI hints for today (per the caller's package).</summary>
+        [HttpGet("quota")]
+        public async Task<IActionResult> GetQuota()
+        {
+            var studentId = User.GetStudentId();
+            if (studentId == null) return this.Forbidden("Only students have an AI hint quota");
+
+            var q = await _quota.PeekHintAsync(studentId.Value);
+            return Ok(new { q.Used, q.Limit, q.Unlimited, q.Remaining });
         }
 
         [HttpGet("by-attempt/{attemptId:int}")]
@@ -59,6 +73,17 @@ namespace ELearning_ToanHocHay_Control.Controllers
         {
             if (!await _access.CanModifyAttemptAsync(User, dto.AttemptId))
                 return this.Forbidden();
+
+            // P6 — an AI-generated hint (no HintText supplied) counts against the daily quota.
+            var studentId = User.GetStudentId();
+            var aiGenerated = string.IsNullOrWhiteSpace(dto.HintText);
+            if (aiGenerated && studentId != null)
+            {
+                var q = await _quota.TryConsumeHintAsync(studentId.Value);
+                if (!q.Allowed)
+                    return StatusCode(StatusCodes.Status429TooManyRequests, ApiResponse<object>.ErrorResponse(
+                        $"Đã hết lượt gợi ý AI hôm nay ({q.Used}/{q.Limit}). Nâng cấp gói để dùng không giới hạn."));
+            }
 
             var result = await _hintService.CreateAsync(dto);
             return result.Success ? Ok(result) : BadRequest(result);

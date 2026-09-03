@@ -277,8 +277,13 @@ namespace ELearning_ToanHocHay_Control
             services.AddHostedService<SubscriptionLifecycleHostedService>();
             services.AddScoped<IAIHintService, AIHintService>();
             services.AddScoped<IAIFeedbackService, AIFeedbackService>();
+            services.AddScoped<IAiQuotaService, AiQuotaService>();
             services.AddScoped<ICoreDashboardService, CoreDashboardService>();
             services.AddScoped<IParentService, ParentService>();
+            services.AddScoped<IParentLinkService, ParentLinkService>();
+            services.AddScoped<INotificationService, NotificationService>();
+            services.AddScoped<INotificationRuleEngine, NotificationRuleEngine>();
+            services.AddScoped<IChatService, ChatService>();
             services.AddScoped<IResourceAccessService, ResourceAccessService>();
 
             // A3/P2 — content layer

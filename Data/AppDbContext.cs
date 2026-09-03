@@ -77,6 +77,7 @@ namespace ELearning_ToanHocHay_Control.Data
         public DbSet<NodeProgress> NodeProgresses { get; set; }
         public DbSet<SkillProgress> SkillProgresses { get; set; }
         public DbSet<DailyActivitySnapshot> DailyActivitySnapshots { get; set; }
+        public DbSet<AiUsageDaily> AiUsageDailies { get; set; }
         public DbSet<LearningPath> LearningPaths { get; set; }
 
         // --- Khách chưa đăng nhập ---
@@ -102,6 +103,7 @@ namespace ELearning_ToanHocHay_Control.Data
         public DbSet<SupportTicket> SupportTickets { get; set; }
         public DbSet<SupportMessage> SupportMessages { get; set; }
         public DbSet<Notification> Notifications { get; set; }
+        public DbSet<NotificationPreference> NotificationPreferences { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<SystemConfig> SystemConfigs { get; set; }
         public DbSet<StaticPage> StaticPages { get; set; }
@@ -611,6 +613,14 @@ namespace ELearning_ToanHocHay_Control.Data
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
+            modelBuilder.Entity<AiUsageDaily>(e =>
+            {
+                e.ToTable("AiUsageDaily");
+                e.HasKey(x => new { x.StudentId, x.Date });
+                e.HasOne(x => x.Student).WithMany().HasForeignKey(x => x.StudentId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
             modelBuilder.Entity<LearningPath>(e =>
             {
                 e.ToTable("LearningPath");
@@ -803,6 +813,14 @@ namespace ELearning_ToanHocHay_Control.Data
                 e.HasOne(x => x.User).WithMany(u => u.Notifications).HasForeignKey(x => x.UserId)
                     .OnDelete(DeleteBehavior.Cascade);
                 e.HasOne(x => x.Student).WithMany().HasForeignKey(x => x.StudentId);
+            });
+
+            modelBuilder.Entity<NotificationPreference>(e =>
+            {
+                e.ToTable("NotificationPreference");
+                e.HasKey(x => new { x.UserId, x.RuleKey });
+                e.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<AuditLog>(e =>

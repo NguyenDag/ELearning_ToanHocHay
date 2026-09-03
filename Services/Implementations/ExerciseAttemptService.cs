@@ -765,17 +765,22 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     .Where(a => a.StudentId == student.StudentId && a.Status != AttemptStatus.InProgress)
                     .ToListAsync();
 
+                // A2-14: load every exercise of the enrolled versions once, then bucket in memory.
+                var courseExercises = await _context.Exercises
+                    .Where(e => e.Node != null && versionIds.Contains(e.Node.CourseVersionId))
+                    .Select(e => new { e.ExerciseId, e.NodeId, Path = e.Node!.MaterializedPath })
+                    .ToListAsync();
+
                 var stats = new StudentDashboardDto();
                 stats.TotalAttempts = attempts.Count;
                 stats.AverageScore = attempts.Any() ? Math.Round(attempts.Average(a => a.TotalScore), 1) : 0;
 
                 foreach (var ch in allChapters)
                 {
-                    var exInChapter = await _context.Exercises
-                        .Where(e => e.Node != null && (e.NodeId == ch.NodeId
-                                    || e.Node.MaterializedPath.StartsWith(ch.Prefix)))
+                    var exInChapter = courseExercises
+                        .Where(e => e.NodeId == ch.NodeId || e.Path.StartsWith(ch.Prefix))
                         .Select(e => e.ExerciseId)
-                        .ToListAsync();
+                        .ToHashSet();
 
                     int totalExercisesInChapter = exInChapter.Count;
                     int completedInChapter = attempts

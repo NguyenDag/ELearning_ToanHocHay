@@ -80,10 +80,12 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
 
         public async Task<StreakDataModel> GetStreakDataAsync(int studentId)
         {
-            var days = await _context.ExerciseAttempts
+            // P4 — streak from DailyActivitySnapshot instead of scanning every attempt.
+            var days = await _context.DailyActivitySnapshots
                 .AsNoTracking()
-                .Where(a => a.StudentId == studentId && a.Status != AttemptStatus.InProgress && a.SubmittedAt.HasValue)
-                .Select(a => a.SubmittedAt!.Value.Date)
+                .Where(s => s.StudentId == studentId
+                            && (s.MinutesStudied > 0 || s.ExercisesDone > 0 || s.LessonsDone > 0))
+                .Select(s => s.Date.ToDateTime(TimeOnly.MinValue))
                 .Distinct()
                 .OrderByDescending(d => d)
                 .ToListAsync();
@@ -120,22 +122,44 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
 
         public async Task<List<RecentLessonModel>> GetRecentLessonsAsync(int studentId, int limit)
         {
-            return await _context.NodeProgresses
+            var rows = await _context.NodeProgresses
                 .AsNoTracking()
                 .Where(np => np.StudentId == studentId && np.Node!.NodeType == NodeType.Lesson)
                 .OrderByDescending(np => np.LastAccessedAt)
                 .Take(limit)
-                .Select(np => new RecentLessonModel
+                .Select(np => new
                 {
-                    LessonId = np.NodeId,
+                    np.NodeId,
                     LessonName = np.Node!.Title,
                     TopicName = np.Node.Parent != null ? np.Node.Parent.Title : "",
-                    ChapterName = "",
-                    CompletedAt = np.Status == ProgressStatus.Completed ? np.LastAccessedAt : null,
-                    IsCompleted = np.Status == ProgressStatus.Completed,
-                    ProgressPercentage = (int)np.CompletionPercent
+                    np.Node.MaterializedPath,
+                    np.Status,
+                    np.LastAccessedAt,
+                    np.CompletionPercent
                 })
                 .ToListAsync();
+
+            var result = new List<RecentLessonModel>();
+            var chapterCache = new Dictionary<string, string>();
+            foreach (var r in rows)
+            {
+                if (!chapterCache.TryGetValue(r.MaterializedPath, out var chapterName))
+                {
+                    chapterName = await ResolveChapterNameAsync(r.MaterializedPath);
+                    chapterCache[r.MaterializedPath] = chapterName;
+                }
+                result.Add(new RecentLessonModel
+                {
+                    LessonId = r.NodeId,
+                    LessonName = r.LessonName,
+                    TopicName = r.TopicName,
+                    ChapterName = chapterName,
+                    CompletedAt = r.Status == ProgressStatus.Completed ? r.LastAccessedAt : null,
+                    IsCompleted = r.Status == ProgressStatus.Completed,
+                    ProgressPercentage = (int)r.CompletionPercent
+                });
+            }
+            return result;
         }
 
         public async Task<List<ChapterProgressModel>> GetChapterProgressAsync(int studentId)
@@ -190,32 +214,168 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
 
         public async Task<List<ChapterScoreComparisonDto>> GetChapterComparisonAsync(int studentId)
         {
-            // TODO(GĐ2): điểm TB theo chương qua Exercise.Node + MaterializedPath.
-            var rows = await _context.ExerciseAttempts
+            var raw = await _context.ExerciseAttempts
                 .AsNoTracking()
                 .Where(a => a.StudentId == studentId && a.Status != AttemptStatus.InProgress
                             && a.MaxScore > 0 && a.Exercise!.NodeId != null)
-                .GroupBy(a => a.Exercise!.NodeId!.Value)
+                .Select(a => new
+                {
+                    a.Exercise!.NodeId,
+                    a.Exercise.Node!.MaterializedPath,
+                    Ratio = a.TotalScore / a.MaxScore
+                })
+                .ToListAsync();
+
+            if (raw.Count == 0) return new List<ChapterScoreComparisonDto>();
+
+            // Roll every attempt up to its Chapter ancestor.
+            var chapterIds = raw
+                .SelectMany(r => r.MaterializedPath.Split('/', StringSplitOptions.RemoveEmptyEntries))
+                .Select(s => int.TryParse(s, out var id) ? id : 0)
+                .Where(id => id != 0)
+                .Concat(raw.Select(r => r.NodeId!.Value))
+                .Distinct()
+                .ToList();
+
+            var chapters = await _context.ContentNodes
+                .AsNoTracking()
+                .Where(n => chapterIds.Contains(n.NodeId) && n.NodeType == NodeType.Chapter)
+                .Select(n => new { n.NodeId, n.Title })
+                .ToListAsync();
+            var chapterById = chapters.ToDictionary(c => c.NodeId, c => c.Title);
+
+            return raw
+                .Select(r =>
+                {
+                    var chapterId = r.MaterializedPath
+                        .Split('/', StringSplitOptions.RemoveEmptyEntries)
+                        .Select(s => int.TryParse(s, out var id) ? id : 0)
+                        .FirstOrDefault(id => chapterById.ContainsKey(id));
+                    if (chapterId == 0 && chapterById.ContainsKey(r.NodeId!.Value)) chapterId = r.NodeId.Value;
+                    return new { chapterId, r.Ratio };
+                })
+                .Where(x => x.chapterId != 0)
+                .GroupBy(x => x.chapterId)
                 .Select(g => new ChapterScoreComparisonDto
                 {
                     ChapterId = g.Key,
-                    ChapterName = "",
-                    AverageScore = (decimal)g.Average(a => a.TotalScore / a.MaxScore * 10.0)
+                    ChapterName = chapterById.TryGetValue(g.Key, out var t) ? t : "",
+                    AverageScore = Math.Round((decimal)g.Average(x => x.Ratio) * 10m, 1)
+                })
+                .ToList();
+        }
+
+        public async Task<List<WeakTopicDto>> GetWeakTopicsAsync(int studentId, int limit)
+        {
+            // P4 — real weak areas from NodeProgress written by ProgressProjectionService.
+            var weak = await _context.NodeProgresses
+                .AsNoTracking()
+                .Where(p => p.StudentId == studentId
+                            && p.Node!.NodeType != NodeType.Lesson
+                            && (p.WrongCount > p.CorrectCount || p.CompletionPercent < 50m)
+                            && p.Status != ProgressStatus.Completed)
+                .OrderByDescending(p => p.WrongCount)
+                .ThenBy(p => p.CompletionPercent)
+                .Take(limit)
+                .Select(p => new
+                {
+                    p.NodeId,
+                    TopicName = p.Node!.Title,
+                    p.Node.MaterializedPath,
+                    p.WrongCount
                 })
                 .ToListAsync();
-            return rows;
+
+            if (weak.Count == 0) return new List<WeakTopicDto>();
+
+            var result = new List<WeakTopicDto>();
+            foreach (var w in weak)
+            {
+                var prefix = w.MaterializedPath + w.NodeId + "/";
+                var lessons = await _context.ContentNodes
+                    .AsNoTracking()
+                    .Where(n => n.NodeType == NodeType.Lesson && !n.IsHidden && n.MaterializedPath.StartsWith(prefix))
+                    .OrderBy(n => n.OrderIndex)
+                    .Select(n => new { n.NodeId, n.Title })
+                    .ToListAsync();
+
+                var chapterName = await ResolveChapterNameAsync(w.MaterializedPath);
+
+                result.Add(new WeakTopicDto
+                {
+                    TopicId = w.NodeId,
+                    TopicName = w.TopicName,
+                    ChapterName = chapterName,
+                    ErrorCount = w.WrongCount,
+                    FirstLessonId = lessons.FirstOrDefault()?.NodeId,
+                    LessonNames = lessons.Select(l => l.Title).ToList()
+                });
+            }
+            return result;
         }
 
-        public Task<List<WeakTopicDto>> GetWeakTopicsAsync(int studentId, int limit)
+        public async Task<List<TopicPerformanceDto>> GetFullPerformanceAsync(int studentId)
         {
-            // TODO(GĐ2): dựa SkillProgress / NodeProgress khi ProgressProjectionService có dữ liệu.
-            return Task.FromResult(new List<WeakTopicDto>());
+            // P4 — average score per node, from real submitted attempts.
+            var rows = await _context.ExerciseAttempts
+                .AsNoTracking()
+                .Where(a => a.StudentId == studentId
+                            && a.Status != AttemptStatus.InProgress
+                            && a.MaxScore > 0
+                            && a.Exercise!.NodeId != null)
+                .Select(a => new { NodeId = a.Exercise!.NodeId!.Value, Ratio = a.TotalScore / a.MaxScore })
+                .ToListAsync();
+
+            if (rows.Count == 0) return new List<TopicPerformanceDto>();
+
+            var nodeIds = rows.Select(r => r.NodeId).Distinct().ToList();
+            var nodes = await _context.ContentNodes
+                .AsNoTracking()
+                .Where(n => nodeIds.Contains(n.NodeId))
+                .Select(n => new { n.NodeId, n.Title, n.MaterializedPath })
+                .ToListAsync();
+            var nodeById = nodes.ToDictionary(n => n.NodeId);
+
+            var chapterNameCache = new Dictionary<string, string>();
+
+            var result = new List<TopicPerformanceDto>();
+            foreach (var g in rows.GroupBy(r => r.NodeId))
+            {
+                if (!nodeById.TryGetValue(g.Key, out var node)) continue;
+
+                if (!chapterNameCache.TryGetValue(node.MaterializedPath, out var chapterName))
+                {
+                    chapterName = await ResolveChapterNameAsync(node.MaterializedPath);
+                    chapterNameCache[node.MaterializedPath] = chapterName;
+                }
+
+                result.Add(new TopicPerformanceDto
+                {
+                    TopicName = node.Title,
+                    ChapterName = chapterName,
+                    AverageScore = Math.Round((decimal)g.Average(x => x.Ratio) * 10m, 1),
+                    TotalAttempts = g.Count()
+                });
+            }
+            return result.OrderBy(r => r.AverageScore).ToList();
         }
 
-        public Task<List<TopicPerformanceDto>> GetFullPerformanceAsync(int studentId)
+        /// <summary>Title of the Chapter-type ancestor named in a MaterializedPath ("" if none).</summary>
+        private async Task<string> ResolveChapterNameAsync(string materializedPath)
         {
-            // TODO(GĐ2): dựa NodeProgress / SkillProgress.
-            return Task.FromResult(new List<TopicPerformanceDto>());
+            var ids = materializedPath
+                .Split('/', StringSplitOptions.RemoveEmptyEntries)
+                .Select(s => int.TryParse(s, out var id) ? id : 0)
+                .Where(id => id != 0)
+                .ToList();
+            if (ids.Count == 0) return "";
+
+            return await _context.ContentNodes
+                .AsNoTracking()
+                .Where(n => ids.Contains(n.NodeId) && n.NodeType == NodeType.Chapter)
+                .OrderBy(n => n.Depth)
+                .Select(n => n.Title)
+                .FirstOrDefaultAsync() ?? "";
         }
     }
 }

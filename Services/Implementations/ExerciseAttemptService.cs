@@ -71,6 +71,19 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
+                // P3 — pessimistic lock: only one concurrent /complete grades an attempt.
+                // The row stays locked for the rest of this transaction.
+                var claimed = await _context.Database.ExecuteSqlRawAsync(
+                    "UPDATE \"ExerciseAttempt\" SET \"Status\" = \"Status\" " +
+                    "WHERE \"AttemptId\" = {0} AND \"Status\" = 'InProgress'", dto.AttemptId);
+                if (claimed == 0)
+                {
+                    await transaction.RollbackAsync();
+                    return ApiResponse<ExerciseResultDto>.ErrorResponse(
+                        "Attempt already completed",
+                        new List<string> { "This attempt has already been completed or does not exist" });
+                }
+
                 // 1. Load the attempt and validate it
                 var attempt = await _attemptRepository.GetAttemptWithDetailsAsync(dto.AttemptId);
 

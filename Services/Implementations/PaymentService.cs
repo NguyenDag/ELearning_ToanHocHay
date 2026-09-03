@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using ELearning_ToanHocHay_Control.Common;
 using ELearning_ToanHocHay_Control.Data.Entities;
 using ELearning_ToanHocHay_Control.Models.DTOs;
 using ELearning_ToanHocHay_Control.Models.DTOs.Payment;
@@ -55,6 +56,28 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             };
 
             return ApiResponse<PaymentDto>.SuccessResponse(dto);
+        }
+
+        public async Task<ApiResponse<PagedResult<PaymentDto>>> GetPagedAsync(
+            Common.PagedRequest request, PaymentStatus? status)
+        {
+            var query = _repository.Query();
+            if (status.HasValue) query = query.Where(p => p.Status == status.Value);
+
+            var pageResult = await query
+                .OrderByDescending(p => p.PaymentDate)
+                .ToPagedResultAsync(request);
+
+            return ApiResponse<PagedResult<PaymentDto>>.SuccessResponse(pageResult.Map(x => new PaymentDto
+            {
+                PaymentId = x.PaymentId,
+                StudentId = x.StudentId ?? 0,
+                Amount = x.Amount,
+                PaymentMethod = x.PaymentMethod,
+                Status = x.Status,
+                PaymentDate = x.PaymentDate,
+                TransactionId = x.TransactionId
+            }));
         }
 
         public async Task<ApiResponse<PagedResult<PaymentDto>>> GetMyPaymentsAsync(int userId, int page, int pageSize)

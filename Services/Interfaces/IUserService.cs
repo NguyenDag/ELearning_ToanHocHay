@@ -6,6 +6,7 @@ namespace ELearning_ToanHocHay_Control.Services.Interfaces
     public interface IUserService
     {
         Task<ApiResponse<IEnumerable<UserDto>>> GetAllAsync();
+        Task<ApiResponse<PagedResult<UserDto>>> GetPagedAsync(Common.PagedRequest request);
         Task<ApiResponse<UserDto>> GetByIdAsync(int userId);
         Task<ApiResponse<UserDto>> GetByEmailAsync(string email);
 

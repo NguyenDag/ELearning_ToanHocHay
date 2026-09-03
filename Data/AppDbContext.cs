@@ -77,6 +77,7 @@ namespace ELearning_ToanHocHay_Control.Data
         public DbSet<NodeProgress> NodeProgresses { get; set; }
         public DbSet<SkillProgress> SkillProgresses { get; set; }
         public DbSet<DailyActivitySnapshot> DailyActivitySnapshots { get; set; }
+        public DbSet<AiUsageDaily> AiUsageDailies { get; set; }
         public DbSet<LearningPath> LearningPaths { get; set; }
 
         // --- Khách chưa đăng nhập ---
@@ -608,6 +609,14 @@ namespace ELearning_ToanHocHay_Control.Data
                 e.ToTable("DailyActivitySnapshot");
                 e.HasKey(x => new { x.StudentId, x.Date });
                 e.HasOne(x => x.Student).WithMany(s => s.DailyActivitySnapshots).HasForeignKey(x => x.StudentId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<AiUsageDaily>(e =>
+            {
+                e.ToTable("AiUsageDaily");
+                e.HasKey(x => new { x.StudentId, x.Date });
+                e.HasOne(x => x.Student).WithMany().HasForeignKey(x => x.StudentId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
 

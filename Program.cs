@@ -277,6 +277,7 @@ namespace ELearning_ToanHocHay_Control
             services.AddHostedService<SubscriptionLifecycleHostedService>();
             services.AddScoped<IAIHintService, AIHintService>();
             services.AddScoped<IAIFeedbackService, AIFeedbackService>();
+            services.AddScoped<IAiQuotaService, AiQuotaService>();
             services.AddScoped<ICoreDashboardService, CoreDashboardService>();
             services.AddScoped<IParentService, ParentService>();
             services.AddScoped<IResourceAccessService, ResourceAccessService>();

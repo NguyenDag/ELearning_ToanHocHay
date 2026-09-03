@@ -54,6 +54,23 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs.Content
         [Required] public List<int> OrderedNodeIds { get; set; } = new();
     }
 
+    public class MoveNodeDto
+    {
+        /// <summary>New parent; null moves the node to the version root.</summary>
+        public int? NewParentNodeId { get; set; }
+        public int? OrderIndex { get; set; }
+    }
+
+    public class NodeRevisionDto
+    {
+        public long RevisionId { get; set; }
+        public int NodeId { get; set; }
+        public int RevisionNumber { get; set; }
+        public string? Snapshot { get; set; }
+        public int EditedBy { get; set; }
+        public DateTime EditedAt { get; set; }
+    }
+
     // ---------------- ContentBlock ----------------
     public class ContentBlockDto
     {

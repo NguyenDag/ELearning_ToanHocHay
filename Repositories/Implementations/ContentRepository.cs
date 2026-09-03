@@ -72,6 +72,33 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             return _context.SaveChangesAsync();
         }
 
+        public async Task<List<ContentNode>> GetSubtreeAsync(int courseVersionId, string materializedPathPrefix)
+            => await _context.ContentNodes
+                .Where(n => n.CourseVersionId == courseVersionId
+                            && n.MaterializedPath.StartsWith(materializedPathPrefix))
+                .ToListAsync();
+
+        // ---------------- revisions ----------------
+        public async Task<List<NodeRevision>> GetRevisionsAsync(int nodeId)
+            => await _context.NodeRevisions.AsNoTracking()
+                .Where(r => r.NodeId == nodeId)
+                .OrderByDescending(r => r.RevisionNumber)
+                .ToListAsync();
+
+        public Task<NodeRevision?> GetRevisionAsync(int nodeId, int revisionNumber)
+            => _context.NodeRevisions.AsNoTracking()
+                .FirstOrDefaultAsync(r => r.NodeId == nodeId && r.RevisionNumber == revisionNumber);
+
+        public async Task<int> NextRevisionNumberAsync(int nodeId)
+            => ((await _context.NodeRevisions.Where(r => r.NodeId == nodeId)
+                .Select(r => (int?)r.RevisionNumber).MaxAsync()) ?? 0) + 1;
+
+        public async Task AddRevisionAsync(NodeRevision revision)
+        {
+            _context.NodeRevisions.Add(revision);
+            await _context.SaveChangesAsync();
+        }
+
         // ---------------- node type rules ----------------
         public async Task<bool> NodeTypeAllowedAsync(int? subjectId, NodeType? parentType, NodeType childType)
         {

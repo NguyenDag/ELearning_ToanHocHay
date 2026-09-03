@@ -18,8 +18,16 @@ namespace ELearning_ToanHocHay_Control.Repositories.Interfaces
         Task SaveAsync();
         Task RemoveNodeAsync(ContentNode node);
 
+        Task<List<ContentNode>> GetSubtreeAsync(int courseVersionId, string materializedPathPrefix);
+
         // ----- node type rules -----
         Task<bool> NodeTypeAllowedAsync(int? subjectId, NodeType? parentType, NodeType childType);
+
+        // ----- revisions -----
+        Task<List<NodeRevision>> GetRevisionsAsync(int nodeId);
+        Task<NodeRevision?> GetRevisionAsync(int nodeId, int revisionNumber);
+        Task<int> NextRevisionNumberAsync(int nodeId);
+        Task AddRevisionAsync(NodeRevision revision);
 
         // ----- blocks -----
         Task<List<ContentBlock>> GetBlocksAsync(int nodeId);

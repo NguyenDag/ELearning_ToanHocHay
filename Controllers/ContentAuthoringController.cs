@@ -67,6 +67,27 @@ namespace ELearning_ToanHocHay_Control.Controllers
             return r.Success ? Ok(r) : BadRequest(r);
         }
 
+        [HttpPatch("nodes/{nodeId:int}/move")]
+        public async Task<IActionResult> MoveNode(int nodeId, [FromBody] MoveNodeDto dto)
+        {
+            var r = await _content.MoveNodeAsync(nodeId, dto, Uid);
+            return r.Success ? Ok(r) : BadRequest(r);
+        }
+
+        [HttpGet("nodes/{nodeId:int}/revisions")]
+        public async Task<IActionResult> GetRevisions(int nodeId)
+        {
+            var r = await _content.GetRevisionsAsync(nodeId);
+            return r.Success ? Ok(r) : NotFound(r);
+        }
+
+        [HttpPost("nodes/{nodeId:int}/revisions/{revisionNumber:int}/restore")]
+        public async Task<IActionResult> RestoreRevision(int nodeId, int revisionNumber)
+        {
+            var r = await _content.RestoreRevisionAsync(nodeId, revisionNumber, Uid);
+            return r.Success ? Ok(r) : BadRequest(r);
+        }
+
         // ---------------- blocks ----------------
         [HttpPost("nodes/{nodeId:int}/blocks")]
         public async Task<IActionResult> AddBlock(int nodeId, [FromBody] ContentBlockRequestDto dto)

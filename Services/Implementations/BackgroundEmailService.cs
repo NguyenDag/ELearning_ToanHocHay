@@ -16,15 +16,27 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
         public void QueueConfirmationEmail(string toEmail, string fullName, string confirmLink)
         {
-            Console.WriteLine("📥 Confirmation email queued");
-            _emailQueue.Enqueue(new EmailJob(EmailKind.Confirmation, toEmail, fullName, confirmLink));
+            _emailQueue.Enqueue(new EmailJob(EmailKind.Confirmation, toEmail, fullName) { Link = confirmLink });
             _signal.Release();
         }
 
         public void QueuePasswordResetEmail(string toEmail, string fullName, string resetLink)
         {
-            Console.WriteLine("📥 Password-reset email queued");
-            _emailQueue.Enqueue(new EmailJob(EmailKind.PasswordReset, toEmail, fullName, resetLink));
+            _emailQueue.Enqueue(new EmailJob(EmailKind.PasswordReset, toEmail, fullName) { Link = resetLink });
+            _signal.Release();
+        }
+
+        public void QueueTabSwitchEmail(
+            string toEmail, string parentName, string studentName, string exerciseName,
+            DateTime switchedAt, int switchCount)
+        {
+            _emailQueue.Enqueue(new EmailJob(EmailKind.TabSwitch, toEmail, parentName)
+            {
+                StudentName = studentName,
+                ExerciseName = exerciseName,
+                SwitchedAt = switchedAt,
+                SwitchCount = switchCount
+            });
             _signal.Release();
         }
 
@@ -44,10 +56,15 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     switch (job.Kind)
                     {
                         case EmailKind.Confirmation:
-                            await emailService.SendConfirmEmailAsync(job.ToEmail, job.FullName, job.Link);
+                            await emailService.SendConfirmEmailAsync(job.ToEmail, job.Name, job.Link!);
                             break;
                         case EmailKind.PasswordReset:
-                            await emailService.SendPasswordResetEmailAsync(job.ToEmail, job.FullName, job.Link);
+                            await emailService.SendPasswordResetEmailAsync(job.ToEmail, job.Name, job.Link!);
+                            break;
+                        case EmailKind.TabSwitch:
+                            await emailService.SendTabSwitchNotificationAsync(
+                                job.ToEmail, job.Name, job.StudentName!, job.ExerciseName!,
+                                job.SwitchedAt, job.SwitchCount);
                             break;
                     }
                 }
@@ -58,8 +75,25 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             }
         }
 
-        private enum EmailKind { Confirmation, PasswordReset }
+        private enum EmailKind { Confirmation, PasswordReset, TabSwitch }
 
-        private sealed record EmailJob(EmailKind Kind, string ToEmail, string FullName, string Link);
+        private sealed class EmailJob
+        {
+            public EmailJob(EmailKind kind, string toEmail, string name)
+            {
+                Kind = kind;
+                ToEmail = toEmail;
+                Name = name;
+            }
+
+            public EmailKind Kind { get; }
+            public string ToEmail { get; }
+            public string Name { get; }
+            public string? Link { get; init; }
+            public string? StudentName { get; init; }
+            public string? ExerciseName { get; init; }
+            public DateTime SwitchedAt { get; init; }
+            public int SwitchCount { get; init; }
+        }
     }
 }

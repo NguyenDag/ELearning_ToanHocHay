@@ -31,6 +31,8 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         private readonly AppDbContext _context;
         private readonly IEmailService _emailService;
         private readonly IProgressProjectionService _projection;
+        private readonly INotificationRuleEngine _rules;
+        private readonly IBackgroundEmailService _backgroundEmail;
 
         public ExerciseAttemptService(
             IExerciseAttemptRepository attemptRepository,
@@ -44,9 +46,13 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             IMapper mapper,
             AppDbContext context,
             IEmailService emailService,
-            IProgressProjectionService projection)
+            IProgressProjectionService projection,
+            INotificationRuleEngine rules,
+            IBackgroundEmailService backgroundEmail)
         {
             _projection = projection;
+            _rules = rules;
+            _backgroundEmail = backgroundEmail;
             _attemptRepository = attemptRepository;
             _exerciseRepository = exerciseRepository;
             _answerRepository = answerRepository;
@@ -190,6 +196,10 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
                 // P4 (A2-06): fold this attempt into NodeProgress + the activity snapshot.
                 await _projection.ProjectAttemptAsync(attempt.AttemptId);
+
+                // P6: low-score notification rule (never blocks the response).
+                try { await _rules.OnExerciseCompletedAsync(attempt.AttemptId); }
+                catch (Exception ex) { Console.WriteLine($"[Notify] low-score rule failed: {ex.Message}"); }
 
                 // 8. Return the result immediately (AI fields fill in later via /result)
                 var result = new ExerciseResultDto
@@ -894,7 +904,11 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 // Count how many times it has happened
                 var switchCount = await _context.TabSwitchLogs.CountAsync(l => l.AttemptId == attemptId);
 
-                // Stop notifying parents once the cap is reached (the log still grows).
+                // P6: in-app notification for student + parents (respects opt-outs).
+                try { await _rules.OnTabSwitchAsync(attemptId, switchCount); }
+                catch (Exception ex) { Console.WriteLine($"[Notify] tab-switch rule failed: {ex.Message}"); }
+
+                // Stop emailing parents once the cap is reached (the log still grows).
                 if (switchCount > TabSwitchEmailCap)
                     return ApiResponse<bool>.SuccessResponse(true, "Đã ghi nhận (đã đạt giới hạn gửi email).");
 
@@ -904,27 +918,12 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     .Where(p => p?.User?.Email != null)
                     .ToList() ?? new List<Parent>();
 
-                if (!parents.Any())
-                {
-                    // No linked parents — still report success
-                    return ApiResponse<bool>.SuccessResponse(true, "Không có phụ huynh liên kết.");
-                }
+                // P6: parent emails go to the background queue — no longer awaited in the request.
+                foreach (var p in parents)
+                    _backgroundEmail.QueueTabSwitchEmail(
+                        p.User!.Email, p.User.FullName, studentName, exerciseName, switchedAt, switchCount);
 
-                // Email every linked parent in parallel
-                var emailTasks = parents.Select(p =>
-                    _emailService.SendTabSwitchNotificationAsync(
-                        toEmail: p.User!.Email,
-                        parentName: p.User.FullName,
-                        studentName: studentName,
-                        exerciseName: exerciseName,
-                        switchedAt: switchedAt,
-                        switchCount: switchCount
-                    )
-                );
-
-                await Task.WhenAll(emailTasks);
-
-                return ApiResponse<bool>.SuccessResponse(true, "Đã gửi thông báo cho phụ huynh.");
+                return ApiResponse<bool>.SuccessResponse(true, "Đã ghi nhận và thông báo cho phụ huynh.");
             }
             catch (Exception ex)
             {

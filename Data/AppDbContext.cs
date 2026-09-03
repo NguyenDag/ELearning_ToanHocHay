@@ -103,6 +103,7 @@ namespace ELearning_ToanHocHay_Control.Data
         public DbSet<SupportTicket> SupportTickets { get; set; }
         public DbSet<SupportMessage> SupportMessages { get; set; }
         public DbSet<Notification> Notifications { get; set; }
+        public DbSet<NotificationPreference> NotificationPreferences { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<SystemConfig> SystemConfigs { get; set; }
         public DbSet<StaticPage> StaticPages { get; set; }
@@ -812,6 +813,14 @@ namespace ELearning_ToanHocHay_Control.Data
                 e.HasOne(x => x.User).WithMany(u => u.Notifications).HasForeignKey(x => x.UserId)
                     .OnDelete(DeleteBehavior.Cascade);
                 e.HasOne(x => x.Student).WithMany().HasForeignKey(x => x.StudentId);
+            });
+
+            modelBuilder.Entity<NotificationPreference>(e =>
+            {
+                e.ToTable("NotificationPreference");
+                e.HasKey(x => new { x.UserId, x.RuleKey });
+                e.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<AuditLog>(e =>

@@ -13,45 +13,31 @@ namespace ELearning_ToanHocHay_Control.Controllers
     [EnableRateLimiting("ai")]
     public class ChatbotController : ControllerBase
     {
+        private readonly IChatService _chat;
         private readonly IAIService _aiService;
         private readonly ILogger<ChatbotController> _logger;
 
-        public ChatbotController(IAIService aiService, ILogger<ChatbotController> logger)
+        public ChatbotController(IChatService chat, IAIService aiService, ILogger<ChatbotController> logger)
         {
+            _chat = chat;
             _aiService = aiService;
             _logger = logger;
         }
 
+        private int Uid => User.GetUserId()!.Value;
+
         [HttpPost("message")]
-        public async Task<IActionResult> Message([FromBody] ChatbotMessageRequest request)
+        public async Task<IActionResult> Message([FromBody] SendChatMessageDto request)
         {
-            try
-            {
-                request.UserId = User.GetUserId()?.ToString();
-                var result = await _aiService.SendChatbotMessageAsync(request);
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error in ChatbotController.Message");
-                return StatusCode(500, new { success = false, error = "Internal server error" });
-            }
+            var r = await _chat.SendUserTurnAsync(Uid, User.GetStudentId(), request.Text, isQuickReply: false);
+            return r.Success ? Ok(r) : BadRequest(r);
         }
 
         [HttpPost("quick-reply")]
-        public async Task<IActionResult> QuickReply([FromBody] ChatbotQuickReplyRequest request)
+        public async Task<IActionResult> QuickReply([FromBody] SendChatMessageDto request)
         {
-            try
-            {
-                request.UserId = User.GetUserId()?.ToString();
-                var result = await _aiService.SendChatbotQuickReplyAsync(request);
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error in ChatbotController.QuickReply");
-                return StatusCode(500, new { success = false, error = "Internal server error" });
-            }
+            var r = await _chat.SendUserTurnAsync(Uid, User.GetStudentId(), request.Text, isQuickReply: true);
+            return r.Success ? Ok(r) : BadRequest(r);
         }
 
         [HttpPost("trigger")]
@@ -59,15 +45,35 @@ namespace ELearning_ToanHocHay_Control.Controllers
         {
             try
             {
-                request.UserId = User.GetUserId()?.ToString();
-                var result = await _aiService.SendChatbotTriggerAsync(request);
-                return Ok(result);
+                request.UserId = Uid.ToString();
+                return Ok(await _aiService.SendChatbotTriggerAsync(request));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error in ChatbotController.Trigger");
-                return StatusCode(500, new { success = false, error = "Internal server error" });
+                _logger.LogError(ex, "Chatbot trigger failed");
+                return StatusCode(503, new { success = false, error = "AI service unavailable" });
             }
+        }
+
+        [HttpGet("conversations")]
+        public async Task<IActionResult> Conversations()
+            => Ok(await _chat.GetMyConversationsAsync(Uid));
+
+        [HttpGet("conversations/{id:int}/messages")]
+        public async Task<IActionResult> Messages(int id)
+        {
+            var r = await _chat.GetMessagesAsync(Uid, id);
+            return r.Success ? Ok(r) : NotFound(r);
+        }
+
+        [HttpGet("health")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Health()
+        {
+            var ok = await _aiService.IsHealthyAsync();
+            return ok
+                ? Ok(new { status = "healthy" })
+                : StatusCode(503, new { status = "unavailable" });
         }
     }
 }

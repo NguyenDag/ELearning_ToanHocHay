@@ -18,5 +18,8 @@ namespace ELearning_ToanHocHay_Control.Services.Interfaces
         Task<ChatbotResponse?> SendChatbotMessageAsync(ChatbotMessageRequest request);
         Task<ChatbotResponse?> SendChatbotQuickReplyAsync(ChatbotQuickReplyRequest request);
         Task<ChatbotResponse?> SendChatbotTriggerAsync(ChatbotTriggerRequest request);
+
+        /// <summary>P6 — is the Flask AI service reachable?</summary>
+        Task<bool> IsHealthyAsync();
     }
 }

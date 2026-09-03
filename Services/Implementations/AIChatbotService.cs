@@ -193,6 +193,21 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             return await PostChatbotAsync("/api/chatbot/trigger", request);
         }
 
+        public async Task<bool> IsHealthyAsync()
+        {
+            foreach (var path in new[] { "/health", "/api/health", "/" })
+            {
+                try
+                {
+                    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                    var res = await _httpClient.GetAsync(path, cts.Token);
+                    if (res.IsSuccessStatusCode) return true;
+                }
+                catch { /* try the next path */ }
+            }
+            return false;
+        }
+
         private async Task<ChatbotResponse?> PostChatbotAsync<T>(string endpoint, T request)
         {
             try

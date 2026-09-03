@@ -283,6 +283,7 @@ namespace ELearning_ToanHocHay_Control
             services.AddScoped<IParentLinkService, ParentLinkService>();
             services.AddScoped<INotificationService, NotificationService>();
             services.AddScoped<INotificationRuleEngine, NotificationRuleEngine>();
+            services.AddScoped<IChatService, ChatService>();
             services.AddScoped<IResourceAccessService, ResourceAccessService>();
 
             // A3/P2 — content layer

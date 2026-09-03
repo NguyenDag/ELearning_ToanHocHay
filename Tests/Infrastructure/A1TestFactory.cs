@@ -45,6 +45,9 @@ public class A1TestFactory : WebApplicationFactory<Program>, IAsyncLifetime
         Environment.SetEnvironmentVariable("JwtSettings__ExpirationMinutes", "60");
         // Tests fire many auth calls from one IP — lift the login rate limit.
         Environment.SetEnvironmentVariable("RateLimiting__AuthPermitLimit", "10000");
+        // Tests drive the subscription sweep explicitly — no background timer.
+        Environment.SetEnvironmentVariable("SePay__LifecycleIntervalMinutes", "0");
+        Environment.SetEnvironmentVariable("SePay__ApiKeyValidator", "test-sepay-key");
 
         // Touching Services builds the host, which runs Program.Main -> db.Database.Migrate().
         using var scope = Services.CreateScope();

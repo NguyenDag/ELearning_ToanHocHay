@@ -48,8 +48,11 @@ namespace ELearning_ToanHocHay_Control
                 connectionString = builder.Configuration.GetConnectionString("MyCnn")!;
             }
 
-            builder.Services.AddDbContext<AppDbContext>(options =>
-                options.UseNpgsql(connectionString));
+            builder.Services.AddHttpContextAccessor();
+            builder.Services.AddScoped<AuditSaveChangesInterceptor>();
+            builder.Services.AddDbContext<AppDbContext>((sp, options) =>
+                options.UseNpgsql(connectionString)
+                       .AddInterceptors(sp.GetRequiredService<AuditSaveChangesInterceptor>()));
 
             // 2. App base URL & email config
             var appBaseUrl = Environment.GetEnvironmentVariable("APP_BASE_URL") ?? "https://localhost:5001";
@@ -62,7 +65,6 @@ namespace ELearning_ToanHocHay_Control
             // P7 — global exception handling (A2-15) + health checks
             builder.Services.AddProblemDetails();
             builder.Services.AddExceptionHandler<Common.GlobalExceptionHandler>();
-            builder.Services.AddHttpContextAccessor();
             builder.Services.AddHealthChecks()
                 .AddCheck<Common.DbHealthCheck>("database", tags: new[] { "ready" });
 

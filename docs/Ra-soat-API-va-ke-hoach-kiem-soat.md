@@ -415,6 +415,19 @@ kể số câu sai.
 Không còn field dashboard trả 0/rỗng do thiếu projection. `ai-assessment` / `ai-roadmap` gọi
 AI với dữ liệu thật (kiểm qua mock). Không còn `Contains("premium")` trong codebase.
 
+**Trạng thái triển khai (cập nhật)** — nhánh `feat/p4-progress-dashboard`, test `P4ProgressTests` (4):
+
+| Hạng mục P4 | Trạng thái | Ghi chú |
+|---|---|---|
+| `ProgressProjectionService` (A2-06) | ✅ | `ProjectAttemptAsync` gọi sau mỗi submit; cập nhật `NodeProgress` node + roll-up tổ tiên theo `MaterializedPath`; cập nhật `StudentCourse.ProgressPercent` |
+| API "đánh dấu hoàn thành bài học" | ✅ | `POST /api/progress/lessons/{id}/complete` — ngưỡng 20s xem bài, kiểm ghi danh, bỏ hard-code `isCompleted` |
+| `GetWeakTopicsAsync` / `GetFullPerformanceAsync` dữ liệu thật | ✅ | truy vấn `NodeProgress` + attempt roll-up → mở khoá nhánh thật của `ai-assessment` / `ai-roadmap` |
+| Thay chuỗi tên gói bằng `Package.Tier` (A2-05) | ✅ | `Services/Helpers/TierMap` — không còn `Contains("premium")` |
+| N+1 dashboard (A2-14) | ✅ | `GetDashboardStatsAsync` load exercise 1 lần, bucket trong RAM |
+| `DailyActivitySnapshot` + streak từ snapshot + heatmap | ✅ | snapshot cập nhật khi submit / hoàn thành bài; `GetStreakDataAsync` đọc snapshot; `GET /api/progress/students/{id}/heatmap` (guard chủ sở hữu) |
+| `ChapterName` rỗng (A4) | ✅ | `GetRecentLessonsAsync` / `GetChapterComparisonAsync` điền tên chương |
+| **Còn lại** | ⏳ | chưa gộp `StudentController.GetDashboardStats` với `DashboardController` (giữ 2 endpoint để không vỡ frontend); `SkillProgress` chưa được ghi; `ChartData`/`ScoreChartItemDto` vẫn theo node id chưa gộp chương; test "so sánh 2 tuần cố định" chưa có |
+
 ---
 
 ### P5 — Thanh toán & Subscription hoàn chỉnh

@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Serilog;
 
 namespace ELearning_ToanHocHay_Control
 {
@@ -22,6 +23,15 @@ namespace ELearning_ToanHocHay_Control
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
+            // P7 — structured logging (Serilog). Config-driven, console sink by default.
+            builder.Host.UseSerilog((context, services, config) => config
+                .ReadFrom.Configuration(context.Configuration)
+                .ReadFrom.Services(services)
+                .Enrich.FromLogContext()
+                .WriteTo.Console(
+                    outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} " +
+                                    "{Properties:j}{NewLine}{Exception}"));
 
             // 1. Database config (supports both a Railway URL and a local connection string)
             var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
@@ -48,6 +58,13 @@ namespace ELearning_ToanHocHay_Control
 
             // 3. Register all repositories and services
             RegisterAppServices(builder.Services);
+
+            // P7 — global exception handling (A2-15) + health checks
+            builder.Services.AddProblemDetails();
+            builder.Services.AddExceptionHandler<Common.GlobalExceptionHandler>();
+            builder.Services.AddHttpContextAccessor();
+            builder.Services.AddHealthChecks()
+                .AddCheck<Common.DbHealthCheck>("database", tags: new[] { "ready" });
 
 
 
@@ -190,8 +207,12 @@ namespace ELearning_ToanHocHay_Control
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                 db.Database.Migrate();
             }
-                
+
             // 8. Middleware pipeline, in the standard order
+            app.UseExceptionHandler();                 // P7 (A2-15) — first, so it wraps everything
+            app.UseMiddleware<Common.CorrelationIdMiddleware>();
+            app.UseSerilogRequestLogging();
+
             app.UseSwagger();
             app.UseSwaggerUI();
 
@@ -217,8 +238,15 @@ namespace ELearning_ToanHocHay_Control
             // Default redirect to Swagger
             app.MapGet("/", () => Results.Redirect("/swagger")).AllowAnonymous();
 
-            // Health check (A3)
-            app.MapGet("/health", () => Results.Ok(new { status = "healthy" })).AllowAnonymous();
+            // P7 — liveness (process up) vs readiness (DB reachable)
+            app.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+            {
+                Predicate = _ => false
+            }).AllowAnonymous();
+            app.MapHealthChecks("/health/ready", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+            {
+                Predicate = c => c.Tags.Contains("ready")
+            }).AllowAnonymous();
 
             app.Run();
         }
@@ -247,7 +275,6 @@ namespace ELearning_ToanHocHay_Control
             services.AddScoped<IAIFeedbackRepository, AIFeedbackRepository>();
             services.AddScoped<IDashboardRepository, DashboardRepository>();
             services.AddScoped<IParentLinkRepository, ParentLinkRepository>();
-            services.AddScoped<IParentRepository, ParentRepository>();
 
             // A3/P2 — content layer
             services.AddScoped<ICatalogRepository, CatalogRepository>();

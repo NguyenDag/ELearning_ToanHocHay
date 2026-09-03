@@ -5,9 +5,7 @@ namespace ELearning_ToanHocHay_Control.Services.Interfaces
 {
     public interface IQuestionService
     {
-        Task<ApiResponse<QuestionDto>> CreateQuestionAsync(CreateQuestionDto dto);
-        Task<ApiResponse<List<QuestionDto>>> CreateQuestionsAsync(List<CreateQuestionDto> dtos);
-
-        // (Nếu có các hàm khác cũ thì giữ nguyên, chỉ thêm hàm trên vào)
+        Task<ApiResponse<QuestionDto>> CreateQuestionAsync(CreateQuestionDto dto, int createdBy);
+        Task<ApiResponse<List<QuestionDto>>> CreateQuestionsAsync(List<CreateQuestionDto> dtos, int createdBy);
     }
 }

@@ -54,7 +54,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 : ApiResponse<bool>.ErrorResponse("Failed to add questions");
         }
 
-        public async Task<ApiResponse<ExerciseDto>> CreateExerciseAsync(ExerciseRequestDto exercise)
+        public async Task<ApiResponse<ExerciseDto>> CreateExerciseAsync(ExerciseRequestDto exercise, int createdBy)
         {
             try
             {
@@ -70,7 +70,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     TotalScores = exercise.TotalScores,
                     PassingScore = exercise.PassingScore,
                     Status = exercise.Status,
-                    CreatedBy = 3, // Use UserId in session for CreatedBy
+                    CreatedBy = createdBy, // A2-13 — from the caller's token
                     CreatedAt = DateTime.UtcNow,
                 };
                 await _exerciseRepository.CreateExerciseAsync(_exercise);
@@ -264,6 +264,71 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             return success
                 ? ApiResponse<bool>.SuccessResponse(true, "Score updated")
                 : ApiResponse<bool>.ErrorResponse("Question not found");
+        }
+
+        // A3/P2 — publish / unpublish
+        public async Task<ApiResponse<ExerciseDto>> SetPublishedAsync(int exerciseId, bool published)
+        {
+            var exercise = await _exerciseRepository.GetExerciseByIdAsync(exerciseId);
+            if (exercise == null)
+                return ApiResponse<ExerciseDto>.ErrorResponse("Exercise not found");
+
+            if (published)
+            {
+                var withQuestions = await _exerciseRepository.GetExerciseWithQuestionsAsync(exerciseId);
+                var count = withQuestions?.ExerciseQuestions?.Count ?? 0;
+                if (count == 0)
+                    return ApiResponse<ExerciseDto>.ErrorResponse("Add at least one question before publishing");
+
+                exercise.Status = ExerciseStatus.Published;
+                exercise.IsActive = true;
+            }
+            else
+            {
+                exercise.Status = ExerciseStatus.Draft;
+                exercise.IsActive = false;
+            }
+
+            await _exerciseRepository.UpdateExerciseAsync(exercise);
+            return ApiResponse<ExerciseDto>.SuccessResponse(
+                _mapper.Map<ExerciseDto>(exercise),
+                published ? "Exercise published" : "Exercise unpublished");
+        }
+
+        // A3/P2 — full exercise (with answer keys) for the editor
+        public Task<ApiResponse<ExerciseDetailDto>> GetForEditAsync(int exerciseId)
+            => GetByIdAsync(exerciseId);
+
+        // A3/P2 — the questions attached to an exercise, in order
+        public async Task<ApiResponse<List<QuestionInExerciseDto>>> GetExerciseQuestionsAsync(int exerciseId)
+        {
+            if (await _exerciseRepository.GetExerciseByIdAsync(exerciseId) == null)
+                return ApiResponse<List<QuestionInExerciseDto>>.ErrorResponse("Exercise not found");
+
+            var rows = await _exerciseRepository.GetExerciseQuestionsAsync(exerciseId);
+            var dtos = rows
+                .Where(eq => eq.Question != null)
+                .Select(eq => new QuestionInExerciseDto
+                {
+                    QuestionId = eq.QuestionId,
+                    OrderIndex = eq.OrderIndex,
+                    Score = eq.Score,
+                    QuestionText = eq.Question!.QuestionText,
+                    QuestionImageUrl = eq.Question.QuestionImageUrl,
+                    QuestionType = eq.Question.QuestionType,
+                    DifficultyLevel = eq.Question.DifficultyLevel,
+                    Options = eq.Question.QuestionOptions?
+                        .OrderBy(o => o.OrderIndex)
+                        .Select(o => new QuestionOptionDto
+                        {
+                            OptionId = o.OptionId,
+                            OptionText = o.OptionText,
+                            IsCorrect = o.IsCorrect
+                        }).ToList() ?? new List<QuestionOptionDto>()
+                })
+                .ToList();
+
+            return ApiResponse<List<QuestionInExerciseDto>>.SuccessResponse(dtos);
         }
     }
 }

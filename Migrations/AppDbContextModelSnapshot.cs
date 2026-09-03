@@ -1724,6 +1724,41 @@ namespace ELearning_ToanHocHay_Control.Migrations
                     b.ToTable("ParentLink", (string)null);
                 });
 
+            modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.PasswordResetToken", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("ExpiredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsUsed")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Token")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("PasswordResetToken", (string)null);
+                });
+
             modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.Payment", b =>
                 {
                     b.Property<int>("PaymentId")
@@ -2146,6 +2181,49 @@ namespace ELearning_ToanHocHay_Control.Migrations
                     b.HasIndex("TagId");
 
                     b.ToTable("QuestionTag", (string)null);
+                });
+
+            modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.RefreshToken", b =>
+                {
+                    b.Property<long>("RefreshTokenId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("RefreshTokenId"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedByIp")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ReplacedByTokenHash")
+                        .HasMaxLength(88)
+                        .HasColumnType("character varying(88)");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(88)
+                        .HasColumnType("character varying(88)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("RefreshTokenId");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("RefreshToken", (string)null);
                 });
 
             modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.ReviewComment", b =>
@@ -2978,6 +3056,9 @@ namespace ELearning_ToanHocHay_Control.Migrations
                     b.Property<DateTime?>("EmailConfirmedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int>("FailedLoginCount")
+                        .HasColumnType("integer");
+
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -3000,6 +3081,9 @@ namespace ELearning_ToanHocHay_Control.Migrations
 
                     b.Property<string>("LockedReason")
                         .HasColumnType("text");
+
+                    b.Property<DateTime?>("LockoutEndsAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
@@ -3631,6 +3715,17 @@ namespace ELearning_ToanHocHay_Control.Migrations
                     b.Navigation("Student");
                 });
 
+            modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.PasswordResetToken", b =>
+                {
+                    b.HasOne("ELearning_ToanHocHay_Control.Data.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.Payment", b =>
                 {
                     b.HasOne("ELearning_ToanHocHay_Control.Data.Entities.Order", "Order")
@@ -3828,6 +3923,17 @@ namespace ELearning_ToanHocHay_Control.Migrations
                     b.Navigation("Question");
 
                     b.Navigation("Tag");
+                });
+
+            modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.RefreshToken", b =>
+                {
+                    b.HasOne("ELearning_ToanHocHay_Control.Data.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ELearning_ToanHocHay_Control.Data.Entities.ReviewComment", b =>

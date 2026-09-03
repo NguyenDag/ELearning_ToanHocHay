@@ -80,6 +80,47 @@ public class SendGridEmailService : IEmailService
         }
     }
 
+    public async Task SendPasswordResetEmailAsync(string toEmail, string fullName, string resetLink)
+    {
+        if (!_isEnabled)
+        {
+            _logger.LogInformation("📭 Password-reset email skipped (SendGrid disabled). To: {Email}", toEmail);
+            return;
+        }
+
+        try
+        {
+            var client = new SendGridClient(_apiKey);
+            var from = new EmailAddress(_senderEmail!, _senderName);
+            var to = new EmailAddress(toEmail, fullName);
+            var subject = "Đặt lại mật khẩu";
+            var htmlContent = $@"
+                <p>Xin chào <strong>{fullName}</strong>,</p>
+                <p>Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn.</p>
+                <p>
+                    <a href='{resetLink}'
+                       style='padding:10px 20px;background:#2563eb;color:white;text-decoration:none;border-radius:6px;'>
+                       Đặt lại mật khẩu
+                    </a>
+                </p>
+                <p>Link có hiệu lực 1 giờ. Nếu bạn không yêu cầu, hãy bỏ qua email này.</p>
+                <br/><p>E-Learning Team</p>";
+
+            var msg = MailHelper.CreateSingleEmail(from, to, subject, "", htmlContent);
+            var response = await client.SendEmailAsync(msg);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var body = await response.Body.ReadAsStringAsync();
+                _logger.LogError("❌ SendGrid password-reset error {StatusCode}: {Body}", response.StatusCode, body);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ SendGrid password-reset send failed to {Email}", toEmail);
+        }
+    }
+
     public async Task SendTabSwitchNotificationAsync(
         string toEmail,
         string parentName,

@@ -116,17 +116,20 @@ namespace ELearning_ToanHocHay_Control
             });
 
             // Rate limiting
+            var authPermitLimit = int.TryParse(
+                builder.Configuration["RateLimiting:AuthPermitLimit"], out var apl) ? apl : 5;
+
             builder.Services.AddRateLimiter(options =>
             {
                 options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
-                // 5 requests / minute / IP for sensitive endpoints (login).
+                // N requests / minute / IP for sensitive endpoints (login, password reset).
                 options.AddPolicy("auth", context =>
                     RateLimitPartition.GetFixedWindowLimiter(
                         partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
                         factory: _ => new FixedWindowRateLimiterOptions
                         {
-                            PermitLimit = 5,
+                            PermitLimit = authPermitLimit,
                             Window = TimeSpan.FromMinutes(1),
                             QueueLimit = 0
                         }));
@@ -227,6 +230,8 @@ namespace ELearning_ToanHocHay_Control
         {
             // Repositories
             services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+            services.AddScoped<IAuditLogRepository, AuditLogRepository>();
             services.AddScoped<IStudentRepository, StudentRepository>();
             services.AddScoped<IParentRepository, ParentRepository>();
             services.AddScoped<IExerciseRepository, ExerciseRepository>();
@@ -243,6 +248,12 @@ namespace ELearning_ToanHocHay_Control
             services.AddScoped<IDashboardRepository, DashboardRepository>();
             services.AddScoped<IParentLinkRepository, ParentLinkRepository>();
             services.AddScoped<IParentRepository, ParentRepository>();
+
+            // A3/P2 — content layer
+            services.AddScoped<ICatalogRepository, CatalogRepository>();
+            services.AddScoped<ICourseRepository, CourseRepository>();
+            services.AddScoped<IContentRepository, ContentRepository>();
+            services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
 
             // Services
             services.AddScoped<IAuthService, AuthService>();
@@ -266,6 +277,16 @@ namespace ELearning_ToanHocHay_Control
             services.AddScoped<ICoreDashboardService, CoreDashboardService>();
             services.AddScoped<IParentService, ParentService>();
             services.AddScoped<IResourceAccessService, ResourceAccessService>();
+
+            // A3/P2 — content layer
+            services.AddScoped<ICatalogService, CatalogService>();
+            services.AddScoped<ICourseService, CourseService>();
+            services.AddScoped<IContentAuthoringService, ContentAuthoringService>();
+            services.AddScoped<IContentAccessService, ContentAccessService>();
+            services.AddScoped<IEnrollmentService, EnrollmentService>();
+            services.AddScoped<ILearnService, LearnService>();
+            services.AddScoped<IQuestionBankService, QuestionBankService>();
+            services.AddScoped<IAdminUserService, AdminUserService>();
 
             // Background Services
             services.AddSingleton<IBackgroundEmailService, BackgroundEmailService>();

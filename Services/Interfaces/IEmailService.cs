@@ -8,6 +8,12 @@ namespace ELearning_ToanHocHay_Control.Services.Interfaces
         string confirmLink
         );
 
+        Task SendPasswordResetEmailAsync(
+        string toEmail,
+        string fullName,
+        string resetLink
+        );
+
         Task SendTabSwitchNotificationAsync(
             string toEmail,
             string parentName,

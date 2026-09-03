@@ -146,6 +146,26 @@ có controller/service nào:
 - **Thông báo / Hỗ trợ / Duyệt nội dung:** chưa có (nằm ở giai đoạn sau theo roadmap).
 - **Vận hành:** endpoint health/readiness cho chính API (`/health`).
 
+### Trạng thái triển khai (cập nhật)
+
+> Nhánh `feat/a3-p2-content-layer`. Build xanh, 58/58 test xanh (có `A3ContentLayerTests`).
+
+| Hạng mục A3 (thuộc P2) | Trạng thái | Ghi chú |
+|---|---|---|
+| Catalog CRUD (Subject/GradeLevel/CurriculumFramework) | ✅ | `CatalogController` — đọc công khai bản active, ghi cần content role |
+| Course + CourseVersion CRUD | ✅ | `CoursesController` — slug + (môn×lớp×bộ sách) unique |
+| Workflow version Draft→InReview→Approved→Published | ✅ | publish trong transaction, archive version cũ, lật `Course.Status` |
+| Clone cây nội dung khi tạo version | ✅ | `CloneFromVersionId` |
+| Cây nội dung: ContentNode (NodeTypeRule + MaterializedPath/Depth) | ✅ | `ContentAuthoringController`, chặn sửa khi version ≠ Draft |
+| ContentBlock / LessonResource / FlashcardDeck + Flashcard CRUD | ✅ | |
+| `IContentAccessService` 3 bậc (ẩn danh / đăng ký / entitlement) | ✅ | enrolment `StudentCourse` hoặc `PackageEntitlement` trên sub active |
+| StudentCourse ghi danh + "khoá của tôi" | ✅ | `EnrollmentController` |
+| Tiêu thụ nội dung (cây published + node detail, có gating) | ✅ | `LearnController` (công khai) |
+| QuestionBank CRUD + Question CRUD + workflow duyệt câu hỏi | ✅ | `QuestionBanksController` (Draft→PendingReview→Approved/Rejected) |
+| Exercise publish/unpublish + lấy đề kèm đáp án + list câu hỏi của đề | ✅ | `ExercisesController` `{id}/publish`, `{id}/unpublish`, `{id}/for-edit`, `{id}/questions` |
+| A2-13 — `CreatedBy` lấy từ token | ✅ | Exercise + Question service |
+| **Còn lại (chưa làm trong đợt này)** | ⏳ | Duyệt `CourseVersion` bằng `ReviewComment` neo theo node/block; `LessonResource` gắn `MediaAsset` (upload file); re-parent node + rewrite `MaterializedPath`; `CurriculumFramework` gắn `Course` nhiều-nhiều; `NodeRevision` (diff/rollback); `ContentImportJob` (import hàng loạt); phân trang cho danh sách course/node |
+
 ---
 
 ## A4 — API thừa · trùng · code chết
@@ -266,6 +286,22 @@ Không endpoint nào trả dữ liệu/ghi dữ liệu khi thiếu quyền. Bộ
 Không dùng lại được token sau logout/đổi mật khẩu. Brute-force login bị chặn. Toàn bộ kịch
 bản e2e xác thực tự động xanh.
 
+**Trạng thái triển khai (cập nhật)** — nhánh `feat/a3-p2-content-layer`, migration `P1_AuthTokens`, test `P1AuthTests` (6):
+
+| Hạng mục P1 | Trạng thái | Ghi chú |
+|---|---|---|
+| Refresh token thật (A1-07) | ✅ | entity `RefreshToken` (hash SHA-256, xoay vòng mỗi lần dùng, phát hiện replay → thu hồi cả họ); access token 30 phút; `RefreshTokenDays=30` |
+| Logout / đổi mật khẩu / reset → thu hồi refresh token | ✅ | logout thu hồi 1 hoặc tất cả |
+| Thống nhất luồng xác nhận email (A2-12) | ✅ | link trỏ `/api/auth/confirm-email`; resend cùng route |
+| Endpoint gửi lại email xác nhận | ✅ | `POST /api/auth/resend-confirmation` |
+| Quên / đặt lại mật khẩu | ✅ | `PasswordResetToken` (1h, 1 lần), không lộ email tồn tại; `forgot-password` / `reset-password` |
+| Giới hạn đăng nhập (A1-08) | ✅ | `FailedLoginCount` + `LockoutEndsAt` tăng dần 1→30 phút sau 5 lần sai; rate-limit `auth` cấu hình được |
+| Admin khoá/mở khoá + đổi vai trò + ghi `AuditLog` | ✅ | `AdminController` (`/api/admin/users/{id}/lock|unlock|role`, `/api/admin/audit-logs`) |
+| Sửa `/api/auth/me` (A1-11) + extension claim duy nhất | ✅ | đọc qua `ClaimsPrincipalExtensions` |
+| **Còn lại** | ⏳ | JWT blacklist cho access token đang hành (hiện chỉ ngắn hạn 30′); `AuditLog` interceptor tự động (P7); đổi vai trò giữa learner↔staff (đang chặn để không mồ côi Student/Parent) |
+
+> ⚠️ `JwtSettings:ExpirationMinutes` đổi từ 1440 → **30**. Frontend phải dùng luồng refresh token (`LoginResponse.RefreshToken` + `POST /api/auth/refresh-token`).
+
 ---
 
 ### P2 — Tầng nội dung học (đang thiếu hoàn toàn)
@@ -331,6 +367,20 @@ phí. `IContentAccessService` có test cho cả 3 bậc.
 
 Chỉ còn một endpoint nộp bài. Bộ test ma trận chấm điểm xanh. `complete` phản hồi < 2s bất
 kể số câu sai.
+
+**Trạng thái triển khai (cập nhật)**
+
+| Hạng mục P3 | Trạng thái | Ghi chú |
+|---|---|---|
+| Gộp `/submit` + `/complete`, xoá `/submit-answer` (A2-07) | ✅ | làm ở đợt A2 |
+| Bug bài ngẫu nhiên `PlannedEndTime` (A2-03) | ✅ | |
+| `MaxAttempts` + `Published/IsActive` (A2-08) | ✅ | kiểm trong `StartExerciseAsync` |
+| **Tier truy cập** (A2-08 phần còn lại) | ✅ | `StartExerciseAsync` từ chối khi tier gói < `Exercise.RequiredTier` (bài free được miễn) |
+| AI feedback hàng đợi nền (A2-04) | ✅ | |
+| Chuẩn hoá chấm điểm mọi `QuestionType` (A2-09) | ✅ | `AnswerGrading` |
+| `report-tab-switch`: auth | ✅ | làm ở đợt A1 |
+| `report-tab-switch`: chống spam | ✅ | debounce 15s + ngừng gửi email sau 5 lần/attempt (log vẫn ghi đủ) |
+| **Còn lại** | ⏳ | test concurrency "gọi `complete` 2 lần song song" chưa có; AI feedback vẫn chạy trong process (hàng đợi in-memory, mất khi restart) |
 
 ---
 

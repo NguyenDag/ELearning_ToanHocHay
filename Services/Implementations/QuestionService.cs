@@ -1,4 +1,3 @@
-using AutoMapper;
 using ELearning_ToanHocHay_Control.Data.Entities;
 using ELearning_ToanHocHay_Control.Models.DTOs;
 using ELearning_ToanHocHay_Control.Models.DTOs.Question;
@@ -10,56 +9,25 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
     public class QuestionService : IQuestionService
     {
         private readonly IQuestionRepository _questionRepository;
+        private readonly IQuestionBankRepository _bankRepository;
 
-        public QuestionService(IQuestionRepository questionRepository)
+        public QuestionService(IQuestionRepository questionRepository, IQuestionBankRepository bankRepository)
         {
             _questionRepository = questionRepository;
+            _bankRepository = bankRepository;
         }
 
-        public async Task<ApiResponse<QuestionDto>> CreateQuestionAsync(CreateQuestionDto dto)
+        public async Task<ApiResponse<QuestionDto>> CreateQuestionAsync(CreateQuestionDto dto, int createdBy)
         {
             try
             {
-                var question = new Question
-                {
-                    BankId = dto.BankId,
-                    QuestionText = dto.QuestionText,
-                    QuestionImageUrl = dto.QuestionImageUrl,
-                    QuestionType = dto.QuestionType,
-                    DifficultyLevel = dto.DifficultyLevel,
-                    CorrectAnswer = dto.CorrectAnswer,
-                    Explanation = dto.Explanation,
-                    Status = QuestionStatus.PendingReview,
-                    // ID mẫu, sẽ lấy Id từ token
-                    CreatedBy = 6,
-                    CreatedAt = DateTime.UtcNow,
-                    QuestionOptions = dto.Options?.Select(o => new QuestionOption
-                    {
-                        OptionText = o.OptionText,
-                        IsCorrect = o.IsCorrect,
-                        OrderIndex = o.OrderIndex
-                    }).ToList()
-                };
+                var bank = await _bankRepository.GetQuestionBankByIdAsync(dto.BankId);
+                if (bank == null)
+                    return ApiResponse<QuestionDto>.ErrorResponse("Không tìm thấy ngân hàng câu hỏi");
 
-                // 2. Gọi Repository lưu vào DB
+                var question = BuildQuestion(dto, bank.SubjectId, createdBy);
                 var result = await _questionRepository.CreateAsync(question);
-
-                // 3. Chuyển ngược lại từ Entity sang DTO (QuestionDto) để trả về
-                var responseDto = new QuestionDto
-                {
-                    QuestionId = result.QuestionId,
-                    QuestionText = result.QuestionText,
-                    QuestionType = result.QuestionType,
-                    DifficultyLevel = result.DifficultyLevel,
-                    Options = result.QuestionOptions?.Select(o => new QuestionOptionDto
-                    {
-                        OptionId = o.OptionId,
-                        OptionText = o.OptionText,
-                        IsCorrect = o.IsCorrect
-                    }).ToList()
-                };
-
-                return ApiResponse<QuestionDto>.SuccessResponse(responseDto, "Tạo câu hỏi thành công!");
+                return ApiResponse<QuestionDto>.SuccessResponse(ToDto(result), "Tạo câu hỏi thành công!");
             }
             catch (Exception ex)
             {
@@ -67,55 +35,70 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             }
         }
 
-        public async Task<ApiResponse<List<QuestionDto>>> CreateQuestionsAsync(List<CreateQuestionDto> dtos)
+        public async Task<ApiResponse<List<QuestionDto>>> CreateQuestionsAsync(List<CreateQuestionDto> dtos, int createdBy)
         {
             try
             {
-                var questions = dtos.Select(dto => new Question
-                {
-                    BankId = dto.BankId,
-                    QuestionText = dto.QuestionText,
-                    QuestionImageUrl = dto.QuestionImageUrl,
-                    QuestionType = dto.QuestionType,
-                    DifficultyLevel = dto.DifficultyLevel,
-                    CorrectAnswer = dto.CorrectAnswer,
-                    Explanation = dto.Explanation,
-                    Status = QuestionStatus.PendingReview,
-                    // ID mẫu, sẽ lấy Id từ token
-                    CreatedBy = 6,
-                    CreatedAt = DateTime.UtcNow,
-                    QuestionOptions = dto.Options?.Select(o => new QuestionOption
-                    {
-                        OptionText = o.OptionText,
-                        IsCorrect = o.IsCorrect,
-                        OrderIndex = o.OrderIndex
-                    }).ToList()
-                }).ToList();
+                if (dtos.Count == 0)
+                    return ApiResponse<List<QuestionDto>>.ErrorResponse("Danh sách câu hỏi trống");
 
-                // 2. Gọi Repository lưu vào DB
+                var bankIds = dtos.Select(d => d.BankId).Distinct().ToList();
+                var subjectByBank = new Dictionary<int, int>();
+                foreach (var bankId in bankIds)
+                {
+                    var bank = await _bankRepository.GetQuestionBankByIdAsync(bankId);
+                    if (bank == null)
+                        return ApiResponse<List<QuestionDto>>.ErrorResponse($"Không tìm thấy ngân hàng câu hỏi {bankId}");
+                    subjectByBank[bankId] = bank.SubjectId;
+                }
+
+                var questions = dtos
+                    .Select(dto => BuildQuestion(dto, subjectByBank[dto.BankId], createdBy))
+                    .ToList();
+
                 var result = await _questionRepository.CreateMultipleAsync(questions);
-
-                // 3. Chuyển ngược lại từ Entity sang DTO (QuestionDto) để trả về
-                var responseDtos = result.Select(r => new QuestionDto
-                {
-                    QuestionId = r.QuestionId,
-                    QuestionText = r.QuestionText,
-                    QuestionType = r.QuestionType,
-                    DifficultyLevel = r.DifficultyLevel,
-                    Options = r.QuestionOptions?.Select(o => new QuestionOptionDto
-                    {
-                        OptionId = o.OptionId,
-                        OptionText = o.OptionText,
-                        IsCorrect = o.IsCorrect
-                    }).ToList()
-                }).ToList();
-
-                return ApiResponse<List<QuestionDto>>.SuccessResponse(responseDtos, "Tạo các câu hỏi thành công!");
+                return ApiResponse<List<QuestionDto>>.SuccessResponse(
+                    result.Select(ToDto).ToList(), "Tạo các câu hỏi thành công!");
             }
             catch (Exception ex)
             {
                 return ApiResponse<List<QuestionDto>>.ErrorResponse("Lỗi khi tạo các câu hỏi", new List<string> { ex.Message });
             }
         }
+
+        private static Question BuildQuestion(CreateQuestionDto dto, int subjectId, int createdBy) => new()
+        {
+            BankId = dto.BankId,
+            SubjectId = subjectId,
+            QuestionText = dto.QuestionText,
+            QuestionImageUrl = dto.QuestionImageUrl,
+            QuestionType = dto.QuestionType,
+            DifficultyLevel = dto.DifficultyLevel,
+            CorrectAnswer = dto.CorrectAnswer,
+            Explanation = dto.Explanation,
+            Status = QuestionStatus.Draft, // author submits it for review explicitly
+            CreatedBy = createdBy, // A2-13 — from the caller's token
+            CreatedAt = DateTime.UtcNow,
+            QuestionOptions = dto.Options?.Select(o => new QuestionOption
+            {
+                OptionText = o.OptionText,
+                IsCorrect = o.IsCorrect,
+                OrderIndex = o.OrderIndex
+            }).ToList()
+        };
+
+        private static QuestionDto ToDto(Question q) => new()
+        {
+            QuestionId = q.QuestionId,
+            QuestionText = q.QuestionText,
+            QuestionType = q.QuestionType,
+            DifficultyLevel = q.DifficultyLevel,
+            Options = q.QuestionOptions?.Select(o => new QuestionOptionDto
+            {
+                OptionId = o.OptionId,
+                OptionText = o.OptionText,
+                IsCorrect = o.IsCorrect
+            }).ToList()
+        };
     }
 }

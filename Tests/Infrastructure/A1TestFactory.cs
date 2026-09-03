@@ -43,6 +43,8 @@ public class A1TestFactory : WebApplicationFactory<Program>, IAsyncLifetime
         Environment.SetEnvironmentVariable("JwtSettings__Issuer", "test-issuer");
         Environment.SetEnvironmentVariable("JwtSettings__Audience", "test-audience");
         Environment.SetEnvironmentVariable("JwtSettings__ExpirationMinutes", "60");
+        // Tests fire many auth calls from one IP — lift the login rate limit.
+        Environment.SetEnvironmentVariable("RateLimiting__AuthPermitLimit", "10000");
 
         // Touching Services builds the host, which runs Program.Main -> db.Database.Migrate().
         using var scope = Services.CreateScope();

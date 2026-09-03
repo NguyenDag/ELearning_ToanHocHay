@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 
 namespace ELearning_ToanHocHay_Control.Services.Implementations
@@ -13,51 +13,53 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         {
             _serviceProvider = serviceProvider;
         }
+
         public void QueueConfirmationEmail(string toEmail, string fullName, string confirmLink)
         {
-            Console.WriteLine("📥 Email queued");
-            _emailQueue.Enqueue(new EmailJob
-            {
-                ToEmail = toEmail,
-                FullName = fullName,
-                ConfirmLink = confirmLink
-            });
+            Console.WriteLine("📥 Confirmation email queued");
+            _emailQueue.Enqueue(new EmailJob(EmailKind.Confirmation, toEmail, fullName, confirmLink));
             _signal.Release();
         }
+
+        public void QueuePasswordResetEmail(string toEmail, string fullName, string resetLink)
+        {
+            Console.WriteLine("📥 Password-reset email queued");
+            _emailQueue.Enqueue(new EmailJob(EmailKind.PasswordReset, toEmail, fullName, resetLink));
+            _signal.Release();
+        }
+
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             while (!stoppingToken.IsCancellationRequested)
             {
                 await _signal.WaitAsync(stoppingToken);
 
-                if (_emailQueue.TryDequeue(out var job))
-                {
-                    try
-                    {
-                        using var scope = _serviceProvider.CreateScope();
-                        var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
+                if (!_emailQueue.TryDequeue(out var job)) continue;
 
-                        await emailService.SendConfirmEmailAsync(
-                            job.ToEmail,
-                            job.FullName,
-                            job.ConfirmLink
-                        );
-                    }
-                    catch (Exception ex)
+                try
+                {
+                    using var scope = _serviceProvider.CreateScope();
+                    var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
+
+                    switch (job.Kind)
                     {
-                        Console.WriteLine($"Failed to send email: {ex.Message}");
-                        // Có thể thêm retry logic ở đây
+                        case EmailKind.Confirmation:
+                            await emailService.SendConfirmEmailAsync(job.ToEmail, job.FullName, job.Link);
+                            break;
+                        case EmailKind.PasswordReset:
+                            await emailService.SendPasswordResetEmailAsync(job.ToEmail, job.FullName, job.Link);
+                            break;
                     }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to send email: {ex.Message}");
                 }
             }
         }
-        private class EmailJob
-        {
-            public string ToEmail { get; set; }
-            public string FullName { get; set; }
-            public string ConfirmLink { get; set; }
-        }
+
+        private enum EmailKind { Confirmation, PasswordReset }
+
+        private sealed record EmailJob(EmailKind Kind, string ToEmail, string FullName, string Link);
     }
 }
-
-

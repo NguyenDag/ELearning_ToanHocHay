@@ -61,14 +61,18 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
         {
             var today = DateTime.UtcNow;
 
-            return await _context.Subscriptions
+            // A2-05 — tier from Package.Tier, not from the PackageId (row key).
+            var tier = await _context.Subscriptions
                 .AsNoTracking()
                 .Where(s => s.StudentId == studentId &&
+                            s.Status == SubscriptionStatus.Active &&
                             s.StartDate <= today &&
                             s.EndDate >= today)
-                .OrderByDescending(s => s.Package.PackageId) // lấy gói cao nhất
-                .Select(s => (PackageType?)s.Package.PackageId)
+                .OrderByDescending(s => s.Package!.Tier)
+                .Select(s => (PackageTier?)s.Package!.Tier)
                 .FirstOrDefaultAsync();
+
+            return tier.HasValue ? Services.Helpers.TierMap.ToDashboardType(tier.Value) : null;
         }
     }
 }

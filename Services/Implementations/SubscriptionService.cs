@@ -177,13 +177,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 };
             }
 
-            int packageType = package.PackageId switch
-            {
-                1 => 1, // Trải nghiệm
-                2 => 2, // Tiêu chuẩn
-                3 => 3, // Premium
-                _ => 0  // Free
-            };
+            int packageType = (int)Helpers.TierMap.ToDashboardType(package.Tier); // A2-05
 
             DateTime now = DateTime.Now;
             return new SubscriptionInfoDto

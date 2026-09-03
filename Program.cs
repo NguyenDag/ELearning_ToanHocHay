@@ -280,6 +280,7 @@ namespace ELearning_ToanHocHay_Control
             services.AddScoped<IAiQuotaService, AiQuotaService>();
             services.AddScoped<ICoreDashboardService, CoreDashboardService>();
             services.AddScoped<IParentService, ParentService>();
+            services.AddScoped<IParentLinkService, ParentLinkService>();
             services.AddScoped<IResourceAccessService, ResourceAccessService>();
 
             // A3/P2 — content layer

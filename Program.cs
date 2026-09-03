@@ -12,6 +12,7 @@ using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
@@ -123,6 +124,28 @@ namespace ELearning_ToanHocHay_Control
                             context.Response.Headers.Append("Token-Expired", "true");
                         }
                         return Task.CompletedTask;
+                    },
+
+                    // P1/P7 — reject an access token whose SecurityStamp is stale
+                    // (password changed / account locked / role changed). Cached 30s per user.
+                    OnTokenValidated = async context =>
+                    {
+                        var stampClaim = context.Principal?.FindFirst(Common.CustomJwtClaims.SecurityStamp)?.Value;
+                        var userIdClaim = context.Principal?.FindFirst(Common.CustomJwtClaims.UserId)?.Value;
+                        if (stampClaim == null || !int.TryParse(userIdClaim, out var uid)) return;
+
+                        var sp = context.HttpContext.RequestServices;
+                        var cache = sp.GetRequiredService<Microsoft.Extensions.Caching.Memory.IMemoryCache>();
+                        var current = await cache.GetOrCreateAsync($"sstamp:{uid}", async e =>
+                        {
+                            e.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(30);
+                            var db = sp.GetRequiredService<AppDbContext>();
+                            return await db.Users.AsNoTracking()
+                                .Where(u => u.UserId == uid).Select(u => u.SecurityStamp).FirstOrDefaultAsync();
+                        });
+
+                        if (current != null && current != stampClaim)
+                            context.Fail("Security stamp mismatch");
                     }
                 };
             });

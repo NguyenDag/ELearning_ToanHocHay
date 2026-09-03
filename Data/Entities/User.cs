@@ -58,6 +58,10 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         public int FailedLoginCount { get; set; } = 0;
         public DateTime? LockoutEndsAt { get; set; }
 
+        // P1/P7 — bump này để vô hiệu hoá mọi access token đang hành (đổi mật khẩu / khoá / đổi vai trò)
+        [MaxLength(40)]
+        public string SecurityStamp { get; set; } = Guid.NewGuid().ToString("N");
+
         // Navigation
         public Student? Student { get; set; }
         public Parent? Parent { get; set; }

@@ -6,5 +6,6 @@
         public const string StudentId = "student_id";
         public const string ParentId = "parent_id";
         public const string UserType = "user_type";
+        public const string SecurityStamp = "sstamp";
     }
 }

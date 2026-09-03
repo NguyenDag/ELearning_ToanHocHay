@@ -63,6 +63,7 @@ namespace ELearning_ToanHocHay_Control
             RegisterAppServices(builder.Services);
 
             // P7 — global exception handling (A2-15) + health checks
+            builder.Services.AddMemoryCache();
             builder.Services.AddProblemDetails();
             builder.Services.AddExceptionHandler<Common.GlobalExceptionHandler>();
             builder.Services.AddHealthChecks()
@@ -325,6 +326,7 @@ namespace ELearning_ToanHocHay_Control
             services.AddScoped<IQuestionBankService, QuestionBankService>();
             services.AddScoped<IAdminUserService, AdminUserService>();
             services.AddScoped<IProgressProjectionService, ProgressProjectionService>();
+            services.AddScoped<ISystemConfigService, SystemConfigService>();
 
             // Background Services
             services.AddSingleton<IBackgroundEmailService, BackgroundEmailService>();

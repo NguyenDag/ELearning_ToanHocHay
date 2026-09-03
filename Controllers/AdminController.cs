@@ -15,16 +15,30 @@ namespace ELearning_ToanHocHay_Control.Controllers
     {
         private readonly IAdminUserService _admin;
         private readonly INotificationRuleEngine _rules;
+        private readonly ISystemConfigService _config;
 
-        public AdminController(IAdminUserService admin, INotificationRuleEngine rules)
+        public AdminController(IAdminUserService admin, INotificationRuleEngine rules, ISystemConfigService config)
         {
             _admin = admin;
             _rules = rules;
+            _config = config;
         }
 
         [HttpPost("notifications/run-inactivity-check")]
         public async Task<IActionResult> RunInactivityCheck()
             => Ok(new { created = await _rules.RunInactivitySweepAsync() });
+
+        // ---------------- SystemConfig (P6/P7) ----------------
+        [HttpGet("config")]
+        public async Task<IActionResult> GetConfig([FromQuery] string? group)
+            => Ok(await _config.GetAllAsync(group));
+
+        [HttpPut("config/{key}")]
+        public async Task<IActionResult> SetConfig(string key, [FromBody] Models.DTOs.SetConfigDto dto)
+        {
+            var r = await _config.SetAsync(key, dto.Value, User.GetUserId()!.Value);
+            return r.Success ? Ok(r) : BadRequest(r);
+        }
 
         private string? Ip => HttpContext.Connection.RemoteIpAddress?.ToString();
         private int AdminId => User.GetUserId()!.Value;

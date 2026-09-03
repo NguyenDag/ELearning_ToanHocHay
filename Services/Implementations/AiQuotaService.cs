@@ -10,13 +10,16 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
     {
         private readonly AppDbContext _context;
         private readonly IPackageRepository _packageRepo;
-        private readonly int _freeDailyHintLimit;
+        private readonly ISystemConfigService _config;
+        private readonly int _freeDailyHintFallback;
 
-        public AiQuotaService(AppDbContext context, IPackageRepository packageRepo, IConfiguration config)
+        public AiQuotaService(
+            AppDbContext context, IPackageRepository packageRepo, ISystemConfigService config, IConfiguration appConfig)
         {
             _context = context;
             _packageRepo = packageRepo;
-            _freeDailyHintLimit = int.TryParse(config["AI:FreeDailyHintLimit"], out var n) ? n : 3;
+            _config = config;
+            _freeDailyHintFallback = int.TryParse(appConfig["AI:FreeDailyHintLimit"], out var n) ? n : 3;
         }
 
         public async Task<QuotaCheck> PeekHintAsync(int studentId)
@@ -60,7 +63,10 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             var package = sub?.Package;
 
             if (package == null)
-                return (_freeDailyHintLimit, false); // Free tier
+            {
+                var freeLimit = await _config.GetIntAsync("ai.hint.dailyLimitFreeTier", _freeDailyHintFallback);
+                return (freeLimit, false); // Free tier
+            }
 
             if (package.UnlimitedAiHint)
                 return (int.MaxValue, true);

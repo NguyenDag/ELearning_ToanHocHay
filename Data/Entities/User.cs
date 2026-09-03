@@ -54,6 +54,10 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         public string? LockedReason { get; set; }
         public int? LockedByUserId { get; set; }
 
+        // P1 — chống brute-force đăng nhập
+        public int FailedLoginCount { get; set; } = 0;
+        public DateTime? LockoutEndsAt { get; set; }
+
         // Navigation
         public Student? Student { get; set; }
         public Parent? Parent { get; set; }

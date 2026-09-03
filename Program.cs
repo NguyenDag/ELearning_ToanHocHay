@@ -116,17 +116,20 @@ namespace ELearning_ToanHocHay_Control
             });
 
             // Rate limiting
+            var authPermitLimit = int.TryParse(
+                builder.Configuration["RateLimiting:AuthPermitLimit"], out var apl) ? apl : 5;
+
             builder.Services.AddRateLimiter(options =>
             {
                 options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
-                // 5 requests / minute / IP for sensitive endpoints (login).
+                // N requests / minute / IP for sensitive endpoints (login, password reset).
                 options.AddPolicy("auth", context =>
                     RateLimitPartition.GetFixedWindowLimiter(
                         partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
                         factory: _ => new FixedWindowRateLimiterOptions
                         {
-                            PermitLimit = 5,
+                            PermitLimit = authPermitLimit,
                             Window = TimeSpan.FromMinutes(1),
                             QueueLimit = 0
                         }));
@@ -227,6 +230,8 @@ namespace ELearning_ToanHocHay_Control
         {
             // Repositories
             services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+            services.AddScoped<IAuditLogRepository, AuditLogRepository>();
             services.AddScoped<IStudentRepository, StudentRepository>();
             services.AddScoped<IParentRepository, ParentRepository>();
             services.AddScoped<IExerciseRepository, ExerciseRepository>();
@@ -281,6 +286,7 @@ namespace ELearning_ToanHocHay_Control
             services.AddScoped<IEnrollmentService, EnrollmentService>();
             services.AddScoped<ILearnService, LearnService>();
             services.AddScoped<IQuestionBankService, QuestionBankService>();
+            services.AddScoped<IAdminUserService, AdminUserService>();
 
             // Background Services
             services.AddSingleton<IBackgroundEmailService, BackgroundEmailService>();

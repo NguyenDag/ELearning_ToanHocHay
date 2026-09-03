@@ -55,6 +55,24 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             }
         }
 
+        public async Task SendPasswordResetEmailAsync(string toEmail, string fullName, string resetLink)
+        {
+            var subject = "Đặt lại mật khẩu";
+            var body = $@"
+            <p>Xin chào <strong>{fullName}</strong>,</p>
+            <p>Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn.</p>
+            <p>
+                <a href='{resetLink}'
+                   style='display:inline-block;padding:10px 20px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;'>
+                   Đặt lại mật khẩu
+                </a>
+            </p>
+            <p>Link có hiệu lực trong <b>1 giờ</b>. Nếu bạn không yêu cầu, hãy bỏ qua email này.</p>
+            <br/><p>Trân trọng,<br/>E-Learning Team</p>";
+
+            await SendEmailAsync(toEmail, subject, body);
+        }
+
         public async Task SendTabSwitchNotificationAsync(
             string toEmail,
             string parentName,

@@ -18,6 +18,8 @@ namespace ELearning_ToanHocHay_Control.Data
         // --- Người dùng ---
         public DbSet<User> Users { get; set; }
         public DbSet<EmailVerificationToken> EmailVerificationTokens { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
+        public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
         public DbSet<Student> Students { get; set; }
         public DbSet<Parent> Parents { get; set; }
         public DbSet<ParentLink> ParentLinks { get; set; }
@@ -132,6 +134,25 @@ namespace ELearning_ToanHocHay_Control.Data
                 e.Property(x => x.ExpiredAt).IsRequired();
                 e.Property(x => x.IsUsed).HasDefaultValue(false);
                 e.Property(x => x.CreatedAt).HasDefaultValueSql("NOW()");
+                e.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<RefreshToken>(e =>
+            {
+                e.ToTable("RefreshToken");
+                e.HasKey(x => x.RefreshTokenId);
+                e.HasIndex(x => x.TokenHash).IsUnique();
+                e.HasIndex(x => x.UserId);
+                e.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<PasswordResetToken>(e =>
+            {
+                e.ToTable("PasswordResetToken");
+                e.HasKey(x => x.Id);
+                e.HasIndex(x => x.Token).IsUnique();
                 e.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId)
                     .OnDelete(DeleteBehavior.Cascade);
             });

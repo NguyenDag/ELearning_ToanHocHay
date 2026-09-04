@@ -37,12 +37,12 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             // Check Attempt
             var attempt = await _attemptRepository.GetAttemptWithDetailsAsync(dto.AttemptId);
             if (attempt == null)
-                return ApiResponse<AIFeedbackDto>.ErrorResponse("Attempt not found");
+                return ApiResponse<AIFeedbackDto>.ErrorResponse("Không tìm thấy lượt làm bài");
 
             // Check Question
             var question = await _questionRepository.GetQuestionByIdAsync(dto.QuestionId);
             if (question == null)
-                return ApiResponse<AIFeedbackDto>.ErrorResponse("Question not found");
+                return ApiResponse<AIFeedbackDto>.ErrorResponse("Không tìm thấy câu hỏi");
 
             string fullSolution = dto.FullSolution ?? string.Empty;
             string mistakeAnalysis = dto.MistakeAnalysis ?? string.Empty;
@@ -97,8 +97,8 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 }
                 else
                 {
-                    _logger.LogError("AI Service failed to generate feedback");
-                    return ApiResponse<AIFeedbackDto>.ErrorResponse("AI Service failed to generate feedback");
+                    _logger.LogError("AI chưa tạo được nhận xét. Vui lòng thử lại sau.");
+                    return ApiResponse<AIFeedbackDto>.ErrorResponse("AI chưa tạo được nhận xét. Vui lòng thử lại sau.");
                 }
             }
 
@@ -119,7 +119,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
             return ApiResponse<AIFeedbackDto>.SuccessResponse(
                 MapToDto(created),
-                "AI feedback created successfully"
+                "Đã tạo nhận xét"
             );
         }
 
@@ -129,7 +129,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
             return success
                 ? ApiResponse<bool>.SuccessResponse(true, "Feedback deleted")
-                : ApiResponse<bool>.ErrorResponse("Feedback not found");
+                : ApiResponse<bool>.ErrorResponse("Không tìm thấy nhận xét");
         }
 
         public async Task<ApiResponse<IEnumerable<AIFeedbackDto>>> GetByAttemptAsync(int attemptId)
@@ -145,7 +145,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         {
             var feedback = await _feedbackRepository.GetByIdAsync(feedbackId);
             if (feedback == null)
-                return ApiResponse<AIFeedbackDto>.ErrorResponse("Feedback not found");
+                return ApiResponse<AIFeedbackDto>.ErrorResponse("Không tìm thấy nhận xét");
 
             return ApiResponse<AIFeedbackDto>.SuccessResponse(MapToDto(feedback));
         }
@@ -154,7 +154,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         {
             var existing = await _feedbackRepository.GetByIdAsync(feedbackId);
             if (existing == null)
-                return ApiResponse<AIFeedbackDto>.ErrorResponse("Feedback not found");
+                return ApiResponse<AIFeedbackDto>.ErrorResponse("Không tìm thấy nhận xét");
 
             existing.FullSolution = dto.FullSolution;
             existing.MistakeAnalysis = dto.MistakeAnalysis;
@@ -164,7 +164,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
             return ApiResponse<AIFeedbackDto>.SuccessResponse(
                 MapToDto(updated!),
-                "Feedback updated successfully"
+                "Đã cập nhật nhận xét"
             );
         }
 

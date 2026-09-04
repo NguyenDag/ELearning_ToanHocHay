@@ -32,7 +32,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> GetQuota()
         {
             var studentId = User.GetStudentId();
-            if (studentId == null) return this.Forbidden("Only students have an AI hint quota");
+            if (studentId == null) return this.Forbidden("Chỉ học sinh mới có hạn mức gợi ý AI");
 
             var q = await _quota.PeekHintAsync(studentId.Value);
             return Ok(ApiResponse<object>.SuccessResponse(new { q.Used, q.Limit, q.Unlimited, q.Remaining }));

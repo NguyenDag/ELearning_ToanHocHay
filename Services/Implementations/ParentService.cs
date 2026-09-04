@@ -20,7 +20,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         {
             var entity = await _repository.GetByIdAsync(id);
             if (entity == null)
-                return ApiResponse<ParentDto>.ErrorResponse("Not found", null);
+                return ApiResponse<ParentDto>.ErrorResponse("Không tìm thấy phụ huynh", null);
 
             var dto = new ParentDto
             {
@@ -48,7 +48,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         {
             var entity = await _repository.GetByIdAsync(id);
             if (entity == null)
-                return ApiResponse<ParentDto>.ErrorResponse("Not found", null);
+                return ApiResponse<ParentDto>.ErrorResponse("Không tìm thấy phụ huynh", null);
 
             entity.Job = dto.Job;
             await _repository.UpdateAsync(entity);
@@ -62,7 +62,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     FullName = entity.User?.FullName ?? "",
                     Email = entity.User?.Email ?? "",
                     ConnectionCode = entity.ConnectionCode
-                }, "Updated successfully");
+                }, "Cập nhật thành công");
         }
 
         public async Task<ApiResponse<bool>> DeleteAsync(int id)

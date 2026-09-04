@@ -35,12 +35,12 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             // Check Attempt
             var attempt = await _attemptRepository.GetAttemptByIdAsync(dto.AttemptId);
             if (attempt == null)
-                return ApiResponse<AIHintDto>.ErrorResponse("Attempt not found");
+                return ApiResponse<AIHintDto>.ErrorResponse("Không tìm thấy lượt làm bài");
 
             // Check Question
             var question = await _questionRepository.GetQuestionByIdAsync(dto.QuestionId);
             if (question == null)
-                return ApiResponse<AIHintDto>.ErrorResponse("Question not found");
+                return ApiResponse<AIHintDto>.ErrorResponse("Không tìm thấy câu hỏi");
 
             // Nếu HintText chưa có, gọi AI để sinh
             string hintText = dto.HintText ?? string.Empty;
@@ -72,7 +72,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 if (aiResponse == null || string.IsNullOrWhiteSpace(aiResponse.HintText))
                 {
                     _logger.LogError("AI Service failed to generate hint");
-                    return ApiResponse<AIHintDto>.ErrorResponse("Failed to generate hint from AI");
+                    return ApiResponse<AIHintDto>.ErrorResponse("Không tạo được gợi ý từ AI. Vui lòng thử lại.");
                 }
 
                 hintText = aiResponse.HintText;
@@ -93,7 +93,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
             return ApiResponse<AIHintDto>.SuccessResponse(
                 MapToDto(created),
-                "AI hint created successfully"
+                "Đã tạo gợi ý"
             );
         }
 
@@ -103,7 +103,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
             return success
                 ? ApiResponse<bool>.SuccessResponse(true, "Hint deleted")
-                : ApiResponse<bool>.ErrorResponse("Hint not found");
+                : ApiResponse<bool>.ErrorResponse("Không tìm thấy gợi ý");
         }
 
         public async Task<ApiResponse<IEnumerable<AIHintDto>>> GetByAttemptAsync(int attemptId)
@@ -128,7 +128,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         {
             var hint = await _hintRepository.GetByIdAsync(hintId);
             if (hint == null)
-                return ApiResponse<AIHintDto>.ErrorResponse("Hint not found");
+                return ApiResponse<AIHintDto>.ErrorResponse("Không tìm thấy gợi ý");
 
             return ApiResponse<AIHintDto>.SuccessResponse(MapToDto(hint));
         }
@@ -137,7 +137,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         {
             var existing = await _hintRepository.GetByIdAsync(hintId);
             if (existing == null)
-                return ApiResponse<AIHintDto>.ErrorResponse("Hint not found");
+                return ApiResponse<AIHintDto>.ErrorResponse("Không tìm thấy gợi ý");
 
             existing.HintText = dto.HintText;
             existing.HintLevel = dto.HintLevel;
@@ -146,7 +146,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
             return ApiResponse<AIHintDto>.SuccessResponse(
                 MapToDto(updated!),
-                "Hint updated successfully"
+                "Đã cập nhật gợi ý"
             );
         }
 

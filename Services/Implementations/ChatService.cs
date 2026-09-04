@@ -133,8 +133,8 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         public async Task<ApiResponse<bool>> CloseAsync(int userId, int conversationId, bool isStaff)
         {
             var conv = await _context.ChatConversations.FirstOrDefaultAsync(c => c.ConversationId == conversationId);
-            if (conv == null) return ApiResponse<bool>.ErrorResponse("Conversation not found");
-            if (!isStaff && conv.InitiatorUserId != userId) return ApiResponse<bool>.ErrorResponse("Not your conversation");
+            if (conv == null) return ApiResponse<bool>.ErrorResponse("Không tìm thấy hội thoại");
+            if (!isStaff && conv.InitiatorUserId != userId) return ApiResponse<bool>.ErrorResponse("Đây không phải hội thoại của bạn");
 
             conv.Status = ChatStatus.Closed;
             conv.ClosedAt = DateTime.UtcNow;
@@ -163,8 +163,8 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         public async Task<ApiResponse<ChatConversationDto>> AssignToMeAsync(int staffUserId, int conversationId)
         {
             var conv = await _context.ChatConversations.FirstOrDefaultAsync(c => c.ConversationId == conversationId);
-            if (conv == null) return ApiResponse<ChatConversationDto>.ErrorResponse("Conversation not found");
-            if (conv.Status == ChatStatus.Closed) return ApiResponse<ChatConversationDto>.ErrorResponse("Conversation is closed");
+            if (conv == null) return ApiResponse<ChatConversationDto>.ErrorResponse("Không tìm thấy hội thoại");
+            if (conv.Status == ChatStatus.Closed) return ApiResponse<ChatConversationDto>.ErrorResponse("Hội thoại đã đóng");
 
             conv.Status = ChatStatus.WithAgent;
             conv.AssignedStaffId = staffUserId;
@@ -185,7 +185,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 return ApiResponse<ChatMessageDto>.ErrorResponse("Nội dung không được để trống");
 
             var conv = await _context.ChatConversations.FirstOrDefaultAsync(c => c.ConversationId == conversationId);
-            if (conv == null) return ApiResponse<ChatMessageDto>.ErrorResponse("Conversation not found");
+            if (conv == null) return ApiResponse<ChatMessageDto>.ErrorResponse("Không tìm thấy hội thoại");
             if (!isAdmin && conv.AssignedStaffId != staffUserId)
                 return ApiResponse<ChatMessageDto>.ErrorResponse("Hội thoại này chưa được giao cho bạn");
 
@@ -235,7 +235,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         {
             var owns = await _context.ChatConversations
                 .AnyAsync(c => c.ConversationId == conversationId && c.InitiatorUserId == userId);
-            if (!owns) return ApiResponse<List<ChatMessageDto>>.ErrorResponse("Conversation not found");
+            if (!owns) return ApiResponse<List<ChatMessageDto>>.ErrorResponse("Không tìm thấy hội thoại");
 
             var msgs = await _context.ChatMessages
                 .AsNoTracking()

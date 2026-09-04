@@ -263,7 +263,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         {
             var user = await _userRepository.GetByIdAsync(userId);
             if (user == null)
-                return ApiResponse<bool>.ErrorResponse("User không tồn tại");
+                return ApiResponse<bool>.ErrorResponse("Tài khoản không tồn tại");
 
             if (!_passwordHasher.VerifyPassword(request.CurrentPassword, user.PasswordHash))
                 return ApiResponse<bool>.ErrorResponse("Mật khẩu hiện tại không đúng");
@@ -289,7 +289,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 .FirstOrDefaultAsync(x => x.Token == token && !x.IsUsed && x.ExpiredAt > DateTime.UtcNow);
 
             if (emailToken == null)
-                return ApiResponse<bool>.ErrorResponse("Token không hợp lệ");
+                return ApiResponse<bool>.ErrorResponse("Liên kết không hợp lệ");
 
             emailToken.User.IsEmailConfirmed = true;
             emailToken.User.EmailConfirmedAt = DateTime.UtcNow;
@@ -365,11 +365,11 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 .FirstOrDefaultAsync(t => t.Token == token && !t.IsUsed && t.ExpiredAt > DateTime.UtcNow);
 
             if (reset == null)
-                return ApiResponse<bool>.ErrorResponse("Token không hợp lệ hoặc đã hết hạn");
+                return ApiResponse<bool>.ErrorResponse("Liên kết không hợp lệ hoặc đã hết hạn");
 
             var user = await _userRepository.GetByIdAsync(reset.UserId);
             if (user == null)
-                return ApiResponse<bool>.ErrorResponse("User không tồn tại");
+                return ApiResponse<bool>.ErrorResponse("Tài khoản không tồn tại");
 
             user.PasswordHash = _passwordHasher.HashPassword(newPassword);
             user.FailedLoginCount = 0;

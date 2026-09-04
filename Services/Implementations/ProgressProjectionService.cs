@@ -102,9 +102,9 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         {
             var node = await _context.ContentNodes.FirstOrDefaultAsync(n => n.NodeId == nodeId);
             if (node == null || node.IsHidden)
-                return ApiResponse<NodeProgressDto>.ErrorResponse("Lesson not found");
+                return ApiResponse<NodeProgressDto>.ErrorResponse("Không tìm thấy bài học");
             if (node.NodeType != NodeType.Lesson)
-                return ApiResponse<NodeProgressDto>.ErrorResponse("Only a lesson node can be marked complete");
+                return ApiResponse<NodeProgressDto>.ErrorResponse("Chỉ có thể đánh dấu hoàn thành với bài học");
 
             if (!node.IsFree)
             {

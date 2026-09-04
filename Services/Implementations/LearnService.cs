@@ -25,16 +25,16 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         public async Task<ApiResponse<CourseContentDto>> GetCourseContentAsync(ClaimsPrincipal user, int courseId)
         {
             var course = await _courseRepo.GetCourseAsync(courseId, withVersions: true);
-            if (course == null) return ApiResponse<CourseContentDto>.ErrorResponse("Course not found");
+            if (course == null) return ApiResponse<CourseContentDto>.ErrorResponse("Không tìm thấy khoá học");
 
             var level = await _access.GetCourseAccessAsync(user, course);
             if (level == ContentAccessLevel.None)
-                return ApiResponse<CourseContentDto>.ErrorResponse("Course not found");
+                return ApiResponse<CourseContentDto>.ErrorResponse("Không tìm thấy khoá học");
 
             var version = course.Versions?.FirstOrDefault(v => v.State == VersionState.Published)
                           ?? course.Versions?.OrderByDescending(v => v.VersionNumber).FirstOrDefault();
             if (version == null)
-                return ApiResponse<CourseContentDto>.ErrorResponse("Course has no content yet");
+                return ApiResponse<CourseContentDto>.ErrorResponse("Khoá học chưa có nội dung");
 
             var nodes = await _contentRepo.GetNodesByVersionAsync(version.CourseVersionId);
 
@@ -60,20 +60,20 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         {
             var node = await _contentRepo.GetNodeForConsumptionAsync(nodeId);
             if (node?.CourseVersion?.Course == null)
-                return ApiResponse<ContentNodeDetailDto>.ErrorResponse("Node not found");
+                return ApiResponse<ContentNodeDetailDto>.ErrorResponse("Không tìm thấy nội dung");
 
             if (node.IsHidden)
-                return ApiResponse<ContentNodeDetailDto>.ErrorResponse("Node not found");
+                return ApiResponse<ContentNodeDetailDto>.ErrorResponse("Không tìm thấy nội dung");
 
             var course = node.CourseVersion.Course;
             var level = await _access.GetCourseAccessAsync(user, course);
 
             if (level == ContentAccessLevel.None)
-                return ApiResponse<ContentNodeDetailDto>.ErrorResponse("Node not found");
+                return ApiResponse<ContentNodeDetailDto>.ErrorResponse("Không tìm thấy nội dung");
 
             // A published course must be consumed through its published version.
             if (course.Status == CourseStatus.Published && node.CourseVersion.State != VersionState.Published)
-                return ApiResponse<ContentNodeDetailDto>.ErrorResponse("Node not found");
+                return ApiResponse<ContentNodeDetailDto>.ErrorResponse("Không tìm thấy nội dung");
 
             if (level == ContentAccessLevel.FreeOnly && !node.IsFree)
                 return ApiResponse<ContentNodeDetailDto>.Forbidden(

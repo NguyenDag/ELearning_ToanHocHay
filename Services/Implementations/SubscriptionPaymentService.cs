@@ -39,7 +39,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 var package = await _packageRepository.GetByIdAsync(dto.PackageId);
                 if (package == null)
                 {
-                    return ApiResponse<CreatePendingResultDto>.ErrorResponse("Package not found");
+                    return ApiResponse<CreatePendingResultDto>.ErrorResponse("Không tìm thấy gói cước");
                 }
 
                 // Price is decided by the server, never by the client (A2-02).

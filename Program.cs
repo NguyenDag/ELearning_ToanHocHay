@@ -298,6 +298,15 @@ namespace ELearning_ToanHocHay_Control
             {
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                 db.Database.Migrate();
+
+                // Dev-only demo dataset. Gated by config ("Seed:DemoData") and idempotent —
+                // a re-run is a no-op once the demo admin exists.
+                if (app.Environment.IsDevelopment() &&
+                    app.Configuration.GetValue<bool>("Seed:DemoData"))
+                {
+                    var seeder = ActivatorUtilities.CreateInstance<Data.Seed.DemoDataSeeder>(scope.ServiceProvider);
+                    seeder.SeedAsync().GetAwaiter().GetResult();
+                }
             }
 
             // 8. Middleware pipeline, in the standard order

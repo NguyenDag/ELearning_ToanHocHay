@@ -197,6 +197,22 @@ namespace ELearning_ToanHocHay_Control
             {
                 options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
+                // A rejected request gets the ApiResponse envelope (Vietnamese) instead of an
+                // empty body, so clients can parse it like any other error.
+                options.OnRejected = async (context, _) =>
+                {
+                    var http = context.HttpContext;
+                    if (http.Response.HasStarted) return;
+
+                    http.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+                    if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+                        http.Response.Headers.RetryAfter = ((int)retryAfter.TotalSeconds).ToString();
+                    http.Response.ContentType = "application/json; charset=utf-8";
+                    await http.Response.WriteAsJsonAsync(
+                        Models.DTOs.ApiResponse<object>.ErrorResponse(
+                            "Bạn thao tác quá nhanh. Vui lòng chờ một lát rồi thử lại."));
+                };
+
                 // N requests / minute / IP for sensitive endpoints (login, password reset).
                 options.AddPolicy("auth", context =>
                     RateLimitPartition.GetFixedWindowLimiter(

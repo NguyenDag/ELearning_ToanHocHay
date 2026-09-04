@@ -191,7 +191,10 @@ namespace ELearning_ToanHocHay_Control
 
             // Rate limiting
             var authPermitLimit = int.TryParse(
-                builder.Configuration["RateLimiting:AuthPermitLimit"], out var apl) ? apl : 5;
+                builder.Configuration["RateLimiting:AuthPermitLimit"], out var apl) ? apl : 10;
+
+            string ClientKey(HttpContext ctx) =>
+                Common.RateLimitPartitioning.ResolveClientKey(ctx, builder.Configuration);
 
             builder.Services.AddRateLimiter(options =>
             {
@@ -213,10 +216,13 @@ namespace ELearning_ToanHocHay_Control
                             "Bạn thao tác quá nhanh. Vui lòng chờ một lát rồi thử lại."));
                 };
 
-                // N requests / minute / IP for sensitive endpoints (login, password reset).
+                // N requests / minute / client for sensitive endpoints (login, password reset).
+                // Phân vùng theo client thật (X-Client-Key khi qua WebApp tin cậy, ngược lại IP)
+                // để không phạt nhầm cả nhóm người dùng chung một proxy. Chống dò mật khẩu 1 tài
+                // khoản đã có khoá theo tài khoản riêng ở AuthService (FailedLoginCount).
                 options.AddPolicy("auth", context =>
                     RateLimitPartition.GetFixedWindowLimiter(
-                        partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                        partitionKey: "auth:" + ClientKey(context),
                         factory: _ => new FixedWindowRateLimiterOptions
                         {
                             PermitLimit = authPermitLimit,
@@ -228,8 +234,7 @@ namespace ELearning_ToanHocHay_Control
                 options.AddPolicy("ai", context =>
                     RateLimitPartition.GetFixedWindowLimiter(
                         partitionKey: context.User.GetUserId()?.ToString()
-                                      ?? context.Connection.RemoteIpAddress?.ToString()
-                                      ?? "unknown",
+                                      ?? ClientKey(context),
                         factory: _ => new FixedWindowRateLimiterOptions
                         {
                             PermitLimit = 20,
@@ -244,8 +249,7 @@ namespace ELearning_ToanHocHay_Control
                 options.AddPolicy("refund", context =>
                     RateLimitPartition.GetFixedWindowLimiter(
                         partitionKey: context.User.GetUserId()?.ToString()
-                                      ?? context.Connection.RemoteIpAddress?.ToString()
-                                      ?? "unknown",
+                                      ?? ClientKey(context),
                         factory: _ => new FixedWindowRateLimiterOptions
                         {
                             PermitLimit = refundPermitLimit,

@@ -1,6 +1,4 @@
-﻿using System.Text.RegularExpressions;
-using System.Web;
-using ELearning_ToanHocHay_Control.Models.DTOs.Sepay;
+﻿using ELearning_ToanHocHay_Control.Models.DTOs.Sepay;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.Extensions.Options;
 
@@ -80,43 +78,18 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 return null;
             }
 
-            try
+            // Pattern: SUBSCRIPTION_123 / SUBSCRIPTION-123 / SUBSCRIPTION123 (xem SePayContentParser).
+            var subscriptionId = Helpers.SePayContentParser.TryParseSubscriptionId(content);
+
+            if (subscriptionId == null)
             {
-                // Pattern: SUBSCRIPTION_123 hoặc SUBSCRIPTION-123 hoặc SUBSCRIPTION123
-                var match = Regex.Match(
-                    content,
-                    @"SUBSCRIPTION[\-_]?(\d+)",
-                    RegexOptions.IgnoreCase
-                );
-
-                if (!match.Success)
-                {
-                    _logger.LogWarning(
-                        "Could not extract subscription ID from content: {Content}",
-                        content
-                    );
-                    return null;
-                }
-
-                var subscriptionId = int.Parse(match.Groups[1].Value);
-
-                _logger.LogInformation(
-                    "Extracted subscription ID {SubscriptionId} from content: {Content}",
-                    subscriptionId,
-                    content
-                );
-
-                return subscriptionId;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(
-                    ex,
-                    "Error extracting subscription ID from content: {Content}",
-                    content
-                );
+                _logger.LogWarning("Could not extract subscription ID from content: {Content}", content);
                 return null;
             }
+
+            _logger.LogInformation(
+                "Extracted subscription ID {SubscriptionId} from content: {Content}", subscriptionId, content);
+            return subscriptionId;
         }
 
         /// <summary>

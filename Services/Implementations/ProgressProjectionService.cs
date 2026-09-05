@@ -2,6 +2,7 @@ using ELearning_ToanHocHay_Control.Data;
 using ELearning_ToanHocHay_Control.Data.Entities;
 using ELearning_ToanHocHay_Control.Models.DTOs;
 using ELearning_ToanHocHay_Control.Models.DTOs.Content;
+using ELearning_ToanHocHay_Control.Services.Helpers;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,10 +13,9 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         private readonly AppDbContext _context;
         private readonly ILogger<ProgressProjectionService> _logger;
 
-        // A lesson-linked exercise attempt at >= this % marks the lesson complete.
-        private const decimal LessonCompleteScorePct = 70m;
-        // Minimum viewing time before a lesson can be marked read.
-        private const int MinViewSeconds = 20;
+        // §2 — công thức thuần tách sang ProgressRollup (test không cần DB).
+        private const decimal LessonCompleteScorePct = ProgressRollup.LessonCompleteScorePct;
+        private const int MinViewSeconds = ProgressRollup.MinViewSeconds;
 
         public ProgressProjectionService(AppDbContext context, ILogger<ProgressProjectionService> logger)
         {
@@ -238,7 +238,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                                  && lessonIds.Contains(p.NodeId)
                                  && p.Status == ProgressStatus.Completed);
 
-            var pct = Math.Round((decimal)completed / lessonIds.Count * 100m, 2);
+            var pct = ProgressRollup.PercentComplete(completed, lessonIds.Count);
 
             var np = await GetOrCreateAsync(studentId, node.NodeId);
             np.CompletionPercent = pct;
@@ -267,7 +267,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             {
                 var done = await _context.NodeProgresses.CountAsync(p =>
                     p.StudentId == studentId && lessonIds.Contains(p.NodeId) && p.Status == ProgressStatus.Completed);
-                pct = Math.Round((decimal)done / lessonIds.Count * 100m, 2);
+                pct = ProgressRollup.PercentComplete(done, lessonIds.Count);
             }
 
             foreach (var e in enrolments)

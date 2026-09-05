@@ -395,7 +395,10 @@ namespace ELearning_ToanHocHay_Control
             services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
 
             // Services
+            services.AddSingleton(TimeProvider.System);
             services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IPackageTierResolver, PackageTierResolver>();
+            services.AddScoped<IRefreshTokenIssuer, RefreshTokenIssuer>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IJwtService, JwtService>();
             services.AddScoped<IExerciseService, ExerciseService>();

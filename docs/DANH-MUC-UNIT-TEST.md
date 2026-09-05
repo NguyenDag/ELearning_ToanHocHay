@@ -286,7 +286,7 @@ Một số logic đang chôn trong `private` hoặc dính `AppDbContext` — tá
 | UT-AUTH-VALIDATE-05 | Mọi thứ hợp lệ | `true` | P2 |
 | UT-AUTH-VALIDATE-06 | `_jwtService` ném exception | `false` (nuốt lỗi) | P3 |
 
-### 3.8 LoginThrottlePolicy (`UT-THROTTLE`)
+### 3.8 LoginThrottlePolicy (`UT-THROTTLE`) ✅ B3
 
 **Hàm:** `static TimeSpan? NextLockout(int failedCount)` — leo thang 1, 2, 4, 8… phút, cap 30, bắt đầu từ lần thứ 5.
 **Tầng:** U1.
@@ -449,7 +449,7 @@ Một số logic đang chôn trong `private` hoặc dính `AppDbContext` — tá
 | UT-GRADE-54 | `TryParseNumeric` | `"abc"` | `null` | P2 |
 | UT-GRADE-55 | `TryParseNumeric` | `"5/0"` | `null` | P2 |
 
-### 3.14 SePayContentParser (`UT-SEPAY-PARSE`)
+### 3.14 SePayContentParser (`UT-SEPAY-PARSE`) ✅ B3
 
 **Hàm:** `static int? TryParseSubscriptionId(string? content)` — regex `SUBSCRIPTION[\-_]?(\d+)`.
 **Tầng:** U1.
@@ -468,7 +468,7 @@ Một số logic đang chôn trong `private` hoặc dính `AppDbContext` — tá
 | UT-SEPAY-PARSE-10 | `"SUBSCRIPTION_012"` (số 0 đầu) | `12` | P3 |
 | UT-SEPAY-PARSE-11 | 2 lần xuất hiện `"SUBSCRIPTION_1 SUBSCRIPTION_2"` | `1` (khớp đầu tiên) | P3 |
 
-### 3.15 SePayAmountMatcher (`UT-SEPAY-AMOUNT`)
+### 3.15 SePayAmountMatcher (`UT-SEPAY-AMOUNT`) ✅ B3
 
 **Hàm:** `static bool Matches(decimal expected, decimal actual, decimal toleranceVnd)`
 **Tầng:** U1.
@@ -484,7 +484,7 @@ Một số logic đang chôn trong `private` hoặc dính `AppDbContext` — tá
 | UT-SEPAY-AMOUNT-07 | (199000, 0, 0) | `false` | P2 |
 | UT-SEPAY-AMOUNT-08 | (199000, 199000, -1) | coi như tolerance 0 → `true` | P3 |
 
-### 3.16 SePayIpnEvaluator (`UT-SEPAY-EVAL`)
+### 3.16 SePayIpnEvaluator (`UT-SEPAY-EVAL`) ✅ B3
 
 **Hàm:** `static IpnOutcome Evaluate(SePayIpnRequest req, Subscription? sub, decimal toleranceVnd)`
 **Tầng:** U1 (nhận entity đã nạp, không DB).
@@ -501,7 +501,7 @@ Một số logic đang chôn trong `private` hoặc dính `AppDbContext` — tá
 | UT-SEPAY-EVAL-08 | `sub.Status = Pending`, số tiền khớp (trong dung sai) | `Processed` (nên kích hoạt) | P1 |
 | UT-SEPAY-EVAL-09 | `transferType` = `"IN"` (hoa) | xử lý như `"in"` — chốt hành vi | P2 |
 
-### 3.17 SePayService — QR & API key (`UT-SEPAY-SVC`)
+### 3.17 SePayService — QR & API key (`UT-SEPAY-SVC`) ✅ B3
 
 **Hàm:** `string GenerateQrUrl(int subscriptionId, decimal amount)`, `bool ValidateApiKey(string? apiKey)`
 **Hạ tầng:** `IOptions<SePayOptions>` (`BaseUrl`, `VA`, `BankName`, `ApiKeyValidator`), `NullLogger`.
@@ -561,7 +561,7 @@ Một số logic đang chôn trong `private` hoặc dính `AppDbContext` — tá
 | UT-CSV-13 | mã hoá byte | UTF-8 **không BOM** (byte đầu ≠ `0xEF`) | P2 |
 | UT-CSV-14 | `items` rỗng | chỉ có dòng header | P3 |
 
-### 3.20 RefundCompletion (`UT-RFC`)
+### 3.20 RefundCompletion (`UT-RFC`) ✅ B3
 
 **Hàm (sau refactor):** `static void Apply(Payment paymentWithSubscription, RefundRequest request)`
 **Tầng:** U1 (thao tác entity trong bộ nhớ).
@@ -576,7 +576,7 @@ Một số logic đang chôn trong `private` hoặc dính `AppDbContext` — tá
 | UT-RFC-06 | full refund, `Subscription = null` | `Amount=199k` | không throw; Payment vẫn `Refunded` | P2 |
 | UT-RFC-07 | `Amount=199k`, `RefundAmount=null` | `Amount=250k` (vượt) | `RefundAmount=250k`, `Status=Refunded` (chốt: hàm không tự chặn — validate ở service) | P3 |
 
-### 3.21 RefundDayWindow (`UT-RFP-WINDOW`)
+### 3.21 RefundDayWindow (`UT-RFP-WINDOW`) ✅ B3
 
 **Hàm (sau refactor):** `static DateTime StartOfDayUtc(DateTime nowUtc, int offsetHours)` — mốc 00:00 theo giờ địa phương, trả về UTC.
 **Tầng:** U1.
@@ -631,7 +631,7 @@ Một số logic đang chôn trong `private` hoặc dính `AppDbContext` — tá
 | UT-PROT-07 | `Unprotect` chuỗi rác | ném exception (caller bắt) | P2 |
 | UT-PROT-08 | 2 protector khác purpose/key | không giải mã chéo được | P3 |
 
-### 3.24 ContentAccessService — Covers (`UT-GATE-COVERS`)
+### 3.24 ContentAccessService — Covers (`UT-GATE-COVERS`) ✅ B3
 
 **Hàm (sau refactor `internal`):** `static bool Covers(PackageEntitlement e, Course course)`
 **Tầng:** U1.
@@ -751,7 +751,7 @@ Một số logic đang chôn trong `private` hoặc dính `AppDbContext` — tá
 | UT-TIER-05 | chỉ có `Expired` / `Cancelled` / `Pending` | `Free` | P1 |
 | UT-TIER-06 | 2 `Active` cùng tier, khác `EndDate` | chọn cái `EndDate` xa hơn (không ảnh hưởng tier nhưng chốt thứ tự) | P3 |
 
-### 3.31 ProgressProjectionService (`UT-PROG`)
+### 3.31 ProgressProjectionService (`UT-PROG`) 🟡 B3 (phần U1: `ProgressRollup`) · B5 (U2)
 
 **Hằng số:** `LessonCompleteScorePct = 70`, `MinViewSeconds = 20`.
 **Hàm tính (sau refactor `ProgressRollup`):** % hoàn thành từ danh sách con; ngưỡng đánh dấu bài hoàn thành.
@@ -998,7 +998,7 @@ Mọi class trong `Unit/` gắn `[Trait("Level","Unit")]` + `[Trait("Tier","U1"|
 | **B0** ✅ | Dựng hạ tầng [§1.3](#13-hạ-tầng-test-xây-mới): dự án `ELearning_ToanHocHay.Tests`, gói NuGet, `<InternalsVisibleTo>`, `SqliteDb`/`TestConfig`/`Claims`/`Entities`/`Fakes`/`DataProtection`. | — | — |
 | **B1** ✅ | U1 thuần: `AnswerGrading`, `SecureTokens`, `ClaimsPrincipalExtensions`, `PasswordHasher`, `PagedRequest`, `RateLimitPartitioning`, `RefundCsvWriter`, `RefundFieldProtector`, `JwtService` | ~120 | B0 |
 | **B2** ✅ | Refactor [§2](#2-refactor-mở-đường-làm-trước): tách policy / parser / evaluator / `Apply(entity)` / `Covers` internal / `ProgressRollup` + inject `TimeProvider` | — | review kiến trúc |
-| **B3** | U1 sau refactor: `LoginThrottlePolicy`, `SePayContentParser`, `SePayAmountMatcher`, `SePayIpnEvaluator`, `SePayService`, `RefundCompletion`, `RefundDayWindow`, `ContentAccess.Covers`, `ProgressRollup` | ~80 | B2 |
+| **B3** ✅ | U1 sau refactor: `LoginThrottlePolicy`, `SePayContentParser`, `SePayAmountMatcher`, `SePayIpnEvaluator`, `SePayService`, `RefundCompletion`, `RefundDayWindow`, `ContentAccess.Covers`, `ProgressRollup` | ~80 | B2 |
 | **B4** | U1 `AuthService` (`Login`, `RefreshToken`, `Logout`, `ChangePassword`, `ValidateToken`), `ResourceAccessService`, `EnrollmentService` (repo fake bằng `NSubstitute`) | ~70 | B3 |
 | **B5** | U2 (SQLite): `Register`/`Confirm`/`Forgot`/`Reset`, `AiQuotaService`, `SubscriptionLifecycleService`, `PackageTierResolver`, `ContentAccessService`, `RefundServicePolicy`, `SystemConfigService`, `NotificationService`, `ExerciseAttemptService`, `ProgressProjection` | ~110 | B4 |
 | **B6** | `UT-ATTR-*`, `UT-MW-*`, `UT-DTO-*` | ~25 | B4 |
@@ -1044,4 +1044,14 @@ Tổng: **~500 unit test**. Sau B6 mới bắt đầu bổ sung **integration te
   `Services/Helpers/{LoginThrottlePolicy,SePayContentParser,SePayAmountMatcher,SePayIpnEvaluator,RefundDayWindow,ProgressRollup}.cs`,
   `Services/Interfaces/{IPackageTierResolver,IRefreshTokenIssuer}.cs`,
   `Services/Implementations/{PackageTierResolver,RefreshTokenIssuer}.cs`.
-- ⏳ **B3–B6:** các case còn lại — **chưa làm**. Bước kế tiếp: **B3** (U1 sau refactor).
+- ✅ **B3 — U1 sau refactor: XONG.** ~78 test, **221/221 xanh**. File:
+  - `Unit/Auth/LoginThrottlePolicyTests.cs` — UT-THROTTLE-01..10.
+  - `Unit/Sepay/SePayContentParserTests.cs` — UT-SEPAY-PARSE-01..11.
+  - `Unit/Sepay/SePayAmountMatcherTests.cs` — UT-SEPAY-AMOUNT-01..08.
+  - `Unit/Sepay/SePayIpnEvaluatorTests.cs` — UT-SEPAY-EVAL-01..09.
+  - `Unit/Sepay/SePayServiceTests.cs` — UT-SEPAY-SVC-01..09.
+  - `Unit/Refund/RefundCompletionTests.cs` — UT-RFC-01..07.
+  - `Unit/Refund/RefundDayWindowTests.cs` — UT-RFP-WINDOW-01..05.
+  - `Unit/Content/ContentAccessCoversTests.cs` — UT-GATE-COVERS-01..08.
+  - `Unit/Progress/ProgressRollupTests.cs` — UT-PROG-01..04 (phần U1); UT-PROG-05..09 để lại B5 (U2).
+- ⏳ **B4–B6:** các case còn lại — **chưa làm**. Bước kế tiếp: **B4** (U1 `AuthService`, `ResourceAccessService`, `EnrollmentService` với repo fake NSubstitute).

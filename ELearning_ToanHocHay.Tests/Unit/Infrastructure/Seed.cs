@@ -45,4 +45,57 @@ public static class Seed
         db.SaveChanges();
         return payment;
     }
+
+    public static CourseVersion CourseVersion(AppDbContext db, VersionState state = VersionState.Published)
+    {
+        var course = Entities.NewCourse(CourseStatus.Published);
+        db.Courses.Add(course);
+        db.SaveChanges();
+
+        var cv = new CourseVersion { CourseId = course.CourseId, VersionNumber = 1, State = state, Label = "v1" };
+        db.CourseVersions.Add(cv);
+        db.SaveChanges();
+        return cv;
+    }
+
+    /// <summary>Node có <c>MaterializedPath = "/{parentPath}{ownId}/"</c> (đúng quy ước của service).</summary>
+    public static ContentNode Node(
+        AppDbContext db, int courseVersionId, NodeType type,
+        ContentNode? parent = null, bool isFree = true, bool isHidden = false)
+    {
+        var node = new ContentNode
+        {
+            CourseVersionId = courseVersionId,
+            NodeType = type,
+            Title = type.ToString(),
+            ParentNodeId = parent?.NodeId,
+            Depth = parent is null ? 0 : parent.Depth + 1,
+            IsFree = isFree,
+            IsHidden = isHidden,
+            MaterializedPath = "/",
+            CreatedBy = 1,
+        };
+        db.ContentNodes.Add(node);
+        db.SaveChanges();
+
+        node.MaterializedPath = (parent?.MaterializedPath ?? "/") + node.NodeId + "/";
+        db.SaveChanges();
+        return node;
+    }
+
+    public static Exercise Exercise(AppDbContext db, int? nodeId, Action<Exercise>? tweak = null)
+    {
+        var creator = User(db, UserType.ContentEditor);
+        var ex = new Exercise
+        {
+            ExerciseName = "Bài tập",
+            NodeId = nodeId,
+            CreatedBy = creator.UserId,
+            IsActive = true,
+        };
+        tweak?.Invoke(ex);
+        db.Exercises.Add(ex);
+        db.SaveChanges();
+        return ex;
+    }
 }

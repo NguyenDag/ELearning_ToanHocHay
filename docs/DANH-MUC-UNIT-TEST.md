@@ -751,7 +751,7 @@ Một số logic đang chôn trong `private` hoặc dính `AppDbContext` — tá
 | UT-TIER-05 | chỉ có `Expired` / `Cancelled` / `Pending` | `Free` | P1 |
 | UT-TIER-06 | 2 `Active` cùng tier, khác `EndDate` | chọn cái `EndDate` xa hơn (không ảnh hưởng tier nhưng chốt thứ tự) | P3 |
 
-### 3.31 ProgressProjectionService (`UT-PROG`) 🟡 B3 (phần U1: `ProgressRollup`) · B5 (U2)
+### 3.31 ProgressProjectionService (`UT-PROG`) ✅ B3 (U1 `ProgressRollup`) · B5 (U2: PROG-06..09; PROG-05 phủ gián tiếp qua PROG-08)
 
 **Hằng số:** `LessonCompleteScorePct = 70`, `MinViewSeconds = 20`.
 **Hàm tính (sau refactor `ProgressRollup`):** % hoàn thành từ danh sách con; ngưỡng đánh dấu bài hoàn thành.
@@ -1082,5 +1082,9 @@ Tổng: **~500 unit test**. Sau B6 mới bắt đầu bổ sung **integration te
     - **Sửa tương thích SQLite:** `RefundService.CheckDailyCapAsync` dùng `SumAsync(decimal)` — EF
       SQLite provider không hỗ trợ; đổi sang `Select(...).ToListAsync()` rồi `.Sum()` phía client
       (số dòng nhỏ; Postgres không đổi hành vi).
-  - ⏳ còn lại: `ExerciseAttemptService` (§3.35), `ProgressProjection` U2 (§3.31).
+  - ✅ đợt 4 (4 test, **392/392 xanh**): `ProgressProjectionService` U2 (UT-PROG-06..09) —
+    `MarkLessonCompleteAsync` (ngưỡng 20s, 100% + roll-up bài→chương→cache khoá học),
+    `ProjectAttemptAsync` bỏ qua attempt `InProgress`. Hạ tầng thêm: `Seed.CourseVersion/Node/Exercise`.
+  - ⏳ còn lại **duy nhất**: `ExerciseAttemptService` (§3.35, ~13 case) — service 14 phụ thuộc +
+    AutoMapper + row-lock raw SQL, cần một lượt riêng.
 - ⏳ **B6:** `UT-ATTR`, `UT-MW`, `UT-DTO`.

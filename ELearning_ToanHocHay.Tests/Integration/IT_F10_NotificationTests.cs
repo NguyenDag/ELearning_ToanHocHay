@@ -97,6 +97,39 @@ public class IT_F10_NotificationTests : IntegrationTest
             .Should().Contain(new[] { "tab-switch", "low-score", "inactivity" });
     }
 
+    [SkippableFact] // IT-F10-02
+    public async Task IT_F10_02_Tab_switch_creates_a_notification()
+    {
+        RequireDocker();
+        var (userId, _) = await Flow.NewStudentAsync();
+        var exId = await Flow.PublishExerciseAsync();
+        var client = App.As(userId);
+        var attemptId = (await (await client.PostAsJsonAsync("/api/exercise-attempts/start", new { ExerciseId = exId })).DataAsync())
+            .GetProperty("AttemptId").GetInt32();
+
+        await (await client.PostAsync($"/api/exercise-attempts/{attemptId}/report-tab-switch", null)).ShouldBeOk();
+
+        await App.Db(async db =>
+            (await db.Notifications.AnyAsync(n => n.UserId == userId && n.Title.Contains("chuyển tab")))
+                .Should().BeTrue());
+    }
+
+    [SkippableFact] // IT-F10-03
+    public async Task IT_F10_03_Inactivity_sweep_notifies_a_dormant_student()
+    {
+        RequireDocker();
+        var (userId, studentId) = await Flow.NewStudentAsync();
+        // từng học (5 ngày trước) nhưng không hoạt động gần đây
+        await Flow.SeedDailyActivityAsync(studentId, DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-5));
+
+        var res = await App.AsRole(TestRole.Admin).PostAsync("/api/admin/notifications/run-inactivity-check", null);
+        res.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        await App.Db(async db =>
+            (await db.Notifications.AnyAsync(n => n.UserId == userId && n.Title.Contains("Lâu rồi chưa học")))
+                .Should().BeTrue());
+    }
+
     [SkippableFact] // IT-F10-07
     public async Task IT_F10_07_Marking_another_users_notification_read_fails()
     {

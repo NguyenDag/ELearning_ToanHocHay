@@ -19,6 +19,26 @@ public class IT_F3_LearnProgressTests : IntegrationTest
     private Task<HttpResponseMessage> Complete(HttpClient client, int nodeId, int seconds)
         => client.PostAsJsonAsync($"/api/progress/lessons/{nodeId}/complete", new { SecondsViewed = seconds });
 
+    [SkippableFact] // IT-F3-01
+    public async Task IT_F3_01_Showcase_lesson_returns_blocks_resources_and_flashcards()
+    {
+        RequireDocker();
+        var (userId, _) = await Flow.NewStudentAsync();
+        var c = await Flow.PublishCourseAsync();
+        await Flow.EnrolAsync(userId, c.CourseId, c.VersionId);
+        await Flow.AddShowcaseContentAsync(c.FirstPaidLessonId);
+
+        var res = await App.As(userId).GetAsync($"/api/learn/nodes/{c.FirstPaidLessonId}");
+        await res.ShouldBeOk();
+        var data = await res.DataAsync();
+
+        data.GetProperty("Blocks").GetArrayLength().Should().Be(12);
+        data.GetProperty("Resources").GetArrayLength().Should().BeGreaterThan(0);
+        var decks = data.GetProperty("FlashcardDecks");
+        decks.GetArrayLength().Should().BeGreaterThan(0);
+        decks[0].GetProperty("Cards").GetArrayLength().Should().Be(2);
+    }
+
     [SkippableFact] // IT-F3-02
     public async Task IT_F3_02_Paid_lesson_complete_without_enrolment_is_403()
     {

@@ -96,4 +96,21 @@ public class SystemConfigServiceTests : IDisposable
 
         (await svc.GetIntAsync("t.cached", 0)).Should().Be(42);
     }
+
+    [Fact] // UT-CFG-09
+    public async Task After_the_cache_entry_expires_the_value_is_reloaded_from_db()
+    {
+        AddConfig("t.evict", "10", ConfigValueType.Int);
+        var svc = Svc();
+        (await svc.GetIntAsync("t.evict", 0)).Should().Be(10);
+
+        using (var other = _sql.NewContext())
+        {
+            other.SystemConfigs.Single(c => c.ConfigKey == "t.evict").ConfigValue = "20";
+            other.SaveChanges();
+        }
+        _cache.Remove("cfg:t.evict"); // mô phỏng hết TTL 5'
+
+        (await svc.GetIntAsync("t.evict", 0)).Should().Be(20);
+    }
 }

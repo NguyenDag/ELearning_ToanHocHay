@@ -122,4 +122,50 @@ public class IT_F6_ParentTests : IntegrationTest
         (await App.AsRole(TestRole.StudentA).DeleteAsync($"/api/parents/{parentIdB}"))
             .StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
+
+    [SkippableFact] // IT-F6-09
+    public async Task IT_F6_09_A_student_can_link_two_parents_with_distinct_relationships()
+    {
+        RequireDocker();
+        var (_, parentIdA, codeA) = await Flow.NewParentAsync();
+        var (_, parentIdB, codeB) = await Flow.NewParentAsync();
+        var (studentUserId, studentId) = await Flow.NewStudentAsync();
+        var student = App.As(studentUserId);
+
+        await (await student.PostAsJsonAsync("/api/parents/link", new { Code = codeA, Relationship = "Father" })).ShouldBeOk();
+        await (await student.PostAsJsonAsync("/api/parents/link", new { Code = codeB, Relationship = "Mother" })).ShouldBeOk();
+
+        await App.Db(async db =>
+        {
+            var links = await db.ParentLinks
+                .Where(l => l.StudentId == studentId && l.Status == LinkStatus.Active).ToListAsync();
+            links.Should().HaveCount(2);
+            links.Select(l => l.ParentId).Should().BeEquivalentTo(new[] { parentIdA, parentIdB });
+            links.Select(l => l.Relationship).Should().BeEquivalentTo(new[] { ParentRelationship.Father, ParentRelationship.Mother });
+            links.Count(l => l.IsPrimaryGuardian).Should().BeLessThanOrEqualTo(1, "tối đa 1 primary guardian");
+        });
+    }
+
+    [SkippableFact] // IT-F6-10
+    public async Task IT_F6_10_Student_can_list_their_linked_parents()
+    {
+        RequireDocker();
+        var (parentUserId, parentId, code) = await Flow.NewParentAsync();
+        var (studentUserId, studentId) = await Flow.NewStudentAsync();
+        await (await App.As(studentUserId).PostAsJsonAsync("/api/parents/link",
+            new { Code = code, Relationship = "Father" })).ShouldBeOk();
+
+        // chủ sở hữu
+        var mine = await (await App.As(studentUserId).GetAsync($"/api/students/{studentId}/parents")).DataAsync();
+        mine.EnumerateArray().Select(p => p.GetProperty("ParentId").GetInt32()).Should().Contain(parentId);
+        mine.EnumerateArray().Should().Contain(p => p.GetProperty("Relationship").GetString() == "Father");
+
+        // phụ huynh liên kết cũng xem được
+        (await App.As(parentUserId).GetAsync($"/api/students/{studentId}/parents")).StatusCode
+            .Should().Be(HttpStatusCode.OK);
+
+        // học sinh khác → 403
+        (await App.AsRole(TestRole.StudentB).GetAsync($"/api/students/{studentId}/parents")).StatusCode
+            .Should().Be(HttpStatusCode.Forbidden);
+    }
 }

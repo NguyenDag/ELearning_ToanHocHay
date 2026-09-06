@@ -3,7 +3,9 @@ using System.Net.Http.Json;
 using ELearning_ToanHocHay_Control.Data.Entities;
 using ELearning_ToanHocHay.Tests.Integration.Infrastructure;
 using FluentAssertions;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace ELearning_ToanHocHay.Tests.Integration;
@@ -353,5 +355,55 @@ public class IT_F1_AuthTests : IntegrationTest
         await (await App.AsRole(TestRole.Admin).PostAsJsonAsync($"/api/admin/users/{userId}/role", new { NewRole = "ContentEditor" })).ShouldBeOk();
         await App.Db(async db =>
             (await db.AuditLogs.AnyAsync(a => a.EntityType == "User" && a.EntityId == userId)).Should().BeTrue());
+    }
+
+    [SkippableFact] // IT-F1-27
+    public async Task IT_F1_27_Validate_token_accepts_a_real_token_and_rejects_garbage()
+    {
+        RequireDocker();
+        var (_, email, _) = await Flow.NewConfirmedUserAsync(UserType.Student);
+        var token = (await (await Anon().PostAsJsonAsync("/api/auth/login", new { Email = email, Password = "Test!234" }))
+            .DataAsync()).GetProperty("Token").GetString()!;
+
+        var ok = await Anon().PostAsJsonAsync("/api/auth/validate-token", token);
+        await ok.ShouldBeOk();
+        (await ok.DataAsync()).GetBoolean().Should().BeTrue();
+
+        // token rác / hết hạn → 401 (không 500)
+        (await Anon().PostAsJsonAsync("/api/auth/validate-token", "abc.def.ghi"))
+            .StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [SkippableFact] // IT-F1-26
+    public async Task IT_F1_26_Auth_rate_limit_is_partitioned_by_client_key()
+    {
+        RequireDocker();
+        using var factory = App.WithWebHostBuilder(b =>
+        {
+            b.UseSetting("RateLimiting:AuthPermitLimit", "2");
+            b.UseSetting("RateLimiting:TrustedProxies:0", "127.0.0.1");
+            b.ConfigureServices(s => s.AddSingleton<Microsoft.AspNetCore.Hosting.IStartupFilter, ForceRemoteIpStartupFilter>());
+        });
+
+        HttpClient ClientKeyed(string key)
+        {
+            var c = factory.CreateClient();
+            c.DefaultRequestHeaders.Add("X-Client-Key", key);
+            return c;
+        }
+
+        var a = ClientKeyed("client-A");
+        var b2 = ClientKeyed("client-B");
+        object body(string e) => new { Email = e, Password = "x" };
+
+        await a.PostAsJsonAsync("/api/auth/login", body("a1@flow.test"));
+        await a.PostAsJsonAsync("/api/auth/login", body("a2@flow.test"));
+        var blockedA = await a.PostAsJsonAsync("/api/auth/login", body("a3@flow.test"));
+        blockedA.StatusCode.Should().Be(HttpStatusCode.TooManyRequests);
+        (await blockedA.Content.ReadAsStringAsync()).Should().Contain("quá nhanh");
+
+        // client B (X-Client-Key khác) không bị ảnh hưởng
+        (await b2.PostAsJsonAsync("/api/auth/login", body("b1@flow.test")))
+            .StatusCode.Should().NotBe(HttpStatusCode.TooManyRequests);
     }
 }

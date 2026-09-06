@@ -40,7 +40,7 @@ public sealed class FakeAiService : IAIService
     {
         GuardTimeout();
         HintCalls++;
-        return Task.FromResult<AIHintResponse?>(new AIHintResponse { HintText = NextHint, HintLevel = 1 });
+        return Task.FromResult<AIHintResponse?>(new AIHintResponse { HintText = NextHint, HintLevel = 1, Status = "success" });
     }
 
     public Task<AIFeedbackResponse?> GenerateFeedbackStructuredAsync(AIFeedbackRequest request)
@@ -52,11 +52,12 @@ public sealed class FakeAiService : IAIService
             FullSolution = NextFeedback,
             MistakeAnalysis = "—",
             ImprovementAdvice = "—",
+            Status = "success",
         });
     }
 
     public Task<AIInsightResponse?> GenerateInsightStructuredAsync(AIInsightRequest request)
-        => Task.FromResult<AIInsightResponse?>(new AIInsightResponse());
+        => Task.FromResult<AIInsightResponse?>(new AIInsightResponse { Status = "success" });
 
     public Task<ChatbotResponse?> SendChatbotMessageAsync(ChatbotMessageRequest request)
         => Task.FromResult<ChatbotResponse?>(new ChatbotResponse { Success = true });

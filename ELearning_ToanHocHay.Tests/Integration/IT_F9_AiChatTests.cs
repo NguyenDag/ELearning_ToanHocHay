@@ -91,13 +91,13 @@ public class IT_F9_AiChatTests : IntegrationTest
         await (await client.PostAsJsonAsync("/api/exercise-attempts/complete", new { AttemptId = attemptId })).ShouldBeOk();
 
         var filled = false;
-        for (var i = 0; i < 60 && !filled; i++)
+        for (var i = 0; i < 80 && !filled; i++)
         {
             await Task.Delay(250);
             var body = await (await client.GetAsync($"/api/exercise-attempts/{attemptId}/result")).Content.ReadAsStringAsync();
             filled = body.Contains("FullSolution");
         }
-        Skip.IfNot(filled, "Job feedback nền chưa điền FullSolution trong 15s (timing nền — không coi là lỗi).");
+        filled.Should().BeTrue("job feedback nền (FakeAiService trả ngay) phải điền FullSolution vào /result");
     }
 
     [SkippableFact] // IT-F9-06
@@ -148,5 +148,54 @@ public class IT_F9_AiChatTests : IntegrationTest
         RequireDocker();
         (await App.Anonymous().PostAsJsonAsync("/api/chatbot/message", new { Text = "hi" }))
             .StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    /// <summary>Học sinh mới có 1 hội thoại đang mở — trả <c>(client, conversationId)</c>.</summary>
+    private async Task<(HttpClient student, int conversationId)> StudentWithOpenConversation()
+    {
+        var (userId, _) = await Flow.NewStudentAsync();
+        var client = App.As(userId);
+        await (await client.PostAsJsonAsync("/api/chatbot/message", new { Text = "Em cần hỏi bài" })).ShouldBeOk();
+        var convId = await App.Db(db => db.ChatConversations
+            .Where(c => c.InitiatorUserId == userId)
+            .Select(c => c.ConversationId).FirstAsync());
+        return (client, convId);
+    }
+
+    [SkippableFact] // IT-F9-08
+    public async Task IT_F9_08_Request_human_moves_the_conversation_into_the_staff_queue()
+    {
+        RequireDocker();
+        var (student, convId) = await StudentWithOpenConversation();
+
+        await (await student.PostAsync("/api/chatbot/request-human", null)).ShouldBeOk();
+
+        await App.Db(async db =>
+            (await db.ChatConversations.SingleAsync(c => c.ConversationId == convId)).Status
+                .Should().Be(ChatStatus.WaitingAgent));
+
+        var queue = await (await App.AsRole(TestRole.Support).GetAsync("/api/chatbot/staff/queue")).DataAsync();
+        queue.EnumerateArray().Select(c => c.GetProperty("ConversationId").GetInt32()).Should().Contain(convId);
+    }
+
+    [SkippableFact] // IT-F9-09
+    public async Task IT_F9_09_Staff_can_assign_reply_close_but_non_staff_cannot()
+    {
+        RequireDocker();
+        var (student, convId) = await StudentWithOpenConversation();
+        await (await student.PostAsync("/api/chatbot/request-human", null)).ShouldBeOk();
+        var staff = App.AsRole(TestRole.Support);
+
+        // non-staff → 403
+        (await student.PostAsync($"/api/chatbot/staff/conversations/{convId}/assign", null))
+            .StatusCode.Should().Be(HttpStatusCode.Forbidden);
+
+        await (await staff.PostAsync($"/api/chatbot/staff/conversations/{convId}/assign", null)).ShouldBeOk();
+        await (await staff.PostAsJsonAsync($"/api/chatbot/staff/conversations/{convId}/reply", new { Text = "Chào em, thầy hỗ trợ nhé" })).ShouldBeOk();
+        await (await staff.PostAsync($"/api/chatbot/conversations/{convId}/close", null)).ShouldBeOk();
+
+        await App.Db(async db =>
+            (await db.ChatConversations.SingleAsync(c => c.ConversationId == convId)).Status
+                .Should().Be(ChatStatus.Closed));
     }
 }

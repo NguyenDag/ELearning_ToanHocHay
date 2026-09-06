@@ -201,7 +201,7 @@ Tài liệu nền: pha P6 (ParentLinkService).
 | F6-06 | Phụ huynh **không** liên kết đọc dữ liệu học sinh → 403 | Integration | P1 | ✅ `A1AuthorizationMatrixTests` |
 | F6-07 | Phụ huynh sửa/xoá hồ sơ phụ huynh khác → 403; xoá cần SystemAdmin | Integration | P2 | 🔲 |
 | F6-08 | 1 học sinh liên kết nhiều phụ huynh; cờ `IsPrimaryGuardian`, `Relationship` | Integration | P2 | 🔲 |
-| F6-09 | `GET /api/students/{id}/parents` (backend còn thiếu) — thêm rồi test | Integration | P3 | 🔴 chờ backend |
+| F6-09 | `GET /api/students/{id}/parents` — endpoint đã thêm (`StudentController`); test IT-F6-10 | Integration | P3 | ✅ |
 
 ### F7 — Thanh toán (SePay VA + QR + IPN)
 

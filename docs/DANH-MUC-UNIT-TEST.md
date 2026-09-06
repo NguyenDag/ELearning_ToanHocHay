@@ -1098,8 +1098,15 @@ là các case P2/P3 phụ trong vài mục. Bắt đầu bổ sung **integration
     `ChangePasswordDto`, `CreateRefundRequestDto`, `ResetPasswordDto` (UT-DTO-01..08,10;
     DTO-09 `CreateSubscriptionDto` không có data annotation nên bỏ).
 
+- ✅ **Đợt bổ sung (rà soát vs tài liệu):** điền 4 case P1/P3 còn thiếu bản riêng —
+  `UT-CFG-09` (đẩy entry `cfg:*` khỏi cache → đọc lại DB), `UT-RFP-04` (Rejected/Cancelled + ngoài
+  30 ngày **không** tính vào giới hạn per-user), `UT-RFP-07` (Finance tạo hộ **vẫn** tính cho
+  beneficiary → 409), `UT-PROG-05` (roll-up dùng `MaterializedPath.StartsWith("/…/id/")` — bài của
+  path `/{id}9/…` không bị đếm nhầm). `UT-DTO-09` vẫn bỏ (DTO không có data-annotation).
+
 ---
 
-## ✅ Toàn bộ B0–B6 hoàn thành — **433/433 unit test xanh** (`dotnet test --filter "Level=Unit"`).
+## ✅ Toàn bộ B0–B6 + bổ sung hoàn thành — **437/437 unit test xanh** (`dotnet test --filter "Level=Unit"`).
 
-Kế tiếp: integration test ([DANH-MUC-INTEGRATION-TEST.md](DANH-MUC-INTEGRATION-TEST.md), từ **I0**).
+Integration test ([DANH-MUC-INTEGRATION-TEST.md](DANH-MUC-INTEGRATION-TEST.md)): F1–F12 + §5 xong,
+**189 case, 189 xanh, 0 skip**. Tổng cả 2 tầng: **626 xanh**.

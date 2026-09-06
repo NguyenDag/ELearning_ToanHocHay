@@ -161,6 +161,57 @@ public sealed class FlowSeed(ApiFactory app)
                 freeChapterIds.ToArray(), paidChapterIds.ToArray(), freeLessonId, firstPaidLessonId);
         });
 
+    /// <summary>Nhồi đủ 12 loại <see cref="LessonBlockType"/> + 1 resource + 1 deck (2 thẻ) vào 1 node.</summary>
+    public Task AddShowcaseContentAsync(int nodeId)
+        => app.Db(async db =>
+        {
+            var order = 0;
+            foreach (LessonBlockType type in Enum.GetValues<LessonBlockType>())
+                db.ContentBlocks.Add(new ContentBlock
+                {
+                    NodeId = nodeId, BlockType = type, ContentText = $"{type} demo", OrderIndex = order++,
+                });
+
+            db.LessonResources.Add(new LessonResource
+            {
+                NodeId = nodeId, Title = "Tài liệu PDF", ResourceType = ResourceType.Pdf,
+                ExternalUrl = "https://webapp.test/x.pdf", IsDownloadable = true, OrderIndex = 0,
+            });
+
+            var deck = new FlashcardDeck { NodeId = nodeId, Title = "Bộ thẻ", CreatedAt = DateTime.UtcNow };
+            db.FlashcardDecks.Add(deck);
+            await db.SaveChangesAsync();
+            db.Flashcards.AddRange(
+                new Flashcard { DeckId = deck.DeckId, FrontText = "2+2", BackText = "4", OrderIndex = 0 },
+                new Flashcard { DeckId = deck.DeckId, FrontText = "3+3", BackText = "6", OrderIndex = 1 });
+            await db.SaveChangesAsync();
+        });
+
+    /// <summary>1 dòng <see cref="DailyActivitySnapshot"/> có hoạt động (mặc định) cho ngày chỉ định.</summary>
+    public Task SeedDailyActivityAsync(int studentId, DateOnly date, int minutes = 20, int lessons = 1)
+        => app.Db(async db =>
+        {
+            db.DailyActivitySnapshots.Add(new DailyActivitySnapshot
+            {
+                StudentId = studentId, Date = date,
+                MinutesStudied = minutes, ExercisesDone = 0, LessonsDone = lessons, QuestionsAnswered = lessons,
+            });
+            await db.SaveChangesAsync();
+        });
+
+    /// <summary>Chèn <paramref name="count"/> dòng <see cref="TabSwitchLog"/>; dòng cuối lùi <paramref name="lastAgo"/>.</summary>
+    public Task AddTabSwitchLogsAsync(int attemptId, int count, TimeSpan lastAgo)
+        => app.Db(async db =>
+        {
+            for (var i = 0; i < count; i++)
+                db.TabSwitchLogs.Add(new TabSwitchLog
+                {
+                    AttemptId = attemptId,
+                    SwitchedAt = DateTime.UtcNow - (i == 0 ? lastAgo : lastAgo + TimeSpan.FromMinutes(i)),
+                });
+            await db.SaveChangesAsync();
+        });
+
     /// <summary>Ghi danh trực tiếp (StudentCourse Active).</summary>
     public Task EnrolAsync(int studentUserId, int courseId, int courseVersionId)
         => app.Db(async db =>

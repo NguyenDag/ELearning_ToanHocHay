@@ -244,4 +244,80 @@ public class IT_F4_ExerciseAttemptTests : IntegrationTest
         var res = await App.AsRole(TestRole.StudentA).PostAsJsonAsync("/api/exercise-attempts/submit", new { AttemptId = 1 });
         res.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
+
+    [SkippableFact] // IT-F4-04
+    public async Task IT_F4_04_Start_random_saves_and_completes_without_a_phantom_timeout()
+    {
+        RequireDocker();
+        var (userId, _) = await Flow.NewStudentAsync();
+        var client = App.As(userId);
+
+        foreach (var duration in new int?[] { null, 15 })
+        {
+            var start = await client.PostAsJsonAsync("/api/exercise-attempts/start-random",
+                new { BankId = Ids.BankId, NumberOfQuestions = 2, DurationMinutes = duration });
+            await start.ShouldBeOk();
+            var attemptId = await AttemptIdOf(start);
+
+            await (await Save(client, attemptId, Ids.McQuestionId, optionId: Ids.McCorrectOptionId)).ShouldBeOk();
+
+            var done = await client.PostAsJsonAsync("/api/exercise-attempts/complete", new { AttemptId = attemptId });
+            await done.ShouldBeOk();
+
+            await App.Db(async db =>
+                (await db.ExerciseAttempts.SingleAsync(a => a.AttemptId == attemptId)).Status
+                    .Should().Be(AttemptStatus.Submitted, $"duration={duration} — không bị đánh dấu Timeout ảo"));
+        }
+    }
+
+    [SkippableFact] // IT-F4-14
+    public async Task IT_F4_14_Feedback_status_reports_wrong_count_then_result_gets_full_solution()
+    {
+        RequireDocker();
+        var (client, attemptId) = await StartFreshAttempt();
+        await Save(client, attemptId, Ids.FillBlankQuestionId, text: "999"); // sai
+        await (await client.PostAsJsonAsync("/api/exercise-attempts/complete", new { AttemptId = attemptId })).ShouldBeOk();
+
+        var status = await (await client.GetAsync($"/api/exercise-attempts/{attemptId}/feedback-status")).DataAsync();
+        status.GetProperty("TotalWrong").GetInt32().Should().BeGreaterThan(0);
+
+        var filled = false;
+        for (var i = 0; i < 80 && !filled; i++)
+        {
+            await Task.Delay(250);
+            var body = await (await client.GetAsync($"/api/exercise-attempts/{attemptId}/result")).Content.ReadAsStringAsync();
+            filled = body.Contains("FullSolution");
+        }
+        filled.Should().BeTrue("job feedback nền (FakeAiService trả ngay) phải điền FullSolution vào /result");
+    }
+
+    [SkippableFact] // IT-F4-15
+    public async Task IT_F4_15_Tab_switch_reports_are_debounced()
+    {
+        RequireDocker();
+        var (client, attemptId) = await StartFreshAttempt();
+
+        for (var i = 0; i < 6; i++)
+            (await client.PostAsync($"/api/exercise-attempts/{attemptId}/report-tab-switch", null))
+                .IsSuccessStatusCode.Should().BeTrue();
+
+        await App.Db(async db =>
+            (await db.TabSwitchLogs.CountAsync(l => l.AttemptId == attemptId))
+                .Should().Be(1, "debounce 15s gộp cả loạt báo cáo dồn dập"));
+    }
+
+    [SkippableFact] // IT-F4-18
+    public async Task IT_F4_18_Concurrent_starts_do_not_5xx()
+    {
+        RequireDocker();
+        var (userId, _) = await Flow.NewStudentAsync();
+        var exId = await Flow.PublishExerciseAsync();
+        var client = App.As(userId);
+
+        var tasks = Enumerable.Range(0, 5)
+            .Select(_ => client.PostAsync("/api/exercise-attempts/start", JsonContent.Create(new { ExerciseId = exId })));
+        var results = await Task.WhenAll(tasks);
+
+        results.Should().OnlyContain(r => (int)r.StatusCode < 500);
+    }
 }

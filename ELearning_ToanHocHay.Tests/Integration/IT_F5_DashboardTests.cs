@@ -85,6 +85,48 @@ public class IT_F5_DashboardTests : IntegrationTest
             .Should().Be(HttpStatusCode.OK);
     }
 
+    [SkippableFact] // IT-F5-03
+    public async Task IT_F5_03_Ai_assessment_and_roadmap_return_data_for_a_premium_student()
+    {
+        RequireDocker();
+        var (userId, studentId) = await Flow.NewStudentAsync();
+        await Flow.GrantEntitlementAsync(studentId, EntitlementScope.AllContent, tier: PackageTier.Premium);
+        var client = App.As(userId);
+
+        var assess = await client.GetAsync($"/api/students/{studentId}/dashboard/ai-assessment");
+        await assess.ShouldBeOk();
+        var data = await assess.DataAsync();
+        // "không rỗng" — có tóm tắt hoặc danh sách khái niệm cần ôn (DTO dùng snake_case)
+        var hasSummary = data.TryGetProperty("summary", out var s) && !string.IsNullOrWhiteSpace(s.GetString());
+        var hasConcepts = data.TryGetProperty("concepts_to_review", out var c)
+            && c.ValueKind == System.Text.Json.JsonValueKind.Array && c.GetArrayLength() > 0;
+        (hasSummary || hasConcepts).Should().BeTrue();
+
+        (await client.GetAsync($"/api/students/{studentId}/dashboard/ai-roadmap"))
+            .StatusCode.Should().NotBe(HttpStatusCode.Forbidden);
+    }
+
+    [SkippableFact] // IT-F5-09
+    public async Task IT_F5_09_Heatmap_returns_only_days_with_activity_within_the_window()
+    {
+        RequireDocker();
+        var (userId, studentId) = await Flow.NewStudentAsync();
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        // chuỗi có ngày trống ở giữa
+        await Flow.SeedDailyActivityAsync(studentId, today);
+        await Flow.SeedDailyActivityAsync(studentId, today.AddDays(-1));
+        await Flow.SeedDailyActivityAsync(studentId, today.AddDays(-3)); // -2 để trống
+        await Flow.SeedDailyActivityAsync(studentId, today.AddDays(-120)); // ngoài cửa sổ 90 ngày
+
+        var data = await (await App.As(userId).GetAsync($"/api/progress/students/{studentId}/heatmap?days=90")).DataAsync();
+        var dates = data.EnumerateArray().Select(x => DateOnly.Parse(x.GetProperty("Date").GetString()!)).ToList();
+
+        dates.Should().BeInAscendingOrder();
+        dates.Should().HaveCount(3);
+        dates.Should().OnlyContain(d => d >= today.AddDays(-89));
+        dates.Should().NotContain(today.AddDays(-2));
+    }
+
     [SkippableFact] // IT-F5-08
     public async Task IT_F5_08_Current_subscription_reports_active_package_or_free()
     {

@@ -149,6 +149,33 @@ public class RefundServicePolicyTests : IDisposable
         res.Success.Should().BeTrue();
     }
 
+    [Fact] // UT-RFP-04 — Rejected/Cancelled không tính vào giới hạn 30 ngày
+    public async Task Per_user_count_excludes_rejected_and_cancelled()
+    {
+        _config.Set("refund.maxRequestsPerUserPer30d", "2");
+        var p = AddPayment();
+        AddRequest(AddPayment().PaymentId, 10_000m, RefundRequestStatus.Rejected, beneficiaryUserId: p.PaidByUserId);
+        AddRequest(AddPayment().PaymentId, 10_000m, RefundRequestStatus.Cancelled, beneficiaryUserId: p.PaidByUserId);
+        AddRequest(AddPayment().PaymentId, 10_000m, RefundRequestStatus.Completed, beneficiaryUserId: p.PaidByUserId,
+            createdAt: Now.AddDays(-40)); // ngoài cửa sổ 30 ngày
+
+        var res = await Svc().CreateAsync(CreateDto(p.PaymentId), Customer());
+
+        res.Success.Should().BeTrue();
+    }
+
+    [Fact] // UT-RFP-07 — Finance tạo hộ vẫn tính vào giới hạn của beneficiary
+    public async Task Create_by_finance_still_counts_toward_the_beneficiary_limit()
+    {
+        _config.Set("refund.maxRequestsPerUserPer30d", "1");
+        var p = AddPayment();
+        AddRequest(AddPayment().PaymentId, 10_000m, RefundRequestStatus.Completed, beneficiaryUserId: p.PaidByUserId);
+
+        var res = await Svc().CreateAsync(CreateDto(p.PaymentId), Finance());
+
+        res.StatusCode.Should().Be(409);
+    }
+
     [Fact] // UT-RFP-03 — chỉ request đã duyệt trong ngày mới tính vào "đã dùng"
     public async Task Create_succeeds_when_prior_requests_are_pending_or_from_yesterday()
     {

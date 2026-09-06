@@ -431,7 +431,7 @@ CI: runner có Docker chạy đầy đủ; runner không Docker → integration 
 | IT-F6-07 | `DELETE /api/parents/{id}/children/{studentId}` | đang liên kết | `200`; ngay sau đó phụ huynh gọi dashboard/history của con → `403` | ✅ `P6Tests::...revoke_drops_dashboard_access` | P1 |
 | IT-F6-08 | `PUT /api/parents/{otherId}` · `DELETE /api/parents/{otherId}` | phụ huynh khác / không phải admin | `403`; xoá cần `SystemAdmin` | 🔲 | P2 |
 | IT-F6-09 | `POST /api/parents/link` (nhiều phụ huynh) | 1 student liên kết 2 phụ huynh, cờ `IsPrimaryGuardian`, `Relationship` | DB đúng; chỉ 1 primary | 🔲 | P2 |
-| IT-F6-10 | `GET /api/students/{id}/parents` | (backend còn thiếu) | thêm endpoint rồi test: chủ sở hữu thấy phụ huynh liên kết | 🔴 chờ backend | P3 |
+| IT-F6-10 | `GET /api/students/{id}/parents` | endpoint mới `StudentController` (owner / phụ huynh liên kết / admin) | `200`; chủ sở hữu thấy phụ huynh liên kết (kèm `Relationship`); học sinh khác → `403` | ✅ (đã thêm backend) | P3 |
 
 ### F7 — Thanh toán (SePay VA + IPN) (`IT-F7`)
 
@@ -721,5 +721,58 @@ ELearning_ToanHocHay.Tests/
   rule `low-score` fan-out tới student + phụ huynh liên kết, opt-out chỉ tắt cho user đó,
   list/count/read/read-all, preferences shape, mark-read của người khác → lỗi.
   `FlowSeed.SeedNotificationAsync`; `ApiFactory` giữ lại vòng drain AI feedback.
-- ⏳ **Còn lại:** F11–F12; ma trận §5.
-- **Tổng:** 555 xanh + 1 skip (433 unit + 123 integration).
+- ✅ **F11 — Soạn nội dung (authoring): 13 case** (`IT_F11_AuthoringTests`): IT-F11-01..13.
+  catalog write role-gate (grade-level/framework), vòng đời version `Draft→submit→review(Approve)→publish`
+  (lật `Course.Status=Published`), review `Reject` chặn publish, sửa nội dung sau `Published` → 400 "Draft",
+  Lesson dưới root → 400, `NodeRevision` + restore, move node viết lại `MaterializedPath` cả subtree,
+  reorder anh em, review đính comment + editor resolve, question workflow + reviewer role-gate
+  (Editor gọi `review` → 403), block CRUD trên node draft (Student → 403), exercise
+  `publish`/`unpublish` workflow, `[AuthorizeContentRole]` cho Editor trên `POST /api/exercises`.
+  Test tự tạo `Subject` mới mỗi lần để combo Subject/Grade/Framework luôn duy nhất.
+- ✅ **F12 — Hợp đồng API & Vận hành: 15 case** (`IT_F12_ContractOpsTests`): IT-F12-01..11, 13..16.
+  vỏ `ApiResponse` (thực tế `{ Success, Message, Data, Errors }` — `StatusCode` là `[JsonIgnore]`),
+  404 nhất quán giữa các lookup, 403 có envelope, model-validation → 400 + `Errors`, enum serialize
+  chuỗi + bind query từ chuỗi, phân trang `{ Items, Total, Page, PageSize }` + clamp `pageSize` về 100,
+  route PascalCase cũ → 404, header `X-Correlation-ID` (sinh + echo), `/health` + `/health/ready`,
+  đổi role → `AuditLog`, CORS preflight origin lạ → không có `Access-Control-Allow-Origin`,
+  **rate-limit `auth` (factory con hạ `AuthPermitLimit=2`) → 429 có body vỏ ApiResponse**,
+  ẩn danh vào route bảo vệ → 401.
+- ✅ **§5 — Ma trận phân quyền: 18 case** (`IT_AuthorizationMatrixTests`): 1 test/dòng route,
+  helper `Matrix(call, (who, client, expected)[])` chạy qua mọi vai trò; `expected=null` =
+  "đã qua cửa phân quyền" (khác 401/403) cho route có hiệu ứng phụ. Bao phủ `GET/POST /api/users`,
+  `catalog/subjects`, `learn/nodes/{free|paid}`, `save-answer`/`result`/`history`/`dashboard`,
+  `POST /api/subscriptions`, `PATCH .../status`, `GET /api/payments`, `POST /api/refunds`,
+  `finance/refunds/{id}/approve`, `POST /api/courses`, `versions/{v}/publish`, `admin/users/{id}/role`,
+  `sepay/ipn`. **Lệch có chủ đích với bảng gốc (chốt theo code):** dashboard/overview không bypass
+  cho SystemAdmin → Admin = 403; `POST /api/subscriptions` — Finance = 403 (chỉ SystemAdmin bypass),
+  phụ huynh liên kết mua hộ = cho phép.
+- ✅ **Đợt bổ sung cuối (rà soát vs tài liệu):** điền các case P1/P2/P3 còn thiếu —
+  IT-F1-26 (rate-limit phân vùng `X-Client-Key` qua `ForceRemoteIpStartupFilter` + factory con),
+  IT-F1-27 (`validate-token`: token thật → 200, rác → 401), IT-F3-01 (node showcase đủ 12 loại
+  block + resource + flashcard deck — `FlowSeed.AddShowcaseContentAsync`), IT-F4-04 (`start-random`
+  `DurationMinutes` null/15 → lưu & complete, không Timeout ảo), IT-F4-14 (feedback-status +
+  poll `FullSolution`, `Skip` nếu job nền chậm), IT-F4-15 (report-tab-switch debounce 15s → 1 log),
+  IT-F4-18 (5 `start` song song → không 5xx), IT-F5-03 (ai-assessment/roadmap Premium → có dữ liệu;
+  DTO `AIInsightResponse` dùng **snake_case** `summary`/`concepts_to_review`), IT-F5-09 (heatmap
+  90 ngày có ngày trống → chỉ trả ngày có hoạt động, trong cửa sổ), IT-F6-09 (1 học sinh ↔ 2 phụ
+  huynh, `Relationship` khác nhau, ≤1 primary), IT-F7-10 (overpay trong dung sai `>0` qua factory
+  con → Processed), IT-F7-12 (2 IPN cùng ref song song → đúng 1 Processed, unique index chặn double,
+  kích hoạt 1 lần; loser có thể 5xx — không corrupt), IT-F8-13 (huỷ lô → member về Approved),
+  IT-F8-14 (mark-failed → retry → Approved, rời lô), IT-F9-08 (request-human → `WaitingAgent` +
+  vào `staff/queue`), IT-F9-09 (staff assign/reply/close; non-staff → 403), IT-F10-02 (report-tab-switch
+  → `Notification` rule tab-switch), IT-F10-03 (`run-inactivity-check` → `Notification` "Lâu rồi chưa
+  học"). **F12-12** (500 không lộ `ex.Message`/stack) — thêm `Controllers/DiagnosticsController.cs`
+  `#if DEBUG` (`GET /api/_diag/boom`), Release build không có endpoint này.
+  `FlowSeed` thêm: `AddShowcaseContentAsync`, `SeedDailyActivityAsync`, `AddTabSwitchLogsAsync`;
+  `SePayIpn.WithKey`; `Infrastructure/ForceRemoteIpStartupFilter`.
+- ✅ **Đợt cuối — nốt 3 phần còn lại:**
+  - **IT-F6-10**: thêm backend `GET /api/students/{studentId}/parents` (`StudentController`,
+    guard `IResourceAccessService.CanAccessStudentAsync` → owner / phụ huynh liên kết / admin),
+    service `IParentLinkService.GetParentsForStudentAsync` (dùng `GetByStudentAsync`), thêm
+    `ParentLinkDto.ParentName`. Test: owner + phụ huynh liên kết → 200; học sinh khác → 403.
+  - **IT-F4-14 / IT-F9-05 giờ chạy chắc chắn (bỏ `Skip`):** nguyên nhân cũ là `FakeAiService`
+    không set `Status="success"` trên các response structured → `AIFeedbackService.CreateAsync`
+    rơi vào nhánh lỗi, không ghi feedback. Đã set `Status="success"` cho hint/feedback/insight;
+    2 test poll `/result` tới khi có `FullSolution` rồi assert cứng.
+- ✅ **Hoàn tất F1–F12 + §5 — khớp 100% tài liệu, không còn skip.**
+- **Tổng:** 626 xanh + 0 skip (437 unit + 189 integration).

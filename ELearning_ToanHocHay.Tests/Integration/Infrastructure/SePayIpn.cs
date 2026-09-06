@@ -31,8 +31,11 @@ public static class SePayIpn
     };
 
     public static HttpClient Client(ApiFactory f, string key = "test-sepay-key")
+        => WithKey(f.CreateClient(), key);
+
+    /// <summary>Gắn header <c>Authorization: Apikey …</c> lên client bất kỳ (kể cả factory con).</summary>
+    public static HttpClient WithKey(HttpClient c, string key = "test-sepay-key")
     {
-        var c = f.CreateClient();
         c.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", $"Apikey {key}");
         return c;
     }

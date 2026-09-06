@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using ELearning_ToanHocHay_Control.Data.Entities;
 using ELearning_ToanHocHay.Tests.Integration.Infrastructure;
 using FluentAssertions;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 
@@ -239,5 +240,51 @@ public class IT_F7_PaymentTests : IntegrationTest
         await (await App.Anonymous().GetAsync("/api/packages")).ShouldBeOk();
         (await App.AsRole(TestRole.StudentA).PostAsJsonAsync("/api/packages", new { PackageName = "x", Price = 1, DurationDays = 30 }))
             .StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [SkippableFact] // IT-F7-10
+    public async Task IT_F7_10_Overpay_within_tolerance_still_activates()
+    {
+        RequireDocker();
+        using var factory = App.WithWebHostBuilder(b => b.UseSetting("SePay:AmountToleranceVnd", "1000"));
+
+        var (userId, _) = await Flow.NewStudentAsync();
+        var (subId, amount) = await Flow.CreatePendingSubscriptionAsync(userId, Ids.PackageId);
+
+        var ipnClient = SePayIpn.WithKey(factory.CreateClient());
+        var res = await ipnClient.PostAsJsonAsync("/api/sepay/ipn",
+            SePayIpn.In(subId, amount + 500, "REF-" + Guid.NewGuid().ToString("N")[..10]));
+
+        (await Outcome(res)).Should().Be("Processed");
+        await App.Db(async db =>
+            (await db.Subscriptions.SingleAsync(s => s.SubscriptionId == subId)).Status
+                .Should().Be(SubscriptionStatus.Active));
+    }
+
+    [SkippableFact] // IT-F7-12
+    public async Task IT_F7_12_Two_ipns_with_the_same_reference_in_parallel_activate_once()
+    {
+        RequireDocker();
+        var (userId, _) = await Flow.NewStudentAsync();
+        var (subId, amount) = await Flow.CreatePendingSubscriptionAsync(userId, Ids.PackageId);
+        var reference = "REF-" + Guid.NewGuid().ToString("N")[..10];
+
+        var responses = await Task.WhenAll(
+            Ipn(SePayIpn.In(subId, amount, reference)),
+            Ipn(SePayIpn.In(subId, amount, reference)));
+
+        // Đúng 1 response "Processed"; response còn lại là Duplicate hoặc thua race (5xx) — không corrupt.
+        var processed = 0;
+        foreach (var r in responses)
+            if (r.IsSuccessStatusCode && await Outcome(r) == "Processed") processed++;
+        processed.Should().Be(1);
+
+        // Bảo toàn: unique index chặn double, kích hoạt đúng 1 lần.
+        await App.Db(async db =>
+        {
+            (await db.SePayIpnLogs.CountAsync(l => l.ReferenceCode == reference)).Should().Be(1);
+            (await db.Subscriptions.SingleAsync(s => s.SubscriptionId == subId)).Status.Should().Be(SubscriptionStatus.Active);
+            (await db.Payments.CountAsync(p => p.TransactionId == reference)).Should().BeLessThanOrEqualTo(1);
+        });
     }
 }

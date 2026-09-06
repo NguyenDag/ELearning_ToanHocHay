@@ -76,6 +76,29 @@ public class ProgressProjectionServiceTests : IDisposable
             .ProgressPercent.Should().Be(100m);
     }
 
+    [Fact] // UT-PROG-05 — roll-up dùng MaterializedPath.StartsWith("/…/id/"), không ghép "/id"
+    public async Task RollUp_ignores_prefix_collisions_from_paths_that_share_a_leading_id()
+    {
+        var chapter = Seed.Node(_sql.Db, _cvId, NodeType.Chapter);
+        var lesson = Seed.Node(_sql.Db, _cvId, NodeType.Lesson, parent: chapter);
+
+        // "bẫy": bài của chương khác, path bắt đầu bằng "/{chapterId}" (số) nhưng KHÔNG phải hậu duệ.
+        var trapChapter = Seed.Node(_sql.Db, _cvId, NodeType.Chapter);
+        var trapLesson = Seed.Node(_sql.Db, _cvId, NodeType.Lesson, parent: trapChapter);
+        using (var db = _sql.NewContext())
+        {
+            db.ContentNodes.Find(trapChapter.NodeId)!.MaterializedPath = $"/{chapter.NodeId}9/";
+            db.ContentNodes.Find(trapLesson.NodeId)!.MaterializedPath = $"/{chapter.NodeId}9/{trapLesson.NodeId}/";
+            db.SaveChanges();
+        }
+
+        // chỉ hoàn thành bài THẬT; bài bẫy để dở.
+        await Svc().MarkLessonCompleteAsync(_studentId, lesson.NodeId, secondsViewed: 30);
+
+        // đúng: chương thấy 1 bài con -> 100%. sai (ghép "/{id}"): thấy 2 bài -> 50%.
+        Progress(chapter.NodeId)!.CompletionPercent.Should().Be(100m);
+    }
+
     [Fact] // UT-PROG-09
     public async Task ProjectAttempt_ignores_an_in_progress_attempt()
     {

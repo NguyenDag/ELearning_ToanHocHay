@@ -335,6 +335,53 @@ public class IT_F8_RefundTests : IntegrationTest
         });
     }
 
+    [SkippableFact] // IT-F8-13
+    public async Task IT_F8_13_Cancelling_a_batch_returns_members_to_approved()
+    {
+        RequireDocker();
+        var (userId, _) = await Flow.NewStudentAsync();
+        var paymentId = await Flow.SeedRefundablePaymentAsync(userId);
+        var id = await Flow.CreateRefundRequestAsync(userId, paymentId, amount: 50_000m);
+        var finance = App.AsRole(TestRole.Finance);
+        await (await Approve(finance, id)).ShouldBeOk();
+
+        var batchId = (await (await finance.PostAsJsonAsync("/api/finance/refund-batches",
+            new { RefundRequestIds = new[] { id } })).DataAsync()).GetProperty("RefundBatchId").GetInt32();
+        await App.Db(async db =>
+            (await db.RefundRequests.SingleAsync(r => r.RefundRequestId == id)).Status.Should().Be(RefundRequestStatus.Batched));
+
+        await (await finance.PostAsync($"/api/finance/refund-batches/{batchId}/cancel", null)).ShouldBeOk();
+
+        await App.Db(async db =>
+        {
+            (await db.RefundRequests.SingleAsync(r => r.RefundRequestId == id)).Status.Should().Be(RefundRequestStatus.Approved);
+            (await db.RefundBatches.SingleAsync(b => b.RefundBatchId == batchId)).Status.Should().Be(RefundBatchStatus.Cancelled);
+        });
+    }
+
+    [SkippableFact] // IT-F8-14
+    public async Task IT_F8_14_Mark_failed_then_retry_returns_to_approved()
+    {
+        RequireDocker();
+        var (userId, _) = await Flow.NewStudentAsync();
+        var paymentId = await Flow.SeedRefundablePaymentAsync(userId);
+        var id = await Flow.CreateRefundRequestAsync(userId, paymentId, amount: 50_000m);
+        var finance = App.AsRole(TestRole.Finance);
+        await (await Approve(finance, id)).ShouldBeOk();
+
+        await (await finance.PostAsJsonAsync($"/api/finance/refunds/{id}/mark-failed", new { Reason = "sai số TK" })).ShouldBeOk();
+        await App.Db(async db =>
+            (await db.RefundRequests.SingleAsync(r => r.RefundRequestId == id)).Status.Should().Be(RefundRequestStatus.Failed));
+
+        await (await finance.PostAsync($"/api/finance/refunds/{id}/retry", null)).ShouldBeOk();
+        await App.Db(async db =>
+        {
+            var r = await db.RefundRequests.SingleAsync(x => x.RefundRequestId == id);
+            r.Status.Should().Be(RefundRequestStatus.Approved);
+            r.RefundBatchId.Should().BeNull("rời lô sau khi retry");
+        });
+    }
+
     [SkippableFact] // IT-F8-19
     public async Task IT_F8_19_Owner_sees_their_request_stranger_is_403()
     {

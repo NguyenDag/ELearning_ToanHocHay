@@ -680,4 +680,7 @@ ELearning_ToanHocHay.Tests/
   - `IT_I0_HarnessTests` — 3 test khói (seed, /health, /api/auth/me).
 - ✅ **F1 — Xác thực & tài khoản: 15 case** (`IT_F1_AuthTests`): IT-F1-01..05, 08..11, 13/14, 15,
   18, 19, 20, 23. Login thất bại thực tế trả **401** (không phải 400 như bảng) — test nhận cả hai.
-- ⏳ **Còn lại:** `FlowSeed` các nhóm course/enrol/attempt/refund/subscription; F2–F12; ma trận §5.
+- ✅ **F2 — Danh mục & ghi danh: 12 case** (`IT_F2_CatalogEnrollmentTests`): IT-F2-01, 03..13.
+  `FlowSeed` thêm `PublishCourseAsync` / `EnrolAsync` / `GrantEntitlementAsync`.
+- ⏳ **Còn lại:** `FlowSeed` nhóm attempt/refund/subscription-via-IPN; F3–F12; ma trận §5.
+- **Tổng:** 463 test xanh (433 unit + 30 integration).

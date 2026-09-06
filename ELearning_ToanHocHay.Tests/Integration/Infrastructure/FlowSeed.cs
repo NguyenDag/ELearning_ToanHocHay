@@ -1,6 +1,6 @@
 using ELearning_ToanHocHay_Control.Data.Entities;
-using ELearning_ToanHocHay_Control.Services.Helpers;
 using ELearning_ToanHocHay_Control.Services.Implementations;
+using Microsoft.EntityFrameworkCore;
 
 namespace ELearning_ToanHocHay.Tests.Integration.Infrastructure;
 
@@ -199,6 +199,53 @@ public sealed class FlowSeed(ApiFactory app)
                 AmountPaid = 199_000m, StartDate = now.AddDays(-1), EndDate = expiresAt ?? now.AddDays(30), CreatedAt = now,
             });
             await db.SaveChangesAsync();
+        });
+
+    // ---------------------------------------------------------------- bài tập (F4)
+
+    /// <summary>Học sinh mới đã xác nhận — trả cả <c>userId</c> lẫn <c>studentId</c>.</summary>
+    public async Task<(int userId, int studentId)> NewStudentAsync()
+    {
+        var (userId, _, _) = await NewConfirmedUserAsync(UserType.Student);
+        var studentId = await app.Db(db => db.Students.Where(s => s.UserId == userId)
+            .Select(s => s.StudentId).FirstAsync());
+        return (userId, studentId);
+    }
+
+    /// <summary>
+    /// Exercise Published gắn 4 câu golden (MC/TF/FillBlank/Essay). <paramref name="tier"/> &gt; Free
+    /// ⇒ đặt <c>IsFree=false</c> để kích hoạt cổng gói.
+    /// </summary>
+    public async Task<int> PublishExerciseAsync(
+        AccessTier tier = AccessTier.Free, int? maxAttempts = null, int? durationMinutes = null)
+        => await app.Db(async db =>
+        {
+            var ids = app.Ids;
+            var ex = new Exercise
+            {
+                ExerciseName = $"Ex {Rand()}",
+                ExerciseType = ExerciseType.Quiz,
+                TotalQuestions = 4,
+                TotalScores = 4,
+                PassingScore = 2,
+                MaxAttempts = maxAttempts,
+                DurationMinutes = durationMinutes,
+                RequiredTier = tier,
+                IsFree = tier == AccessTier.Free,
+                Status = ExerciseStatus.Published,
+                IsActive = true,
+                CreatedBy = ids.EditorUserId,
+            };
+            db.Exercises.Add(ex);
+            await db.SaveChangesAsync();
+
+            db.ExerciseQuestions.AddRange(
+                new ExerciseQuestion { ExerciseId = ex.ExerciseId, QuestionId = ids.McQuestionId, Score = 1, OrderIndex = 1 },
+                new ExerciseQuestion { ExerciseId = ex.ExerciseId, QuestionId = ids.TfQuestionId, Score = 1, OrderIndex = 2 },
+                new ExerciseQuestion { ExerciseId = ex.ExerciseId, QuestionId = ids.FillBlankQuestionId, Score = 1, OrderIndex = 3 },
+                new ExerciseQuestion { ExerciseId = ex.ExerciseId, QuestionId = ids.EssayQuestionId, Score = 1, OrderIndex = 4 });
+            await db.SaveChangesAsync();
+            return ex.ExerciseId;
         });
 
     /// <summary>Payment đã Completed, không gắn subscription — dùng cho luồng hoàn tiền F8.</summary>

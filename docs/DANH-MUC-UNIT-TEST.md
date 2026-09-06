@@ -827,7 +827,7 @@ Một số logic đang chôn trong `private` hoặc dính `AppDbContext` — tá
 | UT-NOTIF-09 | `MarkReadAsync` đã read sẵn | không đổi `ReadAt`, vẫn success | P2 |
 | UT-NOTIF-10 | `MarkAllReadAsync` | mọi thông báo unread của user → read; message chứa số lượng | P1 |
 
-### 3.35 ExerciseAttemptService (`UT-ATT`)
+### 3.35 ExerciseAttemptService (`UT-ATT`) ✅ B5
 
 **Hàm:** `StartAttemptAsync`, `SaveAnswerAsync`, `CompleteAttemptAsync`, `StartRandomAsync`
 **Hạ tầng:** SQLite + nhiều repo fake + `IAiFeedbackQueue` fake + `IProgressProjectionService` fake + `INotificationRuleEngine` fake.
@@ -1000,7 +1000,7 @@ Mọi class trong `Unit/` gắn `[Trait("Level","Unit")]` + `[Trait("Tier","U1"|
 | **B2** ✅ | Refactor [§2](#2-refactor-mở-đường-làm-trước): tách policy / parser / evaluator / `Apply(entity)` / `Covers` internal / `ProgressRollup` + inject `TimeProvider` | — | review kiến trúc |
 | **B3** ✅ | U1 sau refactor: `LoginThrottlePolicy`, `SePayContentParser`, `SePayAmountMatcher`, `SePayIpnEvaluator`, `SePayService`, `RefundCompletion`, `RefundDayWindow`, `ContentAccess.Covers`, `ProgressRollup` | ~80 | B2 |
 | **B4** ✅ | U1 `AuthService` (`Login`, `RefreshToken`, `Logout`, `ChangePassword`, `ValidateToken`), `ResourceAccessService`, `EnrollmentService` (repo fake bằng `NSubstitute`) | ~70 | B3 |
-| **B5** | U2 (SQLite): `Register`/`Confirm`/`Forgot`/`Reset`, `AiQuotaService`, `SubscriptionLifecycleService`, `PackageTierResolver`, `ContentAccessService`, `RefundServicePolicy`, `SystemConfigService`, `NotificationService`, `ExerciseAttemptService`, `ProgressProjection` | ~110 | B4 |
+| **B5** ✅ | U2 (SQLite): `Register`/`Confirm`/`Forgot`/`Reset`, `AiQuotaService`, `SubscriptionLifecycleService`, `PackageTierResolver`, `ContentAccessService`, `RefundServicePolicy`, `SystemConfigService`, `NotificationService`, `ExerciseAttemptService`, `ProgressProjection` | ~110 | B4 |
 | **B6** | `UT-ATTR-*`, `UT-MW-*`, `UT-DTO-*` | ~25 | B4 |
 
 Tổng: **~500 unit test**. Sau B6 mới bắt đầu bổ sung **integration test**
@@ -1065,7 +1065,7 @@ Tổng: **~500 unit test**. Sau B6 mới bắt đầu bổ sung **integration te
   - `Unit/Access/ResourceAccessServiceTests.cs` — UT-RES-01..12 (`CanViewAttemptAsync` là tên
     thật của "CanAccessAttempt"; `CanModifyAttemptAsync` chưa có case riêng — bổ sung ở B5/IT nếu cần).
   - `Unit/Content/EnrollmentServiceTests.cs` — UT-ENROL-01..07.
-- 🟡 **B5 — U2 (SQLite): đang làm.**
+- ✅ **B5 — U2 (SQLite): XONG.** ~110 test, **405/405 xanh**.
   - ✅ đợt 1 (49 test, **335/335 xanh**): `PackageTierResolver` (UT-TIER), `SystemConfigService` (UT-CFG-01..08),
     `SubscriptionLifecycleService` (UT-LIFE), `AiQuotaService` (UT-QUOTA), `ContentAccessService`
     GetCourseAccess (UT-GATE — fake repo).
@@ -1085,6 +1085,8 @@ Tổng: **~500 unit test**. Sau B6 mới bắt đầu bổ sung **integration te
   - ✅ đợt 4 (4 test, **392/392 xanh**): `ProgressProjectionService` U2 (UT-PROG-06..09) —
     `MarkLessonCompleteAsync` (ngưỡng 20s, 100% + roll-up bài→chương→cache khoá học),
     `ProjectAttemptAsync` bỏ qua attempt `InProgress`. Hạ tầng thêm: `Seed.CourseVersion/Node/Exercise`.
-  - ⏳ còn lại **duy nhất**: `ExerciseAttemptService` (§3.35, ~13 case) — service 14 phụ thuộc +
-    AutoMapper + row-lock raw SQL, cần một lượt riêng.
-- ⏳ **B6:** `UT-ATTR`, `UT-MW`, `UT-DTO`.
+  - ✅ đợt 5 (13 test): `ExerciseAttemptService` (UT-ATT-01..13) — sociable: repo thật
+    (`ExerciseAttemptRepository`…) trên SQLite, AI queue / progression / notify / email là fake.
+    `CompleteExercise` chạy cả row-lock raw SQL + transaction thật; ATT-11 khẳng định idempotency.
+    `Seed` thêm: `QuestionBank/Question/AttachQuestion/Attempt/Answer`.
+- ⏳ **B6:** `UT-ATTR` (authorization attributes), `UT-MW` (middleware), `UT-DTO` (~25 case).

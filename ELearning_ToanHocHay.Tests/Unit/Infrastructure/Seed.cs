@@ -83,7 +83,7 @@ public static class Seed
         return node;
     }
 
-    public static Exercise Exercise(AppDbContext db, int? nodeId, Action<Exercise>? tweak = null)
+    public static Exercise Exercise(AppDbContext db, int? nodeId = null, Action<Exercise>? tweak = null)
     {
         var creator = User(db, UserType.ContentEditor);
         var ex = new Exercise
@@ -92,10 +92,71 @@ public static class Seed
             NodeId = nodeId,
             CreatedBy = creator.UserId,
             IsActive = true,
+            Status = ExerciseStatus.Published,
+            TotalScores = 10,
         };
         tweak?.Invoke(ex);
         db.Exercises.Add(ex);
         db.SaveChanges();
         return ex;
+    }
+
+    public static QuestionBank QuestionBank(AppDbContext db)
+    {
+        var qb = new QuestionBank { BankName = "Ngân hàng", SubjectId = 1, GradeLevelId = 1, IsActive = true };
+        db.QuestionBanks.Add(qb);
+        db.SaveChanges();
+        return qb;
+    }
+
+    public static Question Question(
+        AppDbContext db, int bankId, QuestionType type, string? correct = null,
+        params (string text, bool isCorrect)[] options)
+    {
+        var q = Entities.NewQuestion(type, correct, bankId: bankId, subjectId: 1);
+        db.Questions.Add(q);
+        db.SaveChanges();
+
+        foreach (var (text, isCorrect) in options)
+            db.QuestionOptions.Add(new QuestionOption { QuestionId = q.QuestionId, OptionText = text, IsCorrect = isCorrect });
+        if (options.Length > 0) db.SaveChanges();
+        return q;
+    }
+
+    public static void AttachQuestion(AppDbContext db, int exerciseId, int questionId, double score, int order = 1)
+    {
+        db.ExerciseQuestions.Add(new ExerciseQuestion
+        {
+            ExerciseId = exerciseId, QuestionId = questionId, Score = score, OrderIndex = order,
+        });
+        db.SaveChanges();
+    }
+
+    public static ExerciseAttempt Attempt(
+        AppDbContext db, int studentId, int exerciseId, AttemptStatus status = AttemptStatus.InProgress,
+        double maxScore = 10, DateTime? plannedEnd = null)
+    {
+        var a = new ExerciseAttempt
+        {
+            StudentId = studentId,
+            ExerciseId = exerciseId,
+            Status = status,
+            MaxScore = maxScore,
+            StartTime = DateTime.UtcNow.AddMinutes(-10),
+            PlannedEndTime = plannedEnd,
+            SubmittedAt = status == AttemptStatus.InProgress ? null : DateTime.UtcNow,
+        };
+        db.ExerciseAttempts.Add(a);
+        db.SaveChanges();
+        return a;
+    }
+
+    public static void Answer(AppDbContext db, int attemptId, int questionId, string? text = null, int? optionId = null)
+    {
+        db.StudentAnswers.Add(new StudentAnswer
+        {
+            AttemptId = attemptId, QuestionId = questionId, AnswerText = text, SelectedOptionId = optionId,
+        });
+        db.SaveChanges();
     }
 }

@@ -647,7 +647,7 @@ Một số logic đang chôn trong `private` hoặc dính `AppDbContext` — tá
 | UT-GATE-COVERS-07 | `SubjectGrade` | khớp subject, lệch grade | `false` | P1 |
 | UT-GATE-COVERS-08 | `SubjectGrade` | lệch subject, khớp grade | `false` | P1 |
 
-### 3.25 ContentAccessService — GetCourseAccess (`UT-GATE`)
+### 3.25 ContentAccessService — GetCourseAccess (`UT-GATE`) ✅ B5
 
 **Hàm:** `Task<ContentAccessLevel> GetCourseAccessAsync(ClaimsPrincipal user, Course course)`
 **Fake:** `IEnrollmentRepository` (`GetActiveEnrolmentAsync`, `GetActiveEntitlementsAsync`).
@@ -700,7 +700,7 @@ Một số logic đang chôn trong `private` hoặc dính `AppDbContext` — tá
 | UT-PAGE-08 | `ToPagedResultAsync` với 25 phần tử, page 2, size 10 | `Items.Count = 10`, `Total = 25`, `Page = 2` | P2 |
 | UT-PAGE-09 | `ToPagedResultAsync` page 3, size 10, 25 phần tử | `Items.Count = 5` | P2 |
 
-### 3.28 AiQuotaService (`UT-QUOTA`)
+### 3.28 AiQuotaService (`UT-QUOTA`) ✅ B5
 
 **Hàm:** `PeekHintAsync(int studentId)`, `TryConsumeHintAsync(int studentId)`, `RecordFeedbackAsync(int studentId)`
 **Hạ tầng:** `AppDbContext` (SQLite — `AiUsageDaily`, `Subscriptions`, `Packages`), fake `IPackageRepository`, `ISystemConfigService`, `IConfiguration` (`AI:FreeDailyHintLimit`).
@@ -720,7 +720,7 @@ Một số logic đang chôn trong `private` hoặc dính `AppDbContext` — tá
 | UT-QUOTA-10 | `AI:FreeDailyHintLimit` cũng không parse được | fallback = 3 | P2 |
 | UT-QUOTA-11 | `RecordFeedbackAsync` | `FeedbackCount + 1` được lưu | P3 |
 
-### 3.29 SubscriptionLifecycleService (`UT-LIFE`)
+### 3.29 SubscriptionLifecycleService (`UT-LIFE`) ✅ B5
 
 **Hàm:** `Task<LifecycleSweepResult> RunSweepAsync()`
 **Hạ tầng:** `AppDbContext` (SQLite — `Subscriptions`, `Payments`), `IOptions<SePayOptions>` (`PendingTimeoutMinutes`), `NullLogger`.
@@ -736,7 +736,7 @@ Một số logic đang chôn trong `private` hoặc dính `AppDbContext` — tá
 | UT-LIFE-06 | nhiều bản ghi mỗi loại | `result` đếm đúng số expired / cancelled | P2 |
 | UT-LIFE-07 | `Subscription(Cancelled/Expired)` sẵn | không bị đụng | P3 |
 
-### 3.30 PackageTierResolver (`UT-TIER`)
+### 3.30 PackageTierResolver (`UT-TIER`) ✅ B5
 
 **Hàm (sau refactor):** `Task<PackageTier> ResolveAsync(int studentId)`
 **Hạ tầng:** `AppDbContext` (SQLite — `Subscriptions` + `Packages`).
@@ -790,7 +790,7 @@ Một số logic đang chôn trong `private` hoặc dính `AppDbContext` — tá
 | UT-RES-11 | `CanAccessAttemptAsync` — chủ attempt / phụ huynh link / người lạ | `true` / `true` / `false` | P1 |
 | UT-RES-12 | `CanAccessSubscriptionAsync` — chủ / Finance / người lạ | `true` / `true` / `false` | P2 |
 
-### 3.33 SystemConfigService (`UT-CFG`)
+### 3.33 SystemConfigService (`UT-CFG`) ✅ B5
 
 **Hàm:** `GetIntAsync(key, fallback)`, `GetDecimalAsync`, `GetBoolAsync`, `GetStringAsync`
 **Hạ tầng:** `AppDbContext` (SQLite — `SystemConfigs`), `IMemoryCache` (`MemoryCache` thật).
@@ -1065,4 +1065,14 @@ Tổng: **~500 unit test**. Sau B6 mới bắt đầu bổ sung **integration te
   - `Unit/Access/ResourceAccessServiceTests.cs` — UT-RES-01..12 (`CanViewAttemptAsync` là tên
     thật của "CanAccessAttempt"; `CanModifyAttemptAsync` chưa có case riêng — bổ sung ở B5/IT nếu cần).
   - `Unit/Content/EnrollmentServiceTests.cs` — UT-ENROL-01..07.
-- ⏳ **B5–B6:** các case còn lại — **chưa làm**. Bước kế tiếp: **B5** (U2 với SQLite).
+- 🟡 **B5 — U2 (SQLite): đang làm.**
+  - ✅ đợt 1 (49 test, **335/335 xanh**): `PackageTierResolver` (UT-TIER), `SystemConfigService` (UT-CFG-01..08),
+    `SubscriptionLifecycleService` (UT-LIFE), `AiQuotaService` (UT-QUOTA), `ContentAccessService`
+    GetCourseAccess (UT-GATE — fake repo).
+    - Hạ tầng thêm: `Unit/Infrastructure/Seed.cs` (chèn đồ thị entity hợp lệ cho SQLite).
+    - **Sửa bug sản phẩm:** `PackageTierResolver` sắp xếp `Package.Tier` ở DB — cột này persist
+      dạng **string** (`HasConversion<string>`) nên `ORDER BY` ra thứ tự chữ cái ("Standard" > "Premium").
+      Đã đổi sang nạp danh sách tier rồi `Max()` theo enum. (UT-TIER-03)
+  - ⏳ còn lại: `Register`/`Confirm`/`Forgot`/`Reset` (§3.4–3.6), `RefundServicePolicy` (§3.22),
+    `NotificationService` (§3.34), `ExerciseAttemptService` (§3.35), `ProgressProjection` U2 (§3.31).
+- ⏳ **B6:** `UT-ATTR`, `UT-MW`, `UT-DTO`.

@@ -20,15 +20,14 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         {
             var now = _clock.GetUtcNow().UtcDateTime;
 
-            var tier = await _context.Subscriptions
+            // Tier persist dưới dạng string (HasConversion<string>) nên không thể ORDER BY ở DB —
+            // nạp các tier đang hiệu lực rồi lấy max theo thứ tự enum (Free < Standard < Premium < Yearly).
+            var tiers = await _context.Subscriptions
                 .Where(s => s.StudentId == studentId && s.Status == SubscriptionStatus.Active && s.EndDate > now)
-                .Include(s => s.Package)
-                .OrderByDescending(s => s.Package!.Tier)
-                .ThenByDescending(s => s.EndDate)
-                .Select(s => (PackageTier?)s.Package!.Tier)
-                .FirstOrDefaultAsync();
+                .Select(s => s.Package!.Tier)
+                .ToListAsync();
 
-            return tier ?? PackageTier.Free;
+            return tiers.Count == 0 ? PackageTier.Free : tiers.Max();
         }
     }
 }

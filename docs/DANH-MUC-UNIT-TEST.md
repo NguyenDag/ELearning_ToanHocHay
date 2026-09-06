@@ -589,7 +589,7 @@ Một số logic đang chôn trong `private` hoặc dính `AppDbContext` — tá
 | UT-RFP-WINDOW-04 | `2026-09-05T17:00:00Z` | 7 | `2026-09-05T17:00:00Z` (đúng nửa đêm VN) | P2 |
 | UT-RFP-WINDOW-05 | bất kỳ | 0 | mốc UTC 00:00 cùng ngày | P2 |
 
-### 3.22 RefundService — chính sách duyệt (`UT-RFP`)
+### 3.22 RefundService — chính sách duyệt (`UT-RFP`) ✅ B5
 
 **Hàm:** `CreateAsync`, `ApproveAsync` (các nhánh kiểm soát)
 **Hạ tầng:** `AppDbContext` (SQLite — `RefundRequests`, `Payments`), `ISystemConfigService` (fake trả cấu hình), `IRefundEventWriter` (fake).
@@ -808,7 +808,7 @@ Một số logic đang chôn trong `private` hoặc dính `AppDbContext` — tá
 | UT-CFG-08 | Gọi 2 lần cùng key | lần 2 lấy từ cache (không query DB) — verify qua context tracking hoặc bộ đếm | P2 |
 | UT-CFG-09 | Cache hết hạn (TTL 5') | query lại DB | P3 |
 
-### 3.34 NotificationService & NotificationRules (`UT-NOTIF`)
+### 3.34 NotificationService & NotificationRules (`UT-NOTIF`) ✅ B5
 
 **Hàm:** `GetMineAsync`, `GetUnreadCountAsync`, `MarkReadAsync`, `MarkAllReadAsync`, `NotificationRules.All`
 **Hạ tầng:** `AppDbContext` (SQLite — `Notifications`).
@@ -1077,6 +1077,10 @@ Tổng: **~500 unit test**. Sau B6 mới bắt đầu bổ sung **integration te
     (UT-AUTH-RESET), `Register` (UT-AUTH-REGISTER) — `AppDbContext` SQLite + repo thật
     (`UserRepository`…) trên cùng context; email/hasher/cache/refresh-token repo là fake
     (`Unit/Auth/_AuthU2.cs`).
-  - ⏳ còn lại: `RefundServicePolicy` (§3.22), `NotificationService` (§3.34),
-    `ExerciseAttemptService` (§3.35), `ProgressProjection` U2 (§3.31).
+  - ✅ đợt 3 (24 test, **388/388 xanh**): `NotificationService`/`NotificationRules` (UT-NOTIF),
+    `RefundService` chính sách duyệt (UT-RFP: create-guard, trần/ngày, dual-control, state machine).
+    - **Sửa tương thích SQLite:** `RefundService.CheckDailyCapAsync` dùng `SumAsync(decimal)` — EF
+      SQLite provider không hỗ trợ; đổi sang `Select(...).ToListAsync()` rồi `.Sum()` phía client
+      (số dòng nhỏ; Postgres không đổi hành vi).
+  - ⏳ còn lại: `ExerciseAttemptService` (§3.35), `ProgressProjection` U2 (§3.31).
 - ⏳ **B6:** `UT-ATTR`, `UT-MW`, `UT-DTO`.

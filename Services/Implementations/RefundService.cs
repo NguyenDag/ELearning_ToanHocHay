@@ -481,9 +481,11 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         {
             var (start, _) = await DayWindowAsync();
             var cap = await _config.GetDecimalAsync("refund.dailyCapVnd", DefaultDailyCapVnd);
-            var used = await _context.RefundRequests
+            // SUM(decimal) không được EF SQLite provider hỗ trợ — cộng phía client (số dòng nhỏ: đã duyệt trong ngày).
+            var used = (await _context.RefundRequests
                 .Where(r => CountsTowardDailyCap.Contains(r.Status) && r.ApprovedAt >= start)
-                .SumAsync(r => (decimal?)r.Amount) ?? 0m;
+                .Select(r => r.Amount)
+                .ToListAsync()).Sum();
 
             if (used + amount > cap)
                 return $"Vượt trần hoàn tiền trong ngày ({used:N0}/{cap:N0} VND đã dùng, " +

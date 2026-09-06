@@ -21,6 +21,12 @@
     <!-- Tầng unit U2 — SQLite in-memory + Data Protection ephemeral -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.22" />
     <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="8.0.22" />
+
+    <!-- Tầng integration — WebApplicationFactory + Postgres qua Testcontainers -->
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.22" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.22" />
+    <PackageReference Include="Testcontainers.PostgreSql" Version="3.10.0" />
+    <PackageReference Include="Xunit.SkippableFact" Version="1.5.23" />
   </ItemGroup>
 
   <ItemGroup>

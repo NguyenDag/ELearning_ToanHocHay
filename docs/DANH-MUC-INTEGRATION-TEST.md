@@ -664,12 +664,20 @@ ELearning_ToanHocHay.Tests/
 
 > Cập nhật 2026-09-06.
 
-- ✅ **Hạ tầng test cũ + 13 file `Tests/*.cs` đã bị xoá** khỏi repo (không còn *prior art* trong
-  cây mã — tham chiếu qua lịch sử git nếu cần logic assert cũ).
-- ✅ **Dự án `ELearning_ToanHocHay.Tests` đã tạo** (dùng chung unit + integration — §2.1). Đã có
-  gói NuGet tầng unit + `Microsoft.EntityFrameworkCore.Sqlite`; **chưa** thêm
-  `Microsoft.AspNetCore.Mvc.Testing`, `Testcontainers.PostgreSql`, `Xunit.SkippableFact`,
-  `Microsoft.EntityFrameworkCore.Relational` (thêm khi bắt đầu **I0**).
-- ⏳ **Chưa tồn tại:** `Integration/Infrastructure/*` ở §2, mọi file `IT_F*`, `public partial class Program`.
-- Hiện đang triển khai unit test (DANH-MUC-UNIT-TEST §6, đã xong **B0**). Integration bắt đầu sau
-  khi unit tới **B6** — từ **I0** dựng hạ tầng §2, rồi lấp F1–F12 theo lộ trình §8.
+- ✅ **Unit test B0–B6 đã xong** (433 test — xem DANH-MUC-UNIT-TEST §7). Integration bắt đầu.
+- ✅ **I0 — hạ tầng integration (§2): XONG.** `dotnet test --filter "Level=Integration"` —
+  **18/18 xanh** với Docker, tự skip khi không có Docker.
+  - Gói: `Microsoft.AspNetCore.Mvc.Testing`, `Testcontainers.PostgreSql` 3.10, `Xunit.SkippableFact`,
+    `Microsoft.EntityFrameworkCore.Relational`.
+  - `Program` đã là `public class Program` → `WebApplicationFactory<Program>` dùng trực tiếp (không cần `partial`).
+  - `Integration/Infrastructure/`: `ApiFactory` (gộp luôn `PostgreSqlContainer` + `IAsyncLifetime`;
+    env wiring; `As`/`AsRole`/`MintToken`/`Db` helpers; swap `IAIService`→`FakeAiService`,
+    `IEmailService`+`IBackgroundEmailService`→`FakeEmailSink`, gỡ mọi `IHostedService`),
+    `Fakes` (`FakeAiService`, `FakeEmailSink` + `LastLink`/`LastToken`), `SeedData` (golden dataset
+    §2.5 + `SeededIds` + `TestRole`), `FlowSeed` (mới có nhóm auth: `NewConfirmedUserAsync`,
+    `NewUnconfirmedUserAsync`, `SeedRefundablePaymentAsync` — bổ sung dần), `SePayIpn`,
+    `IntegrationCollection`/`IntegrationTest`, `Envelope`.
+  - `IT_I0_HarnessTests` — 3 test khói (seed, /health, /api/auth/me).
+- ✅ **F1 — Xác thực & tài khoản: 15 case** (`IT_F1_AuthTests`): IT-F1-01..05, 08..11, 13/14, 15,
+  18, 19, 20, 23. Login thất bại thực tế trả **401** (không phải 400 như bảng) — test nhận cả hai.
+- ⏳ **Còn lại:** `FlowSeed` các nhóm course/enrol/attempt/refund/subscription; F2–F12; ma trận §5.

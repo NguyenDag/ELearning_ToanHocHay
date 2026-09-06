@@ -682,9 +682,12 @@ ELearning_ToanHocHay.Tests/
   18, 19, 20, 23. Login thất bại thực tế trả **401** (không phải 400 như bảng) — test nhận cả hai.
 - ✅ **F2 — Danh mục & ghi danh: 12 case** (`IT_F2_CatalogEnrollmentTests`): IT-F2-01, 03..13.
   `FlowSeed` thêm `PublishCourseAsync` / `EnrolAsync` / `GrantEntitlementAsync`.
+- ✅ **F3 — Học bài & tiến độ: 8 case** (`IT_F3_LearnProgressTests`): IT-F3-02..09.
+  mark-complete (cổng ghi danh, ngưỡng 20s), roll-up bài→chương→cache khoá, version-progress,
+  bài ngoài khoá đã ghi danh → 403, heatmap owner-guard.
 - ✅ **F4 — Làm bài tập: 11 case** (`IT_F4_ExerciseAttemptTests`): IT-F4-01, 02, 05..12, 17.
   Gồm chấm đủ 4 loại câu, cổng gói 403, ghi đè answer, ma trận quyền `/result`, và
   **complete song song → chấm đúng 1 lần** (row-lock). `FlowSeed` thêm `NewStudentAsync` /
   `PublishExerciseAsync`.
-- ⏳ **Còn lại:** F3, F5–F12; `FlowSeed` nhóm refund/subscription-via-IPN; ma trận §5.
-- **Tổng:** 474 test xanh (433 unit + 41 integration).
+- ⏳ **Còn lại:** F5–F12; `FlowSeed` nhóm refund/subscription-via-IPN; ma trận §5.
+- **Tổng:** 482 test xanh (433 unit + 49 integration).

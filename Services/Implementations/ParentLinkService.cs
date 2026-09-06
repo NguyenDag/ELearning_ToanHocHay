@@ -133,6 +133,13 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 links.Select(l => MapLink(l, l.Student?.User?.FullName ?? "")).ToList());
         }
 
+        public async Task<ApiResponse<List<ParentLinkDto>>> GetParentsForStudentAsync(int studentId)
+        {
+            var links = await _linkRepo.GetByStudentAsync(studentId);
+            return ApiResponse<List<ParentLinkDto>>.SuccessResponse(
+                links.Select(l => MapLink(l, l.Student?.User?.FullName ?? "")).ToList());
+        }
+
         public async Task<ApiResponse<bool>> RevokeAsync(int parentId, int studentId)
         {
             var link = await _linkRepo.GetAsync(parentId, studentId);
@@ -185,6 +192,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             ParentId = l.ParentId,
             StudentId = l.StudentId,
             StudentName = studentName,
+            ParentName = l.Parent?.User?.FullName ?? "",
             Relationship = l.Relationship,
             Status = l.Status,
             IsPrimaryGuardian = l.IsPrimaryGuardian,

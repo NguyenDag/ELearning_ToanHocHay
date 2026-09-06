@@ -9,6 +9,10 @@ namespace ELearning_ToanHocHay_Control.Services.Interfaces
         Task<ApiResponse<ParentInviteDto>> CreateInviteAsync(int parentId, CreateParentInviteDto dto);
         Task<ApiResponse<ParentLinkDto>> LinkByCodeAsync(int studentId, LinkParentDto dto);
         Task<ApiResponse<List<ParentLinkDto>>> GetLinksAsync(int parentId);
+
+        /// <summary>The parents linked to a student (student-facing view of <see cref="GetLinksAsync"/>).</summary>
+        Task<ApiResponse<List<ParentLinkDto>>> GetParentsForStudentAsync(int studentId);
+
         Task<ApiResponse<bool>> RevokeAsync(int parentId, int studentId);
         Task<ApiResponse<List<ChildOverviewDto>>> GetChildrenOverviewAsync(int parentId);
     }

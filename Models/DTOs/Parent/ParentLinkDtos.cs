@@ -33,6 +33,7 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs.Parent
         public int ParentId { get; set; }
         public int StudentId { get; set; }
         public string StudentName { get; set; } = "";
+        public string ParentName { get; set; } = "";
         public ParentRelationship Relationship { get; set; }
         public LinkStatus Status { get; set; }
         public bool IsPrimaryGuardian { get; set; }

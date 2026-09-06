@@ -176,13 +176,14 @@ public sealed class FlowSeed(ApiFactory app)
 
     /// <summary>Cấp entitlement qua một subscription Active (package + entitlement + subscription).</summary>
     public Task GrantEntitlementAsync(
-        int studentId, EntitlementScope scope, int? subjectId = null, int? gradeId = null, DateTime? expiresAt = null)
+        int studentId, EntitlementScope scope, int? subjectId = null, int? gradeId = null,
+        DateTime? expiresAt = null, PackageTier tier = PackageTier.Standard, string? packageName = null)
         => app.Db(async db =>
         {
             var owner = db.Users.First(u => u.UserType == UserType.SystemAdmin);
             var pkg = new Package
             {
-                UserId = owner.UserId, PackageName = $"Pkg {Rand()}", Tier = PackageTier.Standard,
+                UserId = owner.UserId, PackageName = packageName ?? $"Pkg {Rand()}", Tier = tier,
                 Price = 199_000m, DurationDays = 30, IsActive = true,
             };
             db.Packages.Add(pkg);

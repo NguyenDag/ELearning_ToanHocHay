@@ -689,5 +689,8 @@ ELearning_ToanHocHay.Tests/
   Gồm chấm đủ 4 loại câu, cổng gói 403, ghi đè answer, ma trận quyền `/result`, và
   **complete song song → chấm đúng 1 lần** (row-lock). `FlowSeed` thêm `NewStudentAsync` /
   `PublishExerciseAsync`.
-- ⏳ **Còn lại:** F5–F12; `FlowSeed` nhóm refund/subscription-via-IPN; ma trận §5.
-- **Tổng:** 482 test xanh (433 unit + 49 integration).
+- ✅ **F5 — Dashboard học sinh: 6 case** (`IT_F5_DashboardTests`): IT-F5-01, 04..08.
+  tier lấy từ `Package.Tier` (gói tên "Standard" nhưng Tier=Premium), Free → 403 "cần gói",
+  Student B → 403 mọi endpoint, subscription/current trả gói/Free.
+- ⏳ **Còn lại:** F6–F12; `FlowSeed` nhóm refund/subscription-via-IPN; ma trận §5.
+- **Tổng:** 488 test xanh (433 unit + 55 integration).

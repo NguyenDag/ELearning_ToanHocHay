@@ -26,7 +26,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> MarkLessonComplete(int nodeId, [FromBody] MarkLessonCompleteDto dto)
         {
             var studentId = User.GetStudentId();
-            if (studentId == null) return this.Forbidden("Only students track lesson progress");
+            if (studentId == null) return this.Forbidden("Chỉ học sinh mới có tiến độ học bài");
 
             var r = await _progress.MarkLessonCompleteAsync(studentId.Value, nodeId, dto.SecondsViewed);
             return r.ToActionResult();
@@ -36,7 +36,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> GetVersionProgress(int courseVersionId)
         {
             var studentId = User.GetStudentId();
-            if (studentId == null) return this.Forbidden("Only students track lesson progress");
+            if (studentId == null) return this.Forbidden("Chỉ học sinh mới có tiến độ học bài");
 
             return (await _progress.GetVersionProgressAsync(studentId.Value, courseVersionId)).ToActionResult();
         }

@@ -74,7 +74,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             var sub = await _repository.GetByIdAsync(id);
             if (sub == null)
                 return ApiResponse<SubscriptionDto>
-                    .ErrorResponse("Không tìm thấy subscription");
+                    .ErrorResponse("Không tìm thấy gói đăng ký");
 
             var dto = new SubscriptionDto
             {
@@ -96,7 +96,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         {
             var sub = await _repository.GetByIdAsync(id);
             if (sub == null)
-                return ApiResponse<bool>.ErrorResponse("Subscription không tồn tại");
+                return ApiResponse<bool>.ErrorResponse("Không tìm thấy gói đăng ký");
 
             sub.Status = SubscriptionStatus.Cancelled;
             await _repository.UpdateAsync(sub);
@@ -124,7 +124,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         {
             var sub = await _repository.GetByIdAsync(id);
             if (sub == null)
-                return ApiResponse<bool>.ErrorResponse("Subscription không tồn tại");
+                return ApiResponse<bool>.ErrorResponse("Không tìm thấy gói đăng ký");
 
             // ── Validate chuyển trạng thái hợp lệ ──────────────────────────────
             var allowed = new Dictionary<SubscriptionStatus, SubscriptionStatus[]>

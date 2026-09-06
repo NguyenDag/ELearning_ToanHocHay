@@ -191,16 +191,38 @@ namespace ELearning_ToanHocHay_Control
 
             // Rate limiting
             var authPermitLimit = int.TryParse(
-                builder.Configuration["RateLimiting:AuthPermitLimit"], out var apl) ? apl : 5;
+                builder.Configuration["RateLimiting:AuthPermitLimit"], out var apl) ? apl : 10;
+
+            string ClientKey(HttpContext ctx) =>
+                Common.RateLimitPartitioning.ResolveClientKey(ctx, builder.Configuration);
 
             builder.Services.AddRateLimiter(options =>
             {
                 options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
-                // N requests / minute / IP for sensitive endpoints (login, password reset).
+                // A rejected request gets the ApiResponse envelope (Vietnamese) instead of an
+                // empty body, so clients can parse it like any other error.
+                options.OnRejected = async (context, _) =>
+                {
+                    var http = context.HttpContext;
+                    if (http.Response.HasStarted) return;
+
+                    http.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+                    if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+                        http.Response.Headers.RetryAfter = ((int)retryAfter.TotalSeconds).ToString();
+                    http.Response.ContentType = "application/json; charset=utf-8";
+                    await http.Response.WriteAsJsonAsync(
+                        Models.DTOs.ApiResponse<object>.ErrorResponse(
+                            "Bạn thao tác quá nhanh. Vui lòng chờ một lát rồi thử lại."));
+                };
+
+                // N requests / minute / client for sensitive endpoints (login, password reset).
+                // Phân vùng theo client thật (X-Client-Key khi qua WebApp tin cậy, ngược lại IP)
+                // để không phạt nhầm cả nhóm người dùng chung một proxy. Chống dò mật khẩu 1 tài
+                // khoản đã có khoá theo tài khoản riêng ở AuthService (FailedLoginCount).
                 options.AddPolicy("auth", context =>
                     RateLimitPartition.GetFixedWindowLimiter(
-                        partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                        partitionKey: "auth:" + ClientKey(context),
                         factory: _ => new FixedWindowRateLimiterOptions
                         {
                             PermitLimit = authPermitLimit,
@@ -212,8 +234,7 @@ namespace ELearning_ToanHocHay_Control
                 options.AddPolicy("ai", context =>
                     RateLimitPartition.GetFixedWindowLimiter(
                         partitionKey: context.User.GetUserId()?.ToString()
-                                      ?? context.Connection.RemoteIpAddress?.ToString()
-                                      ?? "unknown",
+                                      ?? ClientKey(context),
                         factory: _ => new FixedWindowRateLimiterOptions
                         {
                             PermitLimit = 20,
@@ -228,8 +249,7 @@ namespace ELearning_ToanHocHay_Control
                 options.AddPolicy("refund", context =>
                     RateLimitPartition.GetFixedWindowLimiter(
                         partitionKey: context.User.GetUserId()?.ToString()
-                                      ?? context.Connection.RemoteIpAddress?.ToString()
-                                      ?? "unknown",
+                                      ?? ClientKey(context),
                         factory: _ => new FixedWindowRateLimiterOptions
                         {
                             PermitLimit = refundPermitLimit,
@@ -375,7 +395,10 @@ namespace ELearning_ToanHocHay_Control
             services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
 
             // Services
+            services.AddSingleton(TimeProvider.System);
             services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IPackageTierResolver, PackageTierResolver>();
+            services.AddScoped<IRefreshTokenIssuer, RefreshTokenIssuer>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IJwtService, JwtService>();
             services.AddScoped<IExerciseService, ExerciseService>();

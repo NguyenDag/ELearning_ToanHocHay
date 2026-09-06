@@ -18,6 +18,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         private readonly IRefundFieldProtector _protector;
         private readonly IRefundEventWriter _events;
         private readonly ILogger<RefundService> _logger;
+        private readonly TimeProvider _clock;
 
         // SystemConfig fallbacks
         private const decimal DefaultDailyCapVnd = 20_000_000m;
@@ -46,7 +47,8 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             IResourceAccessService access,
             IRefundFieldProtector protector,
             IRefundEventWriter events,
-            ILogger<RefundService> logger)
+            ILogger<RefundService> logger,
+            TimeProvider clock)
         {
             _context = context;
             _config = config;
@@ -54,7 +56,10 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             _protector = protector;
             _events = events;
             _logger = logger;
+            _clock = clock;
         }
+
+        private DateTime Now => _clock.GetUtcNow().UtcDateTime;
 
         // ---------------------------------------------------------------- create
 
@@ -79,7 +84,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 return ApiResponse<RefundRequestDto>.ErrorResponse("Chỉ hoàn tiền được giao dịch đã Completed");
 
             var maxAgeDays = await _config.GetIntAsync("refund.maxPaymentAgeDays", DefaultMaxPaymentAgeDays);
-            if (payment.PaymentDate < DateTime.UtcNow.AddDays(-maxAgeDays))
+            if (payment.PaymentDate < Now.AddDays(-maxAgeDays))
                 return ApiResponse<RefundRequestDto>.ErrorResponse(
                     $"Giao dịch quá {maxAgeDays} ngày, không hoàn tự động được — liên hệ hỗ trợ");
 
@@ -103,7 +108,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             {
                 var maxPer30d = await _config.GetIntAsync(
                     "refund.maxRequestsPerUserPer30d", DefaultMaxRequestsPerUserPer30d);
-                var since = DateTime.UtcNow.AddDays(-30);
+                var since = Now.AddDays(-30);
                 var recentCount = await _context.RefundRequests.CountAsync(r =>
                     r.BeneficiaryUserId == beneficiaryUserId
                     && r.CreatedAt >= since
@@ -114,7 +119,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                         $"Đã đạt giới hạn {maxPer30d} yêu cầu hoàn tiền trong 30 ngày. Liên hệ hỗ trợ.");
             }
 
-            var now = DateTime.UtcNow;
+            var now = Now;
             var request = new RefundRequest
             {
                 PublicId = Guid.NewGuid(),
@@ -216,7 +221,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             var threshold = await _config.GetDecimalAsync(
                 "refund.dualControlThresholdVnd", DefaultDualControlThresholdVnd);
             var needsDual = threshold > 0 && request.Amount >= threshold;
-            var now = DateTime.UtcNow;
+            var now = Now;
 
             // First approval of a dual-control request — no cap consumption yet.
             if (needsDual && request.Status == RefundRequestStatus.PendingReview)
@@ -266,7 +271,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 return ApiResponse<RefundRequestDto>.Conflict($"Không thể từ chối yêu cầu ở trạng thái {request.Status}");
 
             var from = request.Status.ToString();
-            var now = DateTime.UtcNow;
+            var now = Now;
             request.Status = RefundRequestStatus.Rejected;
             request.RejectedByUserId = actor.GetUserId();
             request.RejectedAt = now;
@@ -293,7 +298,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     "Chỉ huỷ được yêu cầu chưa vào lô chi hộ (huỷ lô nếu đã gộp)");
 
             var from = request.Status.ToString();
-            var now = DateTime.UtcNow;
+            var now = Now;
             request.Status = RefundRequestStatus.Cancelled;
             request.UpdatedAt = now;
             _events.Add(_context, RefundEventType.Cancelled, id, fromStatus: from,
@@ -316,7 +321,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             await using var tx = await _context.Database.BeginTransactionAsync();
 
             var from = request.Status.ToString();
-            var now = DateTime.UtcNow;
+            var now = Now;
             request.BankTransactionRef = dto.BankTransactionRef.Trim();
             request.Status = RefundRequestStatus.Completed;
             request.CompletedAt = now;
@@ -344,7 +349,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     $"Chỉ đánh dấu thất bại cho yêu cầu Approved / Disbursed (hiện {request.Status})");
 
             var from = request.Status.ToString();
-            var now = DateTime.UtcNow;
+            var now = Now;
             request.Status = RefundRequestStatus.Failed;
             request.FailedAt = now;
             request.FailureReason = dto.Reason;
@@ -367,7 +372,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             if (capError != null)
                 return ApiResponse<RefundRequestDto>.ErrorResponse(capError);
 
-            var now = DateTime.UtcNow;
+            var now = Now;
             request.Status = RefundRequestStatus.Approved;
             request.ApprovedByUserId = actor.GetUserId();
             request.ApprovedAt = now;
@@ -404,7 +409,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         public async Task<RefundReconciliationReport> BuildReconciliationAsync()
         {
             var staleDays = await _config.GetIntAsync("refund.staleDisbursedDays", DefaultStaleDisbursedDays);
-            var staleCutoff = DateTime.UtcNow.AddDays(-staleDays);
+            var staleCutoff = Now.AddDays(-staleDays);
 
             var pendingReview = await _context.RefundRequests.CountAsync(r =>
                 r.Status == RefundRequestStatus.PendingReview
@@ -447,7 +452,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         public async Task<int> RunStaleSweepAsync()
         {
             var staleDays = await _config.GetIntAsync("refund.staleDisbursedDays", DefaultStaleDisbursedDays);
-            var cutoff = DateTime.UtcNow.AddDays(-staleDays);
+            var cutoff = Now.AddDays(-staleDays);
 
             var stale = await _context.RefundRequests
                 .Where(r => r.Status == RefundRequestStatus.Disbursed && r.UpdatedAt < cutoff)
@@ -455,7 +460,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 .ToListAsync();
             if (stale.Count == 0) return 0;
 
-            var notified = DateTime.UtcNow.AddDays(-1);
+            var notified = Now.AddDays(-1);
             var already = await _context.Notifications.AnyAsync(n =>
                 n.Audience == NotifyAudience.Staff
                 && n.Title == "Hoàn tiền quá hạn xác nhận"
@@ -476,9 +481,11 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         {
             var (start, _) = await DayWindowAsync();
             var cap = await _config.GetDecimalAsync("refund.dailyCapVnd", DefaultDailyCapVnd);
-            var used = await _context.RefundRequests
+            // SUM(decimal) không được EF SQLite provider hỗ trợ — cộng phía client (số dòng nhỏ: đã duyệt trong ngày).
+            var used = (await _context.RefundRequests
                 .Where(r => CountsTowardDailyCap.Contains(r.Status) && r.ApprovedAt >= start)
-                .SumAsync(r => (decimal?)r.Amount) ?? 0m;
+                .Select(r => r.Amount)
+                .ToListAsync()).Sum();
 
             if (used + amount > cap)
                 return $"Vượt trần hoàn tiền trong ngày ({used:N0}/{cap:N0} VND đã dùng, " +
@@ -489,9 +496,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         private async Task<(DateTime start, DateTime reset)> DayWindowAsync()
         {
             var offsetHours = await _config.GetIntAsync("refund.timezoneOffsetHours", DefaultTimezoneOffsetHours);
-            var offset = TimeSpan.FromHours(offsetHours);
-            var localMidnight = (DateTime.UtcNow + offset).Date;
-            var startUtc = DateTime.SpecifyKind(localMidnight - offset, DateTimeKind.Utc);
+            var startUtc = RefundDayWindow.StartOfDayUtc(Now, offsetHours);
             return (startUtc, startUtc.AddDays(1));
         }
 
@@ -502,7 +507,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 .Select(u => u.UserId)
                 .ToListAsync();
 
-            var now = DateTime.UtcNow;
+            var now = Now;
             foreach (var uid in financeUserIds)
             {
                 _context.Notifications.Add(new Notification

@@ -22,13 +22,10 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         private readonly IEmailService _emailService;
         private readonly AppSettings _appSettings;
         private readonly IBackgroundEmailService _backgroundEmailService;
-        private readonly IConfiguration _configuration;
         private readonly IMemoryCache _cache;
-
-        // P1 — login throttling
-        private const int MaxFailedAttempts = 5;
-        private static readonly TimeSpan BaseLockout = TimeSpan.FromMinutes(1);
-        private static readonly TimeSpan MaxLockout = TimeSpan.FromMinutes(30);
+        private readonly IPackageTierResolver _packageTierResolver;
+        private readonly IRefreshTokenIssuer _refreshTokenIssuer;
+        private readonly TimeProvider _clock;
 
         public AuthService(
             AppDbContext context,
@@ -41,8 +38,10 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             IEmailService emailService,
             IOptions<AppSettings> appSettings,
             IBackgroundEmailService backgroundEmailService,
-            IConfiguration configuration,
-            IMemoryCache cache)
+            IMemoryCache cache,
+            IPackageTierResolver packageTierResolver,
+            IRefreshTokenIssuer refreshTokenIssuer,
+            TimeProvider clock)
         {
             _cache = cache;
             _context = context;
@@ -55,8 +54,12 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             _emailService = emailService;
             _appSettings = appSettings.Value;
             _backgroundEmailService = backgroundEmailService;
-            _configuration = configuration;
+            _packageTierResolver = packageTierResolver;
+            _refreshTokenIssuer = refreshTokenIssuer;
+            _clock = clock;
         }
+
+        private DateTime Now => _clock.GetUtcNow().UtcDateTime;
 
         // ==================================================================
         // Login
@@ -69,9 +72,9 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 if (user == null)
                     return ApiResponse<LoginResponseDto>.ErrorResponse("Email hoặc mật khẩu không đúng");
 
-                if (user.LockoutEndsAt.HasValue && user.LockoutEndsAt.Value > DateTime.UtcNow)
+                if (user.LockoutEndsAt.HasValue && user.LockoutEndsAt.Value > Now)
                 {
-                    var mins = Math.Ceiling((user.LockoutEndsAt.Value - DateTime.UtcNow).TotalMinutes);
+                    var mins = Math.Ceiling((user.LockoutEndsAt.Value - Now).TotalMinutes);
                     return ApiResponse<LoginResponseDto>.ErrorResponse(
                         $"Tài khoản tạm khoá do đăng nhập sai nhiều lần. Thử lại sau {mins} phút.");
                 }
@@ -105,7 +108,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     if (student == null)
                         return ApiResponse<LoginResponseDto>.ErrorResponse("Không tìm thấy thông tin học sinh");
                     studentId = student.StudentId;
-                    packageTier = await ResolvePackageTierAsync(student.StudentId);
+                    packageTier = await _packageTierResolver.ResolveAsync(student.StudentId);
                 }
                 else if (user.UserType == UserType.Parent)
                 {
@@ -117,7 +120,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
                 await _userRepository.UpdateLastLoginAsync(user.UserId);
 
-                var pair = await IssueTokenPairAsync(user, studentId, parentId, ip);
+                var pair = await _refreshTokenIssuer.IssueAsync(user, studentId, parentId, ip);
 
                 return ApiResponse<LoginResponseDto>.SuccessResponse(new LoginResponseDto
                 {
@@ -144,59 +147,17 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         private async Task RegisterFailedLoginAsync(User user)
         {
             user.FailedLoginCount += 1;
-            if (user.FailedLoginCount >= MaxFailedAttempts)
-            {
-                // escalating lockout: 1, 2, 4, 8 … minutes, capped at 30
-                var over = user.FailedLoginCount - MaxFailedAttempts;
-                var minutes = Math.Min(MaxLockout.TotalMinutes, BaseLockout.TotalMinutes * Math.Pow(2, over));
-                user.LockoutEndsAt = DateTime.UtcNow.AddMinutes(minutes);
-            }
+
+            var lockout = LoginThrottlePolicy.NextLockout(user.FailedLoginCount);
+            if (lockout != null)
+                user.LockoutEndsAt = Now.Add(lockout.Value);
+
             await _userRepository.UpdateUserAsync(user);
-        }
-
-        private async Task<PackageTier> ResolvePackageTierAsync(int studentId)
-        {
-            var now = DateTime.UtcNow;
-            var tier = await _context.Subscriptions
-                .Where(s => s.StudentId == studentId && s.Status == SubscriptionStatus.Active && s.EndDate > now)
-                .Include(s => s.Package)
-                .OrderByDescending(s => s.Package!.Tier)
-                .ThenByDescending(s => s.EndDate)
-                .Select(s => (PackageTier?)s.Package!.Tier)
-                .FirstOrDefaultAsync();
-
-            return tier ?? PackageTier.Free;
         }
 
         // ==================================================================
         // Token issuance / refresh (P1 — real rotation)
         // ==================================================================
-        private async Task<TokenPairDto> IssueTokenPairAsync(User user, int? studentId, int? parentId, string? ip)
-        {
-            var accessMinutes = int.TryParse(_configuration["JwtSettings:ExpirationMinutes"], out var m) ? m : 30;
-            var refreshDays = int.TryParse(_configuration["JwtSettings:RefreshTokenDays"], out var d) ? d : 30;
-
-            var access = _jwtService.GenerateToken(user, studentId, parentId);
-
-            var raw = SecureTokens.NewToken();
-            await _refreshTokenRepository.AddAsync(new RefreshToken
-            {
-                UserId = user.UserId,
-                TokenHash = SecureTokens.Hash(raw),
-                CreatedAt = DateTime.UtcNow,
-                ExpiresAt = DateTime.UtcNow.AddDays(refreshDays),
-                CreatedByIp = ip
-            });
-
-            return new TokenPairDto
-            {
-                Token = access,
-                TokenExpiration = DateTime.UtcNow.AddMinutes(accessMinutes),
-                RefreshToken = raw,
-                RefreshTokenExpiration = DateTime.UtcNow.AddDays(refreshDays)
-            };
-        }
-
         public async Task<ApiResponse<TokenPairDto>> RefreshTokenAsync(string refreshToken, string? ip = null)
         {
             if (string.IsNullOrWhiteSpace(refreshToken))
@@ -208,7 +169,8 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             if (stored == null)
                 return ApiResponse<TokenPairDto>.ErrorResponse("Refresh token không hợp lệ");
 
-            if (!stored.IsActive)
+            var isActive = stored.RevokedAt == null && Now < stored.ExpiresAt;
+            if (!isActive)
             {
                 // A revoked token was presented again — treat as reuse and cut every session.
                 if (stored.RevokedAt != null)
@@ -227,10 +189,10 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 ? (await _parentRepository.GetByUserIdAsync(user.UserId))?.ParentId
                 : null;
 
-            var pair = await IssueTokenPairAsync(user, studentId, parentId, ip);
+            var pair = await _refreshTokenIssuer.IssueAsync(user, studentId, parentId, ip);
 
             // rotate: revoke the presented token, point it at its replacement
-            stored.RevokedAt = DateTime.UtcNow;
+            stored.RevokedAt = Now;
             stored.ReplacedByTokenHash = SecureTokens.Hash(pair.RefreshToken);
             await _refreshTokenRepository.SaveAsync();
 
@@ -247,7 +209,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 var stored = await _refreshTokenRepository.GetByHashAsync(SecureTokens.Hash(refreshToken));
                 if (stored != null && stored.UserId == userId && stored.RevokedAt == null)
                 {
-                    stored.RevokedAt = DateTime.UtcNow;
+                    stored.RevokedAt = Now;
                     await _refreshTokenRepository.SaveAsync();
                 }
             }
@@ -263,7 +225,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         {
             var user = await _userRepository.GetByIdAsync(userId);
             if (user == null)
-                return ApiResponse<bool>.ErrorResponse("User không tồn tại");
+                return ApiResponse<bool>.ErrorResponse("Tài khoản không tồn tại");
 
             if (!_passwordHasher.VerifyPassword(request.CurrentPassword, user.PasswordHash))
                 return ApiResponse<bool>.ErrorResponse("Mật khẩu hiện tại không đúng");
@@ -286,13 +248,13 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         {
             var emailToken = await _context.EmailVerificationTokens
                 .Include(x => x.User)
-                .FirstOrDefaultAsync(x => x.Token == token && !x.IsUsed && x.ExpiredAt > DateTime.UtcNow);
+                .FirstOrDefaultAsync(x => x.Token == token && !x.IsUsed && x.ExpiredAt > Now);
 
             if (emailToken == null)
-                return ApiResponse<bool>.ErrorResponse("Token không hợp lệ");
+                return ApiResponse<bool>.ErrorResponse("Liên kết không hợp lệ");
 
             emailToken.User.IsEmailConfirmed = true;
-            emailToken.User.EmailConfirmedAt = DateTime.UtcNow;
+            emailToken.User.EmailConfirmedAt = Now;
             emailToken.IsUsed = true;
             await _context.SaveChangesAsync();
 
@@ -318,7 +280,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             {
                 UserId = user.UserId,
                 Token = tokenValue,
-                ExpiredAt = DateTime.UtcNow.AddHours(24),
+                ExpiredAt = Now.AddHours(24),
                 IsUsed = false
             });
             await _context.SaveChangesAsync();
@@ -348,7 +310,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             {
                 UserId = user.UserId,
                 Token = raw,
-                ExpiredAt = DateTime.UtcNow.AddHours(1),
+                ExpiredAt = Now.AddHours(1),
                 IsUsed = false
             });
             await _context.SaveChangesAsync();
@@ -362,14 +324,14 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         public async Task<ApiResponse<bool>> ResetPasswordAsync(string token, string newPassword)
         {
             var reset = await _context.PasswordResetTokens
-                .FirstOrDefaultAsync(t => t.Token == token && !t.IsUsed && t.ExpiredAt > DateTime.UtcNow);
+                .FirstOrDefaultAsync(t => t.Token == token && !t.IsUsed && t.ExpiredAt > Now);
 
             if (reset == null)
-                return ApiResponse<bool>.ErrorResponse("Token không hợp lệ hoặc đã hết hạn");
+                return ApiResponse<bool>.ErrorResponse("Liên kết không hợp lệ hoặc đã hết hạn");
 
             var user = await _userRepository.GetByIdAsync(reset.UserId);
             if (user == null)
-                return ApiResponse<bool>.ErrorResponse("User không tồn tại");
+                return ApiResponse<bool>.ErrorResponse("Tài khoản không tồn tại");
 
             user.PasswordHash = _passwordHasher.HashPassword(newPassword);
             user.FailedLoginCount = 0;
@@ -409,7 +371,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     Phone = request.Phone,
                     Dob = request.Dob,
                     UserType = request.UserType,
-                    CreatedAt = DateTime.UtcNow,
+                    CreatedAt = Now,
                     IsActive = true
                 };
 
@@ -445,7 +407,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 {
                     UserId = user.UserId,
                     Token = tokenValue,
-                    ExpiredAt = DateTime.UtcNow.AddHours(24),
+                    ExpiredAt = Now.AddHours(24),
                     IsUsed = false
                 });
                 await _context.SaveChangesAsync();

@@ -42,7 +42,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             return entitlements.Any(e => Covers(e, course));
         }
 
-        private static bool Covers(PackageEntitlement e, Course course) => e.ScopeType switch
+        internal static bool Covers(PackageEntitlement e, Course course) => e.ScopeType switch
         {
             EntitlementScope.AllContent => true,
             EntitlementScope.Subject => e.SubjectId == course.SubjectId,

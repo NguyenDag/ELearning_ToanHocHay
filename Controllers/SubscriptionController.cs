@@ -46,7 +46,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         {
             var studentId = User.GetStudentId();
             if (studentId == null)
-                return this.Forbidden("Only students have a personal subscription — parents use /api/student/{id}/subscription/current");
+                return this.Forbidden("Chỉ học sinh mới có gói đăng ký cá nhân");
 
             var info = await _service.GetActiveSubscriptionInfoAsync(studentId.Value);
             return Ok(ApiResponse<SubscriptionInfoDto>.SuccessResponse(info,
@@ -68,7 +68,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> CreateSubscriptionAndQr(CreateSubscriptionDto dto)
         {
             if (!await _access.CanAccessStudentAsync(User, dto.StudentId))
-                return this.Forbidden("You cannot create a subscription for this student");
+                return this.Forbidden("Bạn không thể tạo gói đăng ký cho học sinh này");
 
             var payerId = User.GetUserId();
             if (payerId == null) return this.Forbidden();

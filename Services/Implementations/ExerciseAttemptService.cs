@@ -80,8 +80,8 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 {
                     await transaction.RollbackAsync();
                     return ApiResponse<ExerciseResultDto>.ErrorResponse(
-                        "Attempt already completed",
-                        new List<string> { "This attempt has already been completed or does not exist" });
+                        "Lượt làm bài đã được nộp",
+                        new List<string> { "Lượt làm bài này đã nộp hoặc không tồn tại" });
                 }
 
                 // 1. Load the attempt and validate it
@@ -90,16 +90,16 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 if (attempt == null)
                 {
                     return ApiResponse<ExerciseResultDto>.ErrorResponse(
-                        "Attempt not found",
-                        new List<string> { $"No attempt found with ID: {dto.AttemptId}" }
+                        "Không tìm thấy lượt làm bài",
+                        new List<string> { $"Không có lượt làm bài với mã: {dto.AttemptId}" }
                     );
                 }
 
                 if (attempt.Status != AttemptStatus.InProgress)
                 {
                     return ApiResponse<ExerciseResultDto>.ErrorResponse(
-                        "Attempt already completed",
-                        new List<string> { "This attempt has already been completed" }
+                        "Lượt làm bài đã được nộp",
+                        new List<string> { "Lượt làm bài này đã được nộp" }
                     );
                 }
 
@@ -239,7 +239,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
                 return ApiResponse<ExerciseResultDto>.SuccessResponse(
                     result,
-                    isTimeout ? "Exercise auto-submitted due to timeout" : "Exercise submitted successfully"
+                    isTimeout ? "Bài thi tự động nộp do hết giờ" : "Nộp bài thành công"
                 );
             }
             catch (Exception)
@@ -351,7 +351,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             }
             catch (Exception)
             {
-                return ApiResponse<ExerciseResultDto>.ErrorResponse("Lỗi hệ thống khi tính điểm", new List<string>());
+                return ApiResponse<ExerciseResultDto>.ErrorResponse("Lỗi hệ thống khi chấm điểm", new List<string>());
             }
         }
 
@@ -386,7 +386,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
                 return ApiResponse<List<ExerciseResultDto>>.SuccessResponse(
                     results,
-                    "History retrieved successfully"
+                    "Lấy lịch sử thành công"
                 );
             }
             catch (Exception)
@@ -407,8 +407,8 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 if (attempt == null)
                 {
                     return ApiResponse<bool>.ErrorResponse(
-                        "Attempt not found",
-                        new List<string> { $"No attempt found with ID: {dto.AttemptId}" }
+                        "Không tìm thấy lượt làm bài",
+                        new List<string> { $"Không có lượt làm bài với mã: {dto.AttemptId}" }
                     );
                 }
 
@@ -416,8 +416,8 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 if (attempt.Status != AttemptStatus.InProgress)
                 {
                     return ApiResponse<bool>.ErrorResponse(
-                        "Attempt is not active",
-                        new List<string> { "Cannot save answer for completed attempt" }
+                        "Lượt làm bài không còn hoạt động",
+                        new List<string> { "Không thể lưu câu trả lời cho lượt đã nộp" }
                     );
                 }
 
@@ -425,8 +425,8 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 if (attempt.PlannedEndTime.HasValue && attempt.PlannedEndTime.Value <= DateTime.UtcNow)
                 {
                     return ApiResponse<bool>.ErrorResponse(
-                        "Time is up",
-                        new List<string> { "Exam time has expired" }
+                        "Đã hết giờ làm bài",
+                        new List<string> { "Thời gian làm bài đã kết thúc" }
                     );
                 }
 
@@ -461,7 +461,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
                 return ApiResponse<bool>.SuccessResponse(
                     true,
-                    "Answer saved"
+                    "Đã lưu câu trả lời"
                 );
             }
             catch (Exception)
@@ -510,11 +510,11 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
                 // 2. CREATE A NEW ATTEMPT (only when there is no in-progress one)
                 var exercise = await _exerciseRepository.GetExerciseWithQuestionsAsync(dto.ExerciseId);
-                if (exercise == null) return ApiResponse<ExerciseAttemptDto>.ErrorResponse("Exercise not found");
+                if (exercise == null) return ApiResponse<ExerciseAttemptDto>.ErrorResponse("Không tìm thấy bài tập");
 
                 if (!exercise.IsActive || exercise.Status != ExerciseStatus.Published)
                 {
-                    return ApiResponse<ExerciseAttemptDto>.ErrorResponse("This exercise is not available.");
+                    return ApiResponse<ExerciseAttemptDto>.ErrorResponse("Bài thi này hiện không khả dụng.");
                 }
 
                 // A2-08: enforce the access tier (a free exercise is always allowed).
@@ -522,8 +522,11 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 {
                     var studentTier = await GetStudentTierAsync(dto.StudentId);
                     if ((int)studentTier < (int)exercise.RequiredTier)
-                        return ApiResponse<ExerciseAttemptDto>.ErrorResponse(
-                            $"This exercise requires the {exercise.RequiredTier} package");
+                    {
+                        var tierName = exercise.RequiredTier == AccessTier.Premium ? "Cao cấp" : "Tiêu chuẩn";
+                        return ApiResponse<ExerciseAttemptDto>.Forbidden(
+                            $"Bài thi này yêu cầu gói {tierName}. Vui lòng nâng cấp để tiếp tục.");
+                    }
                 }
 
                 // A2-08: enforce MaxAttempts (null = unlimited).
@@ -535,7 +538,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
                     if (used >= exercise.MaxAttempts.Value)
                         return ApiResponse<ExerciseAttemptDto>.ErrorResponse(
-                            "You have used all attempts for this exercise");
+                            "Bạn đã dùng hết số lượt làm cho bài này");
                 }
 
                 var startTime = DateTime.UtcNow;
@@ -588,8 +591,8 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 if (user == null)
                 {
                     return ApiResponse<ExerciseAttemptDto>.ErrorResponse(
-                        "User not found",
-                        new List<string> { "Invalid StudentId" }
+                        "Không tìm thấy học sinh",
+                        new List<string> { "StudentId không hợp lệ" }
                     );
                 }
 
@@ -599,8 +602,8 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 if (questionBank == null)
                 {
                     return ApiResponse<ExerciseAttemptDto>.ErrorResponse(
-                        "Question bank not found",
-                        new List<string> { "Invalid BankId" }
+                        "Không tìm thấy ngân hàng câu hỏi",
+                        new List<string> { "BankId không hợp lệ" }
                     );
                 }
 
@@ -683,7 +686,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
                 return ApiResponse<ExerciseAttemptDto>.SuccessResponse(
                     attemptDto,
-                    "Random exercise created successfully"
+                    "Đã tạo đề ngẫu nhiên"
                 );
             }
             catch (Exception)
@@ -715,7 +718,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             }
             catch (Exception)
             {
-                return ApiResponse<FeedbackStatusDto>.ErrorResponse("Error reading feedback status", new List<string>());
+                return ApiResponse<FeedbackStatusDto>.ErrorResponse("Lỗi khi đọc trạng thái nhận xét", new List<string>());
             }
         }
 

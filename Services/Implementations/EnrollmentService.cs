@@ -29,13 +29,13 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         public async Task<ApiResponse<EnrolmentDto>> EnrollAsync(int studentId, int courseId)
         {
             var course = await _courseRepo.GetCourseAsync(courseId, withVersions: true);
-            if (course == null) return ApiResponse<EnrolmentDto>.ErrorResponse("Course not found");
+            if (course == null) return ApiResponse<EnrolmentDto>.ErrorResponse("Không tìm thấy khoá học");
             if (course.Status != CourseStatus.Published)
-                return ApiResponse<EnrolmentDto>.ErrorResponse("Course is not published");
+                return ApiResponse<EnrolmentDto>.ErrorResponse("Khoá học chưa được xuất bản");
 
             var published = course.Versions?.FirstOrDefault(v => v.State == VersionState.Published);
             if (published == null)
-                return ApiResponse<EnrolmentDto>.ErrorResponse("Course has no published version");
+                return ApiResponse<EnrolmentDto>.ErrorResponse("Khoá học chưa có phiên bản xuất bản");
 
             var existing = await _repo.GetActiveEnrolmentAsync(studentId, courseId);
             if (existing != null)

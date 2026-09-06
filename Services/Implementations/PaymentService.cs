@@ -42,7 +42,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         {
             var payment = await _repository.GetByIdAsync(id);
             if (payment == null)
-                return ApiResponse<PaymentDto>.ErrorResponse("Payment không tồn tại");
+                return ApiResponse<PaymentDto>.ErrorResponse("Không tìm thấy giao dịch");
 
             var dto = new PaymentDto
             {
@@ -108,7 +108,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         {
             var payment = await _repository.GetByIdAsync(id);
             if (payment == null)
-                return ApiResponse<bool>.ErrorResponse("Payment không tồn tại",
+                return ApiResponse<bool>.ErrorResponse("Không tìm thấy giao dịch",
                     new List<string> { $"No payment found with ID: {id}" }
                     );
 

@@ -65,7 +65,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         {
             var n = await _context.Notifications
                 .FirstOrDefaultAsync(x => x.NotificationId == notificationId && x.UserId == userId);
-            if (n == null) return ApiResponse<bool>.ErrorResponse("Notification not found");
+            if (n == null) return ApiResponse<bool>.ErrorResponse("Không tìm thấy thông báo");
 
             if (!n.IsRead) { n.IsRead = true; n.ReadAt = DateTime.UtcNow; await _context.SaveChangesAsync(); }
             return ApiResponse<bool>.SuccessResponse(true, "Marked read");

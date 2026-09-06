@@ -34,7 +34,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         public async Task<ApiResponse<ParentInviteDto>> CreateInviteAsync(int parentId, CreateParentInviteDto dto)
         {
             if (!await _context.Parents.AnyAsync(p => p.ParentId == parentId))
-                return ApiResponse<ParentInviteDto>.ErrorResponse("Parent not found");
+                return ApiResponse<ParentInviteDto>.ErrorResponse("Không tìm thấy phụ huynh");
 
             var invite = new ParentInvite
             {
@@ -87,7 +87,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
             var student = await _studentRepo.GetStudentWithUserAsync(studentId);
             if (student == null)
-                return ApiResponse<ParentLinkDto>.ErrorResponse("Student not found");
+                return ApiResponse<ParentLinkDto>.ErrorResponse("Không tìm thấy học sinh");
 
             var link = await _linkRepo.GetAsync(parentId.Value, studentId);
             if (link is { Status: LinkStatus.Active })
@@ -129,6 +129,13 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         public async Task<ApiResponse<List<ParentLinkDto>>> GetLinksAsync(int parentId)
         {
             var links = await _linkRepo.GetByParentAsync(parentId);
+            return ApiResponse<List<ParentLinkDto>>.SuccessResponse(
+                links.Select(l => MapLink(l, l.Student?.User?.FullName ?? "")).ToList());
+        }
+
+        public async Task<ApiResponse<List<ParentLinkDto>>> GetParentsForStudentAsync(int studentId)
+        {
+            var links = await _linkRepo.GetByStudentAsync(studentId);
             return ApiResponse<List<ParentLinkDto>>.SuccessResponse(
                 links.Select(l => MapLink(l, l.Student?.User?.FullName ?? "")).ToList());
         }
@@ -185,6 +192,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             ParentId = l.ParentId,
             StudentId = l.StudentId,
             StudentName = studentName,
+            ParentName = l.Parent?.User?.FullName ?? "",
             Relationship = l.Relationship,
             Status = l.Status,
             IsPrimaryGuardian = l.IsPrimaryGuardian,

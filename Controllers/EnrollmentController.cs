@@ -22,7 +22,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> GetMine()
         {
             var studentId = User.GetStudentId();
-            if (studentId == null) return this.Forbidden("Only students have enrolments");
+            if (studentId == null) return this.Forbidden("Chỉ học sinh mới có danh sách ghi danh");
             return (await _enrollment.GetMyEnrolmentsAsync(studentId.Value)).ToActionResult();
         }
 
@@ -30,7 +30,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> Enroll(int courseId)
         {
             var studentId = User.GetStudentId();
-            if (studentId == null) return this.Forbidden("Only students can enrol");
+            if (studentId == null) return this.Forbidden("Chỉ học sinh mới ghi danh được");
 
             var r = await _enrollment.EnrollAsync(studentId.Value, courseId);
             return r.ToActionResult();

@@ -33,7 +33,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         {
             var studentId = User.GetStudentId();
             if (studentId == null)
-                return this.Forbidden("Only students can take exercises");
+                return this.Forbidden("Chỉ học sinh mới làm được bài");
 
             dto.StudentId = studentId.Value; // never trust the studentId from the client
 
@@ -51,7 +51,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         {
             var studentId = User.GetStudentId();
             if (studentId == null)
-                return this.Forbidden("Only students can take exercises");
+                return this.Forbidden("Chỉ học sinh mới làm được bài");
 
             dto.StudentId = studentId.Value;
 

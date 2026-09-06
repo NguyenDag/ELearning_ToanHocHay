@@ -61,7 +61,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
         public async Task<IActionResult> LinkByCode([FromBody] LinkParentDto dto)
         {
             var studentId = User.GetStudentId();
-            if (studentId == null) return this.Forbidden("Only a student can accept a parent link");
+            if (studentId == null) return this.Forbidden("Chỉ học sinh mới chấp nhận được liên kết phụ huynh");
             var r = await _links.LinkByCodeAsync(studentId.Value, dto);
             return r.ToActionResult();
         }

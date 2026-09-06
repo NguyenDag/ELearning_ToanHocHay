@@ -62,10 +62,9 @@ namespace ELearning_ToanHocHay_Control
                 .PersistKeysToDbContext<AppDbContext>()
                 .SetApplicationName("elearning-toanhochay");
 
-            // 2. App base URL & email config
+            // 2. App base URL (used to build links in outgoing emails)
             var appBaseUrl = Environment.GetEnvironmentVariable("APP_BASE_URL") ?? "https://localhost:5001";
             builder.Services.Configure<AppSettings>(options => options.BaseUrl = appBaseUrl);
-            builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 
             // 3. Register all repositories and services
             RegisterAppServices(builder.Services);

@@ -1,3 +1,4 @@
+using System.Net.Http.Json;
 using ELearning_ToanHocHay_Control.Data.Entities;
 using ELearning_ToanHocHay_Control.Services.Implementations;
 using Microsoft.EntityFrameworkCore;
@@ -259,6 +260,28 @@ public sealed class FlowSeed(ApiFactory app)
             await db.SaveChangesAsync();
             return ex.ExerciseId;
         });
+
+    // ---------------------------------------------------------------- thanh toán (F7)
+
+    public async Task<(int subId, long amount)> CreatePendingSubscriptionAsync(int studentUserId, int packageId)
+    {
+        var res = await app.As(studentUserId).PostAsJsonAsync("/api/subscriptions",
+            new { StudentId = await StudentIdOf(studentUserId), PackageId = packageId });
+        res.EnsureSuccessStatusCode();
+        var data = await res.DataAsync();
+        return (data.GetProperty("subscriptionId").GetInt32(), (long)data.GetProperty("amount").GetDecimal());
+    }
+
+    public async Task<string> ActivateSubscriptionViaIpnAsync(int subId, long amount, string? reference = null)
+    {
+        reference ??= "IPN-" + Rand();
+        var res = await SePayIpn.Client(app).PostAsJsonAsync("/api/sepay/ipn", SePayIpn.In(subId, amount, reference));
+        res.EnsureSuccessStatusCode();
+        return reference;
+    }
+
+    private Task<int> StudentIdOf(int userId)
+        => app.Db(db => db.Students.Where(s => s.UserId == userId).Select(s => s.StudentId).FirstAsync());
 
     /// <summary>Payment đã Completed, không gắn subscription — dùng cho luồng hoàn tiền F8.</summary>
     public async Task<int> SeedRefundablePaymentAsync(int payerUserId, decimal amount = 199_000m, DateTime? paidAt = null)

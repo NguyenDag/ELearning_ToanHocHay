@@ -696,5 +696,11 @@ ELearning_ToanHocHay.Tests/
   tạo invite, link bằng connection code, code sai → 400/404, list children, phụ huynh liên kết
   đọc được history/dashboard con, thu hồi link → mất quyền ngay, phụ huynh không sửa được phụ
   huynh khác, xoá cần admin.
-- ⏳ **Còn lại:** F7–F12; `FlowSeed` nhóm refund/subscription-via-IPN; ma trận §5.
-- **Tổng:** 496 test xanh (433 unit + 63 integration).
+- ✅ **F7 — Thanh toán SePay + IPN: 13 case** (`IT_F7_PaymentTests`): IT-F7-01..09, 11, 13, 15..18.
+  Giá lấy từ `Package.Price` (bỏ qua `amount` client gửi), IPN hợp lệ → Active + Completed + 30d,
+  **replay cùng referenceCode → Duplicate, 1 dòng `SePayIpnLog`**, sai tiền → giữ Pending,
+  ref mới trên sub Active → Duplicate, out/unknown → Ignored, sai API key → 401,
+  **gói thứ 2 Active → gói cũ tự Expired**, lifecycle sweep, các endpoint Finance-only.
+  `FlowSeed` thêm `CreatePendingSubscriptionAsync` / `ActivateSubscriptionViaIpnAsync`.
+- ⏳ **Còn lại:** F8–F12; `FlowSeed` nhóm refund; ma trận §5.
+- **Tổng:** 509 test xanh (433 unit + 76 integration).

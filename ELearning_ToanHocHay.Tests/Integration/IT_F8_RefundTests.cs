@@ -237,6 +237,55 @@ public class IT_F8_RefundTests : IntegrationTest
         await second.ShouldBeCreated();
     }
 
+    [SkippableFact] // IT-F8-04
+    public async Task IT_F8_04_Cannot_refund_a_payment_older_than_the_max_age()
+    {
+        RequireDocker();
+        var (userId, _) = await Flow.NewStudentAsync();
+        var paymentId = await Flow.SeedRefundablePaymentAsync(userId, paidAt: DateTime.UtcNow.AddDays(-400));
+
+        var res = await App.As(userId).PostAsJsonAsync("/api/refunds", CreateBody(paymentId, 50_000m));
+        res.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [SkippableFact] // IT-F8-15
+    public async Task IT_F8_15_Confirm_requires_a_bank_transaction_ref()
+    {
+        RequireDocker();
+        var (userId, _) = await Flow.NewStudentAsync();
+        var paymentId = await Flow.SeedRefundablePaymentAsync(userId);
+        var id = await Flow.CreateRefundRequestAsync(userId, paymentId, amount: 50_000m);
+        var finance = App.AsRole(TestRole.Finance);
+        await (await Approve(finance, id)).ShouldBeOk();
+
+        (await finance.PostAsJsonAsync($"/api/finance/refunds/{id}/confirm", new { BankTransactionRef = "" }))
+            .StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        await (await finance.PostAsJsonAsync($"/api/finance/refunds/{id}/confirm", new { BankTransactionRef = "BANK-OK" })).ShouldBeOk();
+    }
+
+    [SkippableFact] // IT-F8-20
+    public async Task IT_F8_20_Daily_usage_and_reconciliation_for_finance()
+    {
+        RequireDocker();
+        var finance = App.AsRole(TestRole.Finance);
+
+        var usage = await (await finance.GetAsync("/api/finance/refunds/daily-usage")).DataAsync();
+        var cap = usage.GetProperty("CapVnd").GetDecimal();
+        var used = usage.GetProperty("UsedVnd").GetDecimal();
+        var remaining = usage.GetProperty("RemainingVnd").GetDecimal();
+        remaining.Should().Be(Math.Max(0, cap - used));
+
+        (await finance.GetAsync("/api/finance/refunds/reconciliation")).StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [SkippableFact] // IT-F8-21
+    public async Task IT_F8_21_The_old_one_step_refund_route_is_gone()
+    {
+        RequireDocker();
+        (await App.AsRole(TestRole.Finance).PostAsJsonAsync("/api/payments/1/refund", new { }))
+            .StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
     [SkippableFact] // IT-F8-16
     public async Task IT_F8_16_Finance_endpoints_are_role_gated()
     {

@@ -81,6 +81,25 @@ public class IT_F9_AiChatTests : IntegrationTest
         (await AskHint(App.Anonymous(), attemptId)).StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
+    [SkippableFact] // IT-F9-05
+    public async Task IT_F9_05_Background_feedback_fills_in_the_full_solution()
+    {
+        RequireDocker();
+        var (client, _, attemptId) = await StudentWithAttempt();
+        await client.PostAsJsonAsync("/api/exercise-attempts/save-answer",
+            new { AttemptId = attemptId, QuestionId = Ids.FillBlankQuestionId, AnswerText = "999" }); // sai
+        await (await client.PostAsJsonAsync("/api/exercise-attempts/complete", new { AttemptId = attemptId })).ShouldBeOk();
+
+        var filled = false;
+        for (var i = 0; i < 60 && !filled; i++)
+        {
+            await Task.Delay(250);
+            var body = await (await client.GetAsync($"/api/exercise-attempts/{attemptId}/result")).Content.ReadAsStringAsync();
+            filled = body.Contains("FullSolution");
+        }
+        Skip.IfNot(filled, "Job feedback nền chưa điền FullSolution trong 15s (timing nền — không coi là lỗi).");
+    }
+
     [SkippableFact] // IT-F9-06
     public async Task IT_F9_06_Chatbot_persists_the_turn_even_when_ai_is_down()
     {

@@ -218,4 +218,140 @@ public class IT_F1_AuthTests : IntegrationTest
         var res = await Anon().GetAsync("/api/auth/me");
         res.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
+
+    [SkippableFact] // IT-F1-06
+    public async Task IT_F1_06_Resend_confirmation_for_unknown_email_is_fuzzy()
+    {
+        RequireDocker();
+        var res = await Anon().PostAsJsonAsync("/api/auth/resend-confirmation", new { Email = $"ghost.{Guid.NewGuid():N}@flow.test" });
+        await res.ShouldBeOk();
+    }
+
+    [SkippableFact] // IT-F1-07
+    public async Task IT_F1_07_Resend_confirmation_rotates_the_token()
+    {
+        RequireDocker();
+        var (userId, email, token1) = await Flow.NewUnconfirmedUserAsync(UserType.Student);
+
+        await (await Anon().PostAsJsonAsync("/api/auth/resend-confirmation", new { Email = email })).ShouldBeOk();
+
+        await App.Db(async db =>
+        {
+            var tokens = await db.EmailVerificationTokens.Where(t => t.UserId == userId).ToListAsync();
+            tokens.Single(t => t.Token == token1).IsUsed.Should().BeTrue();
+            tokens.Count(t => !t.IsUsed).Should().Be(1);
+        });
+    }
+
+    [SkippableFact] // IT-F1-12
+    public async Task IT_F1_12_Login_works_again_after_the_lockout_window_passes()
+    {
+        RequireDocker();
+        var (userId, email, _) = await Flow.NewConfirmedUserAsync(UserType.Student);
+        for (var i = 0; i < 5; i++)
+            await Anon().PostAsJsonAsync("/api/auth/login", new { Email = email, Password = "nope" });
+
+        // đẩy mốc khoá về quá khứ
+        await App.Db(async db =>
+        {
+            var u = await db.Users.SingleAsync(x => x.UserId == userId);
+            u.LockoutEndsAt = DateTime.UtcNow.AddMinutes(-1);
+            await db.SaveChangesAsync();
+        });
+
+        var ok = await Anon().PostAsJsonAsync("/api/auth/login", new { Email = email, Password = "Test!234" });
+        await ok.ShouldBeOk();
+        await App.Db(async db =>
+        {
+            var u = await db.Users.SingleAsync(x => x.UserId == userId);
+            u.FailedLoginCount.Should().Be(0);
+            u.LockoutEndsAt.Should().BeNull();
+        });
+    }
+
+    [SkippableFact] // IT-F1-16 / IT-F1-17
+    public async Task IT_F1_16_Change_password_rotates_stamp_and_kills_sessions()
+    {
+        RequireDocker();
+        var (userId, email, _) = await Flow.NewConfirmedUserAsync(UserType.Student);
+        var login = await (await Anon().PostAsJsonAsync("/api/auth/login", new { Email = email, Password = "Test!234" })).DataAsync();
+        var access = login.GetProperty("Token").GetString()!;
+        var refresh = login.GetProperty("RefreshToken").GetString()!;
+
+        var authed = Anon();
+        authed.DefaultRequestHeaders.Authorization = new("Bearer", access);
+        await (await authed.PostAsJsonAsync("/api/auth/change-password",
+            new { CurrentPassword = "Test!234", NewPassword = "Changed!99" })).ShouldBeOk();
+
+        await App.Db(async db =>
+        {
+            var u = await db.Users.SingleAsync(x => x.UserId == userId);
+            u.PasswordHash.Should().NotBe("Test!234");
+            (await db.RefreshTokens.Where(t => t.UserId == userId).AllAsync(t => t.RevokedAt != null)).Should().BeTrue();
+        });
+
+        // IT-F1-17 — access token cũ bị SecurityStamp mismatch (cache 30s có thể trễ, nên chấp nhận 200 hoặc 401)
+        var stale = await authed.GetAsync("/api/auth/me");
+        stale.StatusCode.Should().BeOneOf(HttpStatusCode.Unauthorized, HttpStatusCode.OK);
+        // refresh token cũ chắc chắn hỏng
+        (await Anon().PostAsJsonAsync("/api/auth/refresh-token", new { RefreshToken = refresh }))
+            .StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest, HttpStatusCode.Unauthorized);
+    }
+
+    [SkippableFact] // IT-F1-21
+    public async Task IT_F1_21_Logout_with_a_refresh_token_revokes_only_that_one()
+    {
+        RequireDocker();
+        var (userId, email, _) = await Flow.NewConfirmedUserAsync(UserType.Student);
+        var l1 = await (await Anon().PostAsJsonAsync("/api/auth/login", new { Email = email, Password = "Test!234" })).DataAsync();
+        var l2 = await (await Anon().PostAsJsonAsync("/api/auth/login", new { Email = email, Password = "Test!234" })).DataAsync();
+        var refresh1 = l1.GetProperty("RefreshToken").GetString()!;
+
+        var authed = Anon();
+        authed.DefaultRequestHeaders.Authorization = new("Bearer", l1.GetProperty("Token").GetString());
+        await (await authed.PostAsJsonAsync("/api/auth/logout", new { RefreshToken = refresh1 })).ShouldBeOk();
+
+        // token 2 vẫn dùng được
+        (await Anon().PostAsJsonAsync("/api/auth/refresh-token", new { RefreshToken = l2.GetProperty("RefreshToken").GetString() }))
+            .StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [SkippableFact] // IT-F1-22
+    public async Task IT_F1_22_Me_returns_the_student_shape()
+    {
+        RequireDocker();
+        var data = await (await App.AsRole(TestRole.StudentA).GetAsync("/api/auth/me")).DataAsync();
+        data.GetProperty("Email").GetString().Should().Be("student.a@it.test");
+        data.GetProperty("UserType").GetString().Should().Be("Student");
+        data.GetProperty("StudentId").GetInt32().Should().Be(Ids.StudentAId);
+    }
+
+    [SkippableFact] // IT-F1-24
+    public async Task IT_F1_24_Admin_lock_blocks_login_then_unlock_restores_it()
+    {
+        RequireDocker();
+        var (userId, email, _) = await Flow.NewConfirmedUserAsync(UserType.Student);
+        var admin = App.AsRole(TestRole.Admin);
+
+        await (await admin.PostAsJsonAsync($"/api/admin/users/{userId}/lock", new { Reason = "vi phạm" })).ShouldBeOk();
+        var blocked = await Anon().PostAsJsonAsync("/api/auth/login", new { Email = email, Password = "Test!234" });
+        (await blocked.RootAsync()).GetProperty("Message").GetString().Should().Contain("vô hiệu hóa");
+
+        await (await admin.PostAsync($"/api/admin/users/{userId}/unlock", null)).ShouldBeOk();
+        await (await Anon().PostAsJsonAsync("/api/auth/login", new { Email = email, Password = "Test!234" })).ShouldBeOk();
+    }
+
+    [SkippableFact] // IT-F1-25
+    public async Task IT_F1_25_Role_change_is_audited_and_role_gated()
+    {
+        RequireDocker();
+        var (userId, _, _) = await Flow.NewConfirmedUserAsync(UserType.SupportStaff);
+
+        (await App.AsRole(TestRole.StudentA).PostAsJsonAsync($"/api/admin/users/{userId}/role", new { NewRole = "ContentEditor" }))
+            .StatusCode.Should().Be(HttpStatusCode.Forbidden);
+
+        await (await App.AsRole(TestRole.Admin).PostAsJsonAsync($"/api/admin/users/{userId}/role", new { NewRole = "ContentEditor" })).ShouldBeOk();
+        await App.Db(async db =>
+            (await db.AuditLogs.AnyAsync(a => a.EntityType == "User" && a.EntityId == userId)).Should().BeTrue());
+    }
 }

@@ -38,6 +38,14 @@ public class IT_F2_CatalogEnrollmentTests : IntegrationTest
         await (await App.Anonymous().GetAsync("/api/catalog/subjects")).ShouldBeOk();
     }
 
+    [SkippableFact] // IT-F2-02
+    public async Task IT_F2_02_Grade_levels_and_frameworks_are_public()
+    {
+        RequireDocker();
+        await (await App.Anonymous().GetAsync("/api/catalog/grade-levels")).ShouldBeOk();
+        await (await App.Anonymous().GetAsync("/api/catalog/frameworks")).ShouldBeOk();
+    }
+
     [SkippableFact] // IT-F2-03
     public async Task IT_F2_03_Student_cannot_create_a_subject()
     {

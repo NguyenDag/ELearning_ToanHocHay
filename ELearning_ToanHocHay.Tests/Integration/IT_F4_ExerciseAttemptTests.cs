@@ -184,6 +184,59 @@ public class IT_F4_ExerciseAttemptTests : IntegrationTest
         (await App.AsRole(TestRole.ParentStranger).GetAsync($"/api/exercise-attempts/{attemptId}/result")).StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
+    [SkippableFact] // IT-F4-03
+    public async Task IT_F4_03_Premium_student_can_start_a_premium_exercise()
+    {
+        RequireDocker();
+        var (userId, studentId) = await Flow.NewStudentAsync();
+        await Flow.GrantEntitlementAsync(studentId, EntitlementScope.AllContent, tier: PackageTier.Premium);
+        var exId = await Flow.PublishExerciseAsync(tier: AccessTier.Premium);
+
+        await (await App.As(userId).PostAsJsonAsync("/api/exercise-attempts/start", new { ExerciseId = exId })).ShouldBeOk();
+    }
+
+    [SkippableFact] // IT-F4-13
+    public async Task IT_F4_13_History_access_matrix()
+    {
+        RequireDocker();
+        var id = Ids.StudentAId;
+        (await App.AsRole(TestRole.StudentA).GetAsync($"/api/exercise-attempts/student/{id}/history")).StatusCode.Should().Be(HttpStatusCode.OK);
+        (await App.AsRole(TestRole.StudentB).GetAsync($"/api/exercise-attempts/student/{id}/history")).StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        (await App.AsRole(TestRole.ParentLinked).GetAsync($"/api/exercise-attempts/student/{id}/history")).StatusCode.Should().Be(HttpStatusCode.OK);
+        (await App.AsRole(TestRole.ParentStranger).GetAsync($"/api/exercise-attempts/student/{id}/history")).StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [SkippableFact] // IT-F4-16
+    public async Task IT_F4_16_Complete_after_planned_end_still_grades()
+    {
+        RequireDocker();
+        var (client, attemptId) = await StartFreshAttempt();
+        await Save(client, attemptId, Ids.McQuestionId, optionId: Ids.McCorrectOptionId);
+        await App.Db(async db =>
+        {
+            var a = await db.ExerciseAttempts.SingleAsync(x => x.AttemptId == attemptId);
+            a.PlannedEndTime = DateTime.UtcNow.AddMinutes(-5);
+            await db.SaveChangesAsync();
+        });
+
+        var res = await client.PostAsJsonAsync("/api/exercise-attempts/complete", new { AttemptId = attemptId });
+        await res.ShouldBeOk();
+        await App.Db(async db =>
+            (await db.ExerciseAttempts.SingleAsync(x => x.AttemptId == attemptId)).Status
+                .Should().Be(AttemptStatus.Timeout));
+    }
+
+    [SkippableFact] // IT-F4-19
+    public async Task IT_F4_19_Ai_hints_by_attempt_for_another_student_is_403()
+    {
+        RequireDocker();
+        var (_, attemptId) = await StartFreshAttempt();
+        var (otherUserId, _) = await Flow.NewStudentAsync();
+
+        (await App.As(otherUserId).GetAsync($"/api/ai-hints/by-attempt/{attemptId}"))
+            .StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
     [SkippableFact] // IT-F4-17
     public async Task IT_F4_17_Removed_submit_route_is_404()
     {

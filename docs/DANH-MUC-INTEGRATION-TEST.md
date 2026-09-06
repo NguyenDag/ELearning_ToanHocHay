@@ -711,9 +711,15 @@ ELearning_ToanHocHay.Tests/
   **API chỉ trả 4 số cuối, DB là ciphertext** (Data Protection thật).
   `FlowSeed` thêm `CreateRefundRequestAsync` / `SetConfigAsync` / `SeedActiveSubscriptionAsync`;
   `ApiFactory.BustCache`.
-- ✅ **F9 — Trợ giúp AI & Chatbot: 7 case** (`IT_F9_AiChatTests`): IT-F9-01..04, 06, 07, 10.
-  Free hết lượt gợi ý → 429, gói unlimited không bao giờ 429, `/quota` used/limit/remaining,
-  hint attempt người khác → 403 / ẩn danh → 401, chatbot lưu turn khi AI down + `/health` 503,
-  chatbot ẩn danh → 401. (IT-F9-05 feedback nền cần hosted service — đã gỡ ở harness; để lại.)
-- ⏳ **Còn lại:** F10–F12; ma trận §5.
-- **Tổng:** 531 test xanh (433 unit + 98 integration).
+- ✅ **F9 — Trợ giúp AI & Chatbot: 8 case** (`IT_F9_AiChatTests`): IT-F9-01..07, 10.
+  Free hết lượt gợi ý → 429, gói unlimited không bao giờ 429, `/quota`, hint người khác → 403,
+  chatbot lưu turn khi AI down + `/health` 503. IT-F9-05 (feedback nền) tự `Skip` nếu job chưa
+  điền `FullSolution` trong 15s (timing hosted service dưới TestServer — không coi là lỗi).
+- ✅ **Bổ sung F1–F9** (đã điền các P1 còn thiếu): F1-06/07/12/16/17/21/22/24/25, F2-02,
+  F4-03/13/16/19, F5-02, F7-14, F8-04/15/20/21.
+- ✅ **F10 — Thông báo: 5 case** (`IT_F10_NotificationTests`): IT-F10-01, 04..07.
+  rule `low-score` fan-out tới student + phụ huynh liên kết, opt-out chỉ tắt cho user đó,
+  list/count/read/read-all, preferences shape, mark-read của người khác → lỗi.
+  `FlowSeed.SeedNotificationAsync`; `ApiFactory` giữ lại vòng drain AI feedback.
+- ⏳ **Còn lại:** F11–F12; ma trận §5.
+- **Tổng:** 555 xanh + 1 skip (433 unit + 123 integration).

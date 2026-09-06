@@ -203,6 +203,19 @@ public sealed class FlowSeed(ApiFactory app)
             await db.SaveChangesAsync();
         });
 
+    public Task<int> SeedNotificationAsync(int userId, string title = "Thử", bool read = false)
+        => app.Db(async db =>
+        {
+            var n = new Notification
+            {
+                UserId = userId, Audience = NotifyAudience.Student, Title = title, Message = "nội dung",
+                NotificationType = NotificationType.Info, IsRead = read, CreatedAt = DateTime.UtcNow,
+            };
+            db.Notifications.Add(n);
+            await db.SaveChangesAsync();
+            return n.NotificationId;
+        });
+
     /// <summary>Phụ huynh mới đã xác nhận — trả <c>userId</c>, <c>parentId</c>, <c>connectionCode</c>.</summary>
     public async Task<(int userId, int parentId, string code)> NewParentAsync()
     {

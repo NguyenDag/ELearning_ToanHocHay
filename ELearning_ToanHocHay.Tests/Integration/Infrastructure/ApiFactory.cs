@@ -79,8 +79,12 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 
         builder.ConfigureTestServices(services =>
         {
-            // Tắt mọi hosted service (BackgroundEmail, AiFeedback drain, lifecycle timer) — test tự điều khiển.
+            // Tắt hosted service (BackgroundEmail cast lỗi vì đã swap; lifecycle timer),
+            // nhưng GIỮ vòng drain AI feedback để F9-05 chạy được (FakeAiService trả ngay).
             services.RemoveAll<Microsoft.Extensions.Hosting.IHostedService>();
+            services.AddHostedService(sp =>
+                (ELearning_ToanHocHay_Control.Services.Implementations.AiFeedbackBackgroundService)
+                    sp.GetRequiredService<IAiFeedbackQueue>());
 
             services.RemoveAll<IAIService>();
             services.AddSingleton<FakeAiService>();

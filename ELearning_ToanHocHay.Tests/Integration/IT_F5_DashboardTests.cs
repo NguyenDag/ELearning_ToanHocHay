@@ -41,6 +41,17 @@ public class IT_F5_DashboardTests : IntegrationTest
         res.StatusCode.Should().NotBe(HttpStatusCode.Forbidden);
     }
 
+    [SkippableFact] // IT-F5-02
+    public async Task IT_F5_02_Chapter_score_comparison_for_a_standard_student()
+    {
+        RequireDocker();
+        var (userId, studentId) = await Flow.NewStudentAsync();
+        await Flow.GrantEntitlementAsync(studentId, EntitlementScope.AllContent, tier: PackageTier.Standard);
+
+        var res = await App.As(userId).GetAsync($"/api/students/{studentId}/dashboard/chapter-score-comparison");
+        await res.ShouldBeOk();
+    }
+
     [SkippableFact] // IT-F5-05
     public async Task IT_F5_05_Free_student_hitting_a_gated_endpoint_gets_403_not_500()
     {

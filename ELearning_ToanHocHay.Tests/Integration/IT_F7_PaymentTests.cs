@@ -187,6 +187,21 @@ public class IT_F7_PaymentTests : IntegrationTest
         });
     }
 
+    [SkippableFact] // IT-F7-14
+    public async Task IT_F7_14_Cancel_subscription_owner_vs_stranger()
+    {
+        RequireDocker();
+        var (userId, _) = await Flow.NewStudentAsync();
+        var (subId, _) = await Flow.CreatePendingSubscriptionAsync(userId, Ids.PackageId);
+
+        (await App.AsRole(TestRole.StudentB).PutAsync($"/api/subscriptions/cancel/{subId}", null))
+            .StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        await (await App.As(userId).PutAsync($"/api/subscriptions/cancel/{subId}", null)).ShouldBeOk();
+        await App.Db(async db =>
+            (await db.Subscriptions.SingleAsync(s => s.SubscriptionId == subId)).Status
+                .Should().Be(SubscriptionStatus.Cancelled));
+    }
+
     [SkippableFact] // IT-F7-13
     public async Task IT_F7_13_My_subscriptions_and_payments_are_scoped()
     {

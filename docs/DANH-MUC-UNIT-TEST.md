@@ -218,7 +218,7 @@ Một số logic đang chôn trong `private` hoặc dính `AppDbContext` — tá
 | UT-AUTH-PWD-07 | ChangePassword thành công | `PasswordHash` = giá trị mới từ `HashPassword`; `SecurityStamp` đổi; `RevokeAllForUserAsync` gọi; `_cache.Remove("sstamp:{userId}")` gọi | P1 |
 | UT-AUTH-PWD-08 | ChangePassword thành công — message | chứa `"đăng nhập lại"` | P3 |
 
-### 3.4 AuthService — Xác nhận email (`UT-AUTH-CONFIRM`)
+### 3.4 AuthService — Xác nhận email (`UT-AUTH-CONFIRM`) ✅ B5
 
 **Hàm:** `ConfirmEmailAsync(string token)`, `ResendConfirmationEmailAsync(string email)`
 **Fake / hạ tầng:** `AppDbContext` (SQLite — bảng `EmailVerificationTokens`, `Users`), `IUserRepository`, `IBackgroundEmailService`, `IOptions<AppSettings>`.
@@ -235,7 +235,7 @@ Một số logic đang chôn trong `private` hoặc dính `AppDbContext` — tá
 | UT-AUTH-CONFIRM-07 | `Resend` hợp lệ | mọi token cũ chưa dùng → `IsUsed = true`; token mới `ExpiredAt ≈ now + 24h`; `QueueConfirmationEmail` gọi với link chứa `/api/auth/confirm-email?token=` | P1 |
 | UT-AUTH-CONFIRM-08 | `Resend` — link dùng `AppSettings.BaseUrl` (TrimEnd `/`) | không có `//` thừa | P3 |
 
-### 3.5 AuthService — Quên / đặt lại mật khẩu (`UT-AUTH-RESET`)
+### 3.5 AuthService — Quên / đặt lại mật khẩu (`UT-AUTH-RESET`) ✅ B5
 
 **Hàm:** `ForgotPasswordAsync(string email)`, `ResetPasswordAsync(string token, string newPassword)`
 **Hạ tầng:** `AppDbContext` (SQLite — `PasswordResetTokens`, `Users`), `IUserRepository`, `IPasswordHasher`, `IRefreshTokenRepository`, `IBackgroundEmailService`, `IMemoryCache`, `IOptions<AppSettings>`.
@@ -254,7 +254,7 @@ Một số logic đang chôn trong `private` hoặc dính `AppDbContext` — tá
 | UT-AUTH-RESET-09 | `Reset` hợp lệ | `PasswordHash` mới; `FailedLoginCount = 0`; `LockoutEndsAt = null`; `SecurityStamp` đổi; token `IsUsed = true`; `RevokeAllForUserAsync` gọi; `_cache.Remove("sstamp:{userId}")` | P1 |
 | UT-AUTH-RESET-10 | `Reset` — mật khẩu mới **được hash** | `PasswordHash != newPassword` | P2 |
 
-### 3.6 AuthService — Đăng ký (`UT-AUTH-REGISTER`)
+### 3.6 AuthService — Đăng ký (`UT-AUTH-REGISTER`) ✅ B5
 
 **Hàm:** `RegisterAsync(RegisterRequestDto request)`
 **Hạ tầng:** `AppDbContext` (SQLite — transaction), `IUserRepository`, `IStudentRepository`, `IParentRepository`, `IPasswordHasher`, `IBackgroundEmailService`, `IOptions<AppSettings>`.
@@ -1073,6 +1073,10 @@ Tổng: **~500 unit test**. Sau B6 mới bắt đầu bổ sung **integration te
     - **Sửa bug sản phẩm:** `PackageTierResolver` sắp xếp `Package.Tier` ở DB — cột này persist
       dạng **string** (`HasConversion<string>`) nên `ORDER BY` ra thứ tự chữ cái ("Standard" > "Premium").
       Đã đổi sang nạp danh sách tier rồi `Max()` theo enum. (UT-TIER-03)
-  - ⏳ còn lại: `Register`/`Confirm`/`Forgot`/`Reset` (§3.4–3.6), `RefundServicePolicy` (§3.22),
-    `NotificationService` (§3.34), `ExerciseAttemptService` (§3.35), `ProgressProjection` U2 (§3.31).
+  - ✅ đợt 2 (29 test, **364/364 xanh**): `Confirm`/`Resend` (UT-AUTH-CONFIRM), `Forgot`/`Reset`
+    (UT-AUTH-RESET), `Register` (UT-AUTH-REGISTER) — `AppDbContext` SQLite + repo thật
+    (`UserRepository`…) trên cùng context; email/hasher/cache/refresh-token repo là fake
+    (`Unit/Auth/_AuthU2.cs`).
+  - ⏳ còn lại: `RefundServicePolicy` (§3.22), `NotificationService` (§3.34),
+    `ExerciseAttemptService` (§3.35), `ProgressProjection` U2 (§3.31).
 - ⏳ **B6:** `UT-ATTR`, `UT-MW`, `UT-DTO`.

@@ -54,8 +54,13 @@ internal sealed class AuthHarness
     private static AppDbContext StubDb() => new(
         new DbContextOptionsBuilder<AppDbContext>().UseSqlite("DataSource=:memory:").Options);
 
+    /// <summary>Đặt để chạy tầng U2 (Register/Confirm/Forgot/Reset chạm <see cref="AppDbContext"/> thật).</summary>
+    public AppDbContext? Db { get; set; }
+
+    public string BaseUrl { get; set; } = "https://webapp.test";
+
     public AuthService Build() => new(
-        StubDb(), Users, Students, Parents, RefreshTokens, Jwt, Hasher, Email,
-        Options.Create(new AppSettings { BaseUrl = "https://webapp.test" }),
+        Db ?? StubDb(), Users, Students, Parents, RefreshTokens, Jwt, Hasher, Email,
+        Options.Create(new AppSettings { BaseUrl = BaseUrl }),
         BgEmail, Cache, TierResolver, Issuer, Clock);
 }

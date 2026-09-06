@@ -711,5 +711,9 @@ ELearning_ToanHocHay.Tests/
   **API chỉ trả 4 số cuối, DB là ciphertext** (Data Protection thật).
   `FlowSeed` thêm `CreateRefundRequestAsync` / `SetConfigAsync` / `SeedActiveSubscriptionAsync`;
   `ApiFactory.BustCache`.
-- ⏳ **Còn lại:** F9–F12; ma trận §5.
-- **Tổng:** 524 test xanh (433 unit + 91 integration).
+- ✅ **F9 — Trợ giúp AI & Chatbot: 7 case** (`IT_F9_AiChatTests`): IT-F9-01..04, 06, 07, 10.
+  Free hết lượt gợi ý → 429, gói unlimited không bao giờ 429, `/quota` used/limit/remaining,
+  hint attempt người khác → 403 / ẩn danh → 401, chatbot lưu turn khi AI down + `/health` 503,
+  chatbot ẩn danh → 401. (IT-F9-05 feedback nền cần hosted service — đã gỡ ở harness; để lại.)
+- ⏳ **Còn lại:** F10–F12; ma trận §5.
+- **Tổng:** 531 test xanh (433 unit + 98 integration).

@@ -156,7 +156,7 @@ Một số logic đang chôn trong `private` hoặc dính `AppDbContext` — tá
 
 ## 3. Danh mục unit test
 
-### 3.1 AuthService — Đăng nhập (`UT-AUTH-LOGIN`)
+### 3.1 AuthService — Đăng nhập (`UT-AUTH-LOGIN`) ✅ B4
 
 **Hàm:** `Task<ApiResponse<LoginResponseDto>> LoginAsync(LoginRequestDto request, string? ip)`
 **Fake:** `IUserRepository`, `IStudentRepository`, `IParentRepository`, `IPasswordHasher`,
@@ -183,7 +183,7 @@ Một số logic đang chôn trong `private` hoặc dính `AppDbContext` — tá
 | UT-AUTH-LOGIN-16 | Parent đăng nhập thành công | `UserType = Parent`, có `Parent` | `Data.ParentId` điền, `Data.StudentId = null`, `PackageTier = Free` | P2 |
 | UT-AUTH-LOGIN-17 | `ip` được truyền vào token issuer | `ip = "1.2.3.4"` | `IssueTokenPair` nhận đúng `ip` | P3 |
 
-### 3.2 AuthService — Refresh token (`UT-AUTH-REFRESH`)
+### 3.2 AuthService — Refresh token (`UT-AUTH-REFRESH`) ✅ B4
 
 **Hàm:** `Task<ApiResponse<TokenPairDto>> RefreshTokenAsync(string refreshToken, string? ip)`
 **Fake:** `IRefreshTokenRepository`, `IUserRepository`, `IStudentRepository`, `IParentRepository`, `IRefreshTokenIssuer`.
@@ -201,7 +201,7 @@ Một số logic đang chôn trong `private` hoặc dính `AppDbContext` — tá
 | UT-AUTH-REFRESH-08 | User là Parent | token mới kèm `parentId` đúng | P2 |
 | UT-AUTH-REFRESH-09 | `ip` truyền vào token issuer | issuer nhận đúng `ip` | P3 |
 
-### 3.3 AuthService — Đăng xuất & đổi mật khẩu (`UT-AUTH-PWD`)
+### 3.3 AuthService — Đăng xuất & đổi mật khẩu (`UT-AUTH-PWD`) ✅ B4
 
 **Hàm:** `LogoutAsync(int userId, string? refreshToken)`, `ChangePasswordAsync(int userId, ChangePasswordDto request)`
 **Fake:** `IRefreshTokenRepository`, `IUserRepository`, `IPasswordHasher`, `IMemoryCache`.
@@ -271,7 +271,7 @@ Một số logic đang chôn trong `private` hoặc dính `AppDbContext` — tá
 | UT-AUTH-REGISTER-07 | `SaveChanges` ném giữa chừng | `RollbackAsync` gọi; message = `"Đăng ký thất bại, vui lòng thử lại sau"`; không rò nội bộ | P2 |
 | UT-AUTH-REGISTER-08 | Student — email xác nhận gửi **sau** commit | `QueueConfirmationEmail` gọi sau `CommitAsync` | P3 |
 
-### 3.7 AuthService — Validate token (`UT-AUTH-VALIDATE`)
+### 3.7 AuthService — Validate token (`UT-AUTH-VALIDATE`) ✅ B4
 
 **Hàm:** `Task<bool> ValidateTokenAsync(string token)`
 **Fake:** `IJwtService`, `IUserRepository`.
@@ -667,7 +667,7 @@ Một số logic đang chôn trong `private` hoặc dính `AppDbContext` — tá
 | UT-GATE-10 | `Published` | Student | không enrolment, entitlement môn khác | `FreeOnly` | P1 |
 | UT-GATE-11 | `Published` | Student | entitlement đã hết hạn (repo không trả) | `FreeOnly` | P2 |
 
-### 3.26 EnrollmentService (`UT-ENROL`)
+### 3.26 EnrollmentService (`UT-ENROL`) ✅ B4
 
 **Hàm:** `Task<ApiResponse<EnrolmentDto>> EnrollAsync(int studentId, int courseId)`, `GetMyEnrolmentsAsync`
 **Fake:** `IEnrollmentRepository`, `ICourseRepository`, `IContentAccessService`.
@@ -769,7 +769,7 @@ Một số logic đang chôn trong `private` hoặc dính `AppDbContext` — tá
 | UT-PROG-08 | roll-up leo 3 cấp (bài → chương → version) | mỗi cấp % đúng | U2 | P1 |
 | UT-PROG-09 | `ProjectAttemptAsync` với attempt chưa `Submitted` | không ghi progress | U2 | P2 |
 
-### 3.32 ResourceAccessService — quyền truy cập (`UT-RES`)
+### 3.32 ResourceAccessService — quyền truy cập (`UT-RES`) ✅ B4
 
 **Hàm:** `CanAccessStudentAsync(int studentId, int userId, UserType?)`, `CanAccessAttemptAsync`, `CanAccessPaymentAsync`, `CanAccessSubscriptionAsync`
 **Fake:** `IStudentRepository`, `IParentRepository`, `IParentLinkRepository`, `IExerciseAttemptRepository`, `ISubscriptionRepository`, `IPaymentRepository`.
@@ -999,7 +999,7 @@ Mọi class trong `Unit/` gắn `[Trait("Level","Unit")]` + `[Trait("Tier","U1"|
 | **B1** ✅ | U1 thuần: `AnswerGrading`, `SecureTokens`, `ClaimsPrincipalExtensions`, `PasswordHasher`, `PagedRequest`, `RateLimitPartitioning`, `RefundCsvWriter`, `RefundFieldProtector`, `JwtService` | ~120 | B0 |
 | **B2** ✅ | Refactor [§2](#2-refactor-mở-đường-làm-trước): tách policy / parser / evaluator / `Apply(entity)` / `Covers` internal / `ProgressRollup` + inject `TimeProvider` | — | review kiến trúc |
 | **B3** ✅ | U1 sau refactor: `LoginThrottlePolicy`, `SePayContentParser`, `SePayAmountMatcher`, `SePayIpnEvaluator`, `SePayService`, `RefundCompletion`, `RefundDayWindow`, `ContentAccess.Covers`, `ProgressRollup` | ~80 | B2 |
-| **B4** | U1 `AuthService` (`Login`, `RefreshToken`, `Logout`, `ChangePassword`, `ValidateToken`), `ResourceAccessService`, `EnrollmentService` (repo fake bằng `NSubstitute`) | ~70 | B3 |
+| **B4** ✅ | U1 `AuthService` (`Login`, `RefreshToken`, `Logout`, `ChangePassword`, `ValidateToken`), `ResourceAccessService`, `EnrollmentService` (repo fake bằng `NSubstitute`) | ~70 | B3 |
 | **B5** | U2 (SQLite): `Register`/`Confirm`/`Forgot`/`Reset`, `AiQuotaService`, `SubscriptionLifecycleService`, `PackageTierResolver`, `ContentAccessService`, `RefundServicePolicy`, `SystemConfigService`, `NotificationService`, `ExerciseAttemptService`, `ProgressProjection` | ~110 | B4 |
 | **B6** | `UT-ATTR-*`, `UT-MW-*`, `UT-DTO-*` | ~25 | B4 |
 
@@ -1054,4 +1054,15 @@ Tổng: **~500 unit test**. Sau B6 mới bắt đầu bổ sung **integration te
   - `Unit/Refund/RefundDayWindowTests.cs` — UT-RFP-WINDOW-01..05.
   - `Unit/Content/ContentAccessCoversTests.cs` — UT-GATE-COVERS-01..08.
   - `Unit/Progress/ProgressRollupTests.cs` — UT-PROG-01..04 (phần U1); UT-PROG-05..09 để lại B5 (U2).
-- ⏳ **B4–B6:** các case còn lại — **chưa làm**. Bước kế tiếp: **B4** (U1 `AuthService`, `ResourceAccessService`, `EnrollmentService` với repo fake NSubstitute).
+- ✅ **B4 — U1 `AuthService` / `ResourceAccessService` / `EnrollmentService`: XONG.** ~65 test,
+  **286/286 xanh**. Mọi phụ thuộc là NSubstitute; `AppDbContext` chỉ là stub (5 hàm Auth không
+  chạm tới sau refactor §2). File:
+  - `Unit/Auth/_AuthHarness.cs` — bộ substitute + `FakeClock` dùng chung.
+  - `Unit/Auth/AuthServiceLoginTests.cs` — UT-AUTH-LOGIN-01..17.
+  - `Unit/Auth/AuthServiceRefreshTokenTests.cs` — UT-AUTH-REFRESH-01..09.
+  - `Unit/Auth/AuthServicePasswordTests.cs` — UT-AUTH-PWD-01..08.
+  - `Unit/Auth/AuthServiceValidateTokenTests.cs` — UT-AUTH-VALIDATE-01..06.
+  - `Unit/Access/ResourceAccessServiceTests.cs` — UT-RES-01..12 (`CanViewAttemptAsync` là tên
+    thật của "CanAccessAttempt"; `CanModifyAttemptAsync` chưa có case riêng — bổ sung ở B5/IT nếu cần).
+  - `Unit/Content/EnrollmentServiceTests.cs` — UT-ENROL-01..07.
+- ⏳ **B5–B6:** các case còn lại — **chưa làm**. Bước kế tiếp: **B5** (U2 với SQLite).

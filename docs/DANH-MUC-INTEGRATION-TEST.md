@@ -692,5 +692,9 @@ ELearning_ToanHocHay.Tests/
 - ✅ **F5 — Dashboard học sinh: 6 case** (`IT_F5_DashboardTests`): IT-F5-01, 04..08.
   tier lấy từ `Package.Tier` (gói tên "Standard" nhưng Tier=Premium), Free → 403 "cần gói",
   Student B → 403 mọi endpoint, subscription/current trả gói/Free.
-- ⏳ **Còn lại:** F6–F12; `FlowSeed` nhóm refund/subscription-via-IPN; ma trận §5.
-- **Tổng:** 488 test xanh (433 unit + 55 integration).
+- ✅ **F6 — Liên kết phụ huynh: 8 case** (`IT_F6_ParentTests`): IT-F6-01..08.
+  tạo invite, link bằng connection code, code sai → 400/404, list children, phụ huynh liên kết
+  đọc được history/dashboard con, thu hồi link → mất quyền ngay, phụ huynh không sửa được phụ
+  huynh khác, xoá cần admin.
+- ⏳ **Còn lại:** F7–F12; `FlowSeed` nhóm refund/subscription-via-IPN; ma trận §5.
+- **Tổng:** 496 test xanh (433 unit + 63 integration).

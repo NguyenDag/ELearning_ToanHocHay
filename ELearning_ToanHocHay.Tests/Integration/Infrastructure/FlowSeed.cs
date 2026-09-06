@@ -202,6 +202,17 @@ public sealed class FlowSeed(ApiFactory app)
             await db.SaveChangesAsync();
         });
 
+    /// <summary>Phụ huynh mới đã xác nhận — trả <c>userId</c>, <c>parentId</c>, <c>connectionCode</c>.</summary>
+    public async Task<(int userId, int parentId, string code)> NewParentAsync()
+    {
+        var (userId, _, _) = await NewConfirmedUserAsync(UserType.Parent);
+        return await app.Db(async db =>
+        {
+            var p = await db.Parents.SingleAsync(x => x.UserId == userId);
+            return (userId, p.ParentId, p.ConnectionCode);
+        });
+    }
+
     // ---------------------------------------------------------------- bài tập (F4)
 
     /// <summary>Học sinh mới đã xác nhận — trả cả <c>userId</c> lẫn <c>studentId</c>.</summary>

@@ -423,3 +423,6 @@ FodyWeavers.xsd
 appsettings.json
 data_backup.sql
 AI/.env
+
+# Test project — local only, not tracked on GitHub
+ELearning_ToanHocHay.Tests/

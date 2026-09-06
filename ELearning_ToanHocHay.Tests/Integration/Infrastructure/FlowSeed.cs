@@ -283,6 +283,46 @@ public sealed class FlowSeed(ApiFactory app)
     private Task<int> StudentIdOf(int userId)
         => app.Db(db => db.Students.Where(s => s.UserId == userId).Select(s => s.StudentId).FirstAsync());
 
+    // ---------------------------------------------------------------- hoàn tiền (F8)
+
+    public async Task<int> CreateRefundRequestAsync(int actorUserId, int paymentId, decimal? amount = null,
+        string holderName = "Nguyen Van A")
+    {
+        var res = await app.As(actorUserId).PostAsJsonAsync("/api/refunds", new
+        {
+            PaymentId = paymentId,
+            Amount = amount,
+            ReasonCode = "CustomerRequest",
+            BankBin = "970418",
+            BankAccountNumber = "0071000123456",
+            BankAccountHolderName = holderName,
+        });
+        res.EnsureSuccessStatusCode();
+        return (await res.DataAsync()).GetProperty("RefundRequestId").GetInt32();
+    }
+
+    /// <summary>Sửa 1 SystemConfig rồi xoá cache tương ứng. Nhớ trả lại giá trị cũ sau test.</summary>
+    public async Task SetConfigAsync(string key, string value)
+    {
+        await app.Db(async db =>
+        {
+            var row = await db.SystemConfigs.SingleAsync(c => c.ConfigKey == key);
+            row.ConfigValue = value;
+            await db.SaveChangesAsync();
+        });
+        app.BustCache($"cfg:{key}");
+    }
+
+    /// <summary>Payment Completed + Subscription Active (qua IPN thật) — trả <c>(paymentId, subId)</c>.</summary>
+    public async Task<(int paymentId, int subId)> SeedActiveSubscriptionAsync(int studentUserId, int packageId)
+    {
+        var (subId, amount) = await CreatePendingSubscriptionAsync(studentUserId, packageId);
+        await ActivateSubscriptionViaIpnAsync(subId, amount);
+        var paymentId = await app.Db(db => db.Subscriptions.Where(s => s.SubscriptionId == subId)
+            .Select(s => s.PaymentId!.Value).FirstAsync());
+        return (paymentId, subId);
+    }
+
     /// <summary>Payment đã Completed, không gắn subscription — dùng cho luồng hoàn tiền F8.</summary>
     public async Task<int> SeedRefundablePaymentAsync(int payerUserId, decimal amount = 199_000m, DateTime? paidAt = null)
         => await app.Db(async db =>

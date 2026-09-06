@@ -124,5 +124,9 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         return await read(scope.ServiceProvider.GetRequiredService<AppDbContext>());
     }
 
+    /// <summary>Xoá 1 entry trong <c>IMemoryCache</c> (SystemConfig cache 5′) sau khi sửa DB.</summary>
+    public void BustCache(string cacheKey)
+        => Services.GetRequiredService<Microsoft.Extensions.Caching.Memory.IMemoryCache>().Remove(cacheKey);
+
     public Task Db(Func<AppDbContext, Task> act) => Db<int>(async db => { await act(db); return 0; });
 }

@@ -702,5 +702,14 @@ ELearning_ToanHocHay.Tests/
   ref mới trên sub Active → Duplicate, out/unknown → Ignored, sai API key → 401,
   **gói thứ 2 Active → gói cũ tự Expired**, lifecycle sweep, các endpoint Finance-only.
   `FlowSeed` thêm `CreatePendingSubscriptionAsync` / `ActivateSubscriptionViaIpnAsync`.
-- ⏳ **Còn lại:** F8–F12; `FlowSeed` nhóm refund; ma trận §5.
-- **Tổng:** 509 test xanh (433 unit + 76 integration).
+- ✅ **F8 — Hoàn tiền: 15 case** (`IT_F8_RefundTests`): IT-F8-01..03, 05..12, 16..19.
+  student tạo yêu cầu (201 + `RefundEvent`), payment người khác → 403, payment Pending → 400,
+  yêu cầu mở thứ 2 → 409, giới hạn 30 ngày (+ Admin bỏ qua), approve → Approved,
+  **trần ngày → "Vượt trần"**, **dual-control 2 người** (config set/reset + bust cache),
+  reject→approve → 409, **full batch flow** (Payment=Refunded, RefundAmount đủ, Subscription=Cancelled),
+  hoàn một phần → PartiallyRefunded, **CSV formula-injection** (`'=cmd`, Draft→Exported),
+  **API chỉ trả 4 số cuối, DB là ciphertext** (Data Protection thật).
+  `FlowSeed` thêm `CreateRefundRequestAsync` / `SetConfigAsync` / `SeedActiveSubscriptionAsync`;
+  `ApiFactory.BustCache`.
+- ⏳ **Còn lại:** F9–F12; ma trận §5.
+- **Tổng:** 524 test xanh (433 unit + 91 integration).

@@ -5,9 +5,8 @@
 > nếu file test nào đó đã có sẵn một phần, phần đó vẫn được ghi lại đầy đủ ở đây và coi
 > như đặc tả chuẩn.
 >
-> ⚠️ **Hạ tầng test cũ (`Tests/*` — kể cả `Tests/AnswerGradingTests.cs`) đã bị xoá.**
-> [§1.3](#13-hạ-tầng-test-xây-mới) đặc tả hạ tầng mới — **B0 đã hoàn thành** (xem [§7](#7-trạng-thái-hiện-tại));
-> các case nghiệp vụ B1–B6 chưa viết.
+> ✅ **B0–B6 đã hoàn thành (2026-09-06): 433 unit test, tất cả xanh.** Hạ tầng test cũ (`Tests/*`)
+> đã xoá; hạ tầng mới ở [§1.3](#13-hạ-tầng-test-xây-mới). Chi tiết từng bước ở [§7](#7-trạng-thái-hiện-tại).
 >
 > Integration: [DANH-MUC-INTEGRATION-TEST.md](DANH-MUC-INTEGRATION-TEST.md) · System: [DANH-MUC-SYSTEM-TEST.md](DANH-MUC-SYSTEM-TEST.md) · Luồng: [KE-HOACH-KIEM-THU-HE-THONG.md](KE-HOACH-KIEM-THU-HE-THONG.md).
 > Ký hiệu ưu tiên **P**: P1 bắt buộc · P2 nên có · P3 khi rảnh.
@@ -849,7 +848,7 @@ Một số logic đang chôn trong `private` hoặc dính `AppDbContext` — tá
 | UT-ATT-12 | `StartRandom` từ ngân hàng, `NumberOfQuestions = 2` | attempt có đúng 2 câu; không "timeout ảo" | P1 |
 | UT-ATT-13 | `Complete` sau `PlannedEndTime` | vẫn chấm (không mất bài) | P2 |
 
-### 3.36 Authorization attributes (`UT-ATTR`)
+### 3.36 Authorization attributes (`UT-ATTR`) ✅ B6
 
 **Lớp:** `AuthorizeUserTypeAttribute`, `AuthorizeContentRoleAttribute`, `SePayApiKeyAttribute`
 **Hạ tầng:** dựng `AuthorizationFilterContext` / `ActionExecutingContext` với `DefaultHttpContext` + `ClaimsPrincipal` giả.
@@ -866,7 +865,7 @@ Một số logic đang chôn trong `private` hoặc dính `AppDbContext` — tá
 | UT-ATTR-07 | `SePayApiKey` — header sai / thiếu | 401 | P1 |
 | UT-ATTR-08 | `SePayApiKey` — sai scheme (`Bearer xxx`) | 401 | P2 |
 
-### 3.37 CorrelationIdMiddleware & GlobalExceptionHandler (`UT-MW`)
+### 3.37 CorrelationIdMiddleware & GlobalExceptionHandler (`UT-MW`) ✅ B6
 
 **Lớp:** `CorrelationIdMiddleware`, `GlobalExceptionHandler`
 **Hạ tầng:** `DefaultHttpContext`, `RequestDelegate` giả.
@@ -880,7 +879,7 @@ Một số logic đang chôn trong `private` hoặc dính `AppDbContext` — tá
 | UT-MW-04 | `GlobalExceptionHandler` — body là JSON hợp lệ, `StatusCode = 500` | `Content-Type: application/json` | P2 |
 | UT-MW-05 | `GlobalExceptionHandler` — có correlation id | id xuất hiện trong body hoặc header để trace | P2 |
 
-### 3.38 Validation DTO (`UT-DTO`)
+### 3.38 Validation DTO (`UT-DTO`) ✅ B6
 
 **Cách test:** `Validator.TryValidateObject(dto, ctx, results, validateAllProperties: true)`.
 **Tầng:** U1.
@@ -1001,10 +1000,11 @@ Mọi class trong `Unit/` gắn `[Trait("Level","Unit")]` + `[Trait("Tier","U1"|
 | **B3** ✅ | U1 sau refactor: `LoginThrottlePolicy`, `SePayContentParser`, `SePayAmountMatcher`, `SePayIpnEvaluator`, `SePayService`, `RefundCompletion`, `RefundDayWindow`, `ContentAccess.Covers`, `ProgressRollup` | ~80 | B2 |
 | **B4** ✅ | U1 `AuthService` (`Login`, `RefreshToken`, `Logout`, `ChangePassword`, `ValidateToken`), `ResourceAccessService`, `EnrollmentService` (repo fake bằng `NSubstitute`) | ~70 | B3 |
 | **B5** ✅ | U2 (SQLite): `Register`/`Confirm`/`Forgot`/`Reset`, `AiQuotaService`, `SubscriptionLifecycleService`, `PackageTierResolver`, `ContentAccessService`, `RefundServicePolicy`, `SystemConfigService`, `NotificationService`, `ExerciseAttemptService`, `ProgressProjection` | ~110 | B4 |
-| **B6** | `UT-ATTR-*`, `UT-MW-*`, `UT-DTO-*` | ~25 | B4 |
+| **B6** ✅ | `UT-ATTR-*`, `UT-MW-*`, `UT-DTO-*` | ~25 | B4 |
 
-Tổng: **~500 unit test**. Sau B6 mới bắt đầu bổ sung **integration test**
-([DANH-MUC-INTEGRATION-TEST.md](DANH-MUC-INTEGRATION-TEST.md)).
+Tổng: **~500 unit test** đặc tả → **433 đã viết & xanh** (B0–B6 xong 2026-09-06). Phần chưa viết
+là các case P2/P3 phụ trong vài mục. Bắt đầu bổ sung **integration test**
+([DANH-MUC-INTEGRATION-TEST.md](DANH-MUC-INTEGRATION-TEST.md)) từ **I0**.
 
 ---
 
@@ -1089,4 +1089,17 @@ Tổng: **~500 unit test**. Sau B6 mới bắt đầu bổ sung **integration te
     (`ExerciseAttemptRepository`…) trên SQLite, AI queue / progression / notify / email là fake.
     `CompleteExercise` chạy cả row-lock raw SQL + transaction thật; ATT-11 khẳng định idempotency.
     `Seed` thêm: `QuestionBank/Question/AttachQuestion/Attempt/Answer`.
-- ⏳ **B6:** `UT-ATTR` (authorization attributes), `UT-MW` (middleware), `UT-DTO` (~25 case).
+- ✅ **B6 — Attributes / Middleware / DTO validation: XONG.** 28 test.
+  - `Unit/Common/AuthorizationAttributeTests.cs` — `AuthorizeUserType` / `AuthorizeContentRole` /
+    `SePayApiKey` (UT-ATTR-01..08) qua `AuthorizationFilterContext` dựng tay.
+  - `Unit/Common/MiddlewareTests.cs` — `CorrelationIdMiddleware` (sinh/echo id) +
+    `GlobalExceptionHandler` (500 envelope, không lộ exception, JSON, correlation id) — UT-MW-01..05.
+  - `Unit/Common/DtoValidationTests.cs` — `LoginRequestDto`, `RegisterRequestDto`,
+    `ChangePasswordDto`, `CreateRefundRequestDto`, `ResetPasswordDto` (UT-DTO-01..08,10;
+    DTO-09 `CreateSubscriptionDto` không có data annotation nên bỏ).
+
+---
+
+## ✅ Toàn bộ B0–B6 hoàn thành — **433/433 unit test xanh** (`dotnet test --filter "Level=Unit"`).
+
+Kế tiếp: integration test ([DANH-MUC-INTEGRATION-TEST.md](DANH-MUC-INTEGRATION-TEST.md), từ **I0**).

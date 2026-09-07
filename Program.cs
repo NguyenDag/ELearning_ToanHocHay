@@ -317,6 +317,11 @@ namespace ELearning_ToanHocHay_Control
             {
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                 db.Database.Migrate();
+
+                // Đảm bảo luôn có 1 tài khoản SystemAdmin để quản trị sau khi deploy.
+                // Idempotent — không đổi gì nếu tài khoản admin đã tồn tại.
+                ActivatorUtilities.CreateInstance<Data.Seed.DefaultAdminSeeder>(scope.ServiceProvider)
+                    .SeedAsync().GetAwaiter().GetResult();
             }
 
             // 8. Middleware pipeline, in the standard order

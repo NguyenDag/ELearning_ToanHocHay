@@ -226,12 +226,13 @@ Một số logic đang chôn trong `private` hoặc dính `AppDbContext` — tá
 | Mã | Tình huống | Kỳ vọng | P |
 |---|---|---|---|
 | UT-AUTH-CONFIRM-01 | `ConfirmEmail` token không tồn tại | message = `"Liên kết không hợp lệ"` | P1 |
-| UT-AUTH-CONFIRM-02 | `ConfirmEmail` token `IsUsed = true` | message = `"Liên kết không hợp lệ"` | P1 |
-| UT-AUTH-CONFIRM-03 | `ConfirmEmail` token `ExpiredAt < now` | message = `"Liên kết không hợp lệ"` | P1 |
+| UT-AUTH-CONFIRM-02 | `ConfirmEmail` token `IsUsed = true`, user chưa xác nhận | message = `"Liên kết không hợp lệ"` | P1 |
+| UT-AUTH-CONFIRM-03 | `ConfirmEmail` token `ExpiredAt < now`, chưa dùng | `Success = false`, message = `"Liên kết xác nhận đã hết hạn"` | P1 |
+| UT-AUTH-CONFIRM-03b | `ConfirmEmail` link cũ nhưng user đã xác nhận rồi | `Success = true`, message = `"Email đã được xác nhận trước đó"` (idempotent) | P2 |
 | UT-AUTH-CONFIRM-04 | `ConfirmEmail` token hợp lệ | `User.IsEmailConfirmed = true`, `EmailConfirmedAt` set, token `IsUsed = true` | P1 |
 | UT-AUTH-CONFIRM-05 | `Resend` email không tồn tại | `Success = true`, message mờ (`"Nếu email tồn tại…"`); **không** queue email | P1 |
 | UT-AUTH-CONFIRM-06 | `Resend` tài khoản đã xác nhận | `Success = false`, message = `"Tài khoản này đã được xác nhận trước đó"` | P2 |
-| UT-AUTH-CONFIRM-07 | `Resend` hợp lệ | mọi token cũ chưa dùng → `IsUsed = true`; token mới `ExpiredAt ≈ now + 24h`; `QueueConfirmationEmail` gọi với link chứa `/api/auth/confirm-email?token=` | P1 |
+| UT-AUTH-CONFIRM-07 | `Resend` hợp lệ | mọi token cũ chưa dùng → `IsUsed = true`; token mới `ExpiredAt ≈ now + 24h`; `QueueConfirmationEmail` gọi với link chứa `/Account/ConfirmEmail?token=` (trang WebApp) | P1 |
 | UT-AUTH-CONFIRM-08 | `Resend` — link dùng `AppSettings.BaseUrl` (TrimEnd `/`) | không có `//` thừa | P3 |
 
 ### 3.5 AuthService — Quên / đặt lại mật khẩu (`UT-AUTH-RESET`) ✅ B5

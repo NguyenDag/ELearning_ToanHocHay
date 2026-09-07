@@ -248,10 +248,23 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         {
             var emailToken = await _context.EmailVerificationTokens
                 .Include(x => x.User)
-                .FirstOrDefaultAsync(x => x.Token == token && !x.IsUsed && x.ExpiredAt > Now);
+                .FirstOrDefaultAsync(x => x.Token == token);
 
+            // Token chưa từng tồn tại → liên kết sai.
             if (emailToken == null)
                 return ApiResponse<bool>.ErrorResponse("Liên kết không hợp lệ");
+
+            // Đã xác nhận trước đó (bấm lại link cũ) → coi như thành công, không báo lỗi.
+            if (emailToken.User.IsEmailConfirmed)
+                return ApiResponse<bool>.SuccessResponse(true, "Email đã được xác nhận trước đó");
+
+            // Token đã dùng nhưng user chưa xác nhận (bất thường) → liên kết sai.
+            if (emailToken.IsUsed)
+                return ApiResponse<bool>.ErrorResponse("Liên kết không hợp lệ");
+
+            // Token còn nguyên nhưng quá hạn → trang "hết hạn" riêng, gợi ý gửi lại.
+            if (emailToken.ExpiredAt <= Now)
+                return ApiResponse<bool>.ErrorResponse("Liên kết xác nhận đã hết hạn");
 
             emailToken.User.IsEmailConfirmed = true;
             emailToken.User.EmailConfirmedAt = Now;
@@ -445,8 +458,9 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             }
         }
 
-        // A2-12 — one consistent confirmation route (the API endpoint).
+        // A2-12 — link trong email trỏ về trang WebApp (BaseUrl = origin WebApp), trang này
+        // gọi lại API /api/auth/confirm-email và hiển thị giao diện thành công / hết hạn / lỗi.
         private string ConfirmLink(string token)
-            => $"{_appSettings.BaseUrl.TrimEnd('/')}/api/auth/confirm-email?token={token}";
+            => $"{_appSettings.BaseUrl.TrimEnd('/')}/Account/ConfirmEmail?token={token}";
     }
 }

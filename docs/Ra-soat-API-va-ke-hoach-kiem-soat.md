@@ -315,7 +315,7 @@ bản e2e xác thực tự động xanh.
 |---|---|---|
 | Refresh token thật (A1-07) | ✅ | entity `RefreshToken` (hash SHA-256, xoay vòng mỗi lần dùng, phát hiện replay → thu hồi cả họ); access token 30 phút; `RefreshTokenDays=30` |
 | Logout / đổi mật khẩu / reset → thu hồi refresh token | ✅ | logout thu hồi 1 hoặc tất cả |
-| Thống nhất luồng xác nhận email (A2-12) | ✅ | link trỏ `/api/auth/confirm-email`; resend cùng route |
+| Thống nhất luồng xác nhận email (A2-12) | ✅ | link email trỏ trang WebApp `{BaseUrl}/Account/ConfirmEmail?token=` (gọi lại API `/api/auth/confirm-email`, hiển thị giao diện thành công / hết hạn / lỗi riêng); resend cùng luồng |
 | Endpoint gửi lại email xác nhận | ✅ | `POST /api/auth/resend-confirmation` |
 | Quên / đặt lại mật khẩu | ✅ | `PasswordResetToken` (1h, 1 lần), không lộ email tồn tại; `forgot-password` / `reset-password` |
 | Giới hạn đăng nhập (A1-08) | ✅ | `FailedLoginCount` + `LockoutEndsAt` tăng dần 1→30 phút sau 5 lần sai; rate-limit `auth` cấu hình được |

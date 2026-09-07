@@ -324,7 +324,7 @@ CI: runner có Docker chạy đầy đủ; runner không Docker → integration 
 | IT-F1-02 | `POST /api/auth/register` | email đã tồn tại (đã xác nhận) | `400`/`409` "Email đã được đăng ký" | 🔲 | P1 |
 | IT-F1-03 | `POST /api/auth/register` | `UserType=SystemAdmin` | `400` "Không cho phép đăng ký role này"; DB không tạo user | 🔲 | P1 |
 | IT-F1-04 | `GET /api/auth/confirm-email?token=` | token hợp lệ vừa tạo | `200`; DB `User.IsEmailConfirmed=true` | 🔲 | P1 |
-| IT-F1-05 | `GET /api/auth/confirm-email?token=` | token sai / đã dùng / hết hạn | `400` envelope "Liên kết không hợp lệ" | 🔲 | P1 |
+| IT-F1-05 | `GET /api/auth/confirm-email?token=` | token sai / đã dùng | `400` envelope "Liên kết không hợp lệ"; token hết hạn → "Liên kết xác nhận đã hết hạn" | 🔲 | P1 |
 | IT-F1-06 | `POST /api/auth/resend-confirmation` | email không tồn tại | `200` mờ ("Nếu email tồn tại…"); không gửi mail | 🔲 | P2 |
 | IT-F1-07 | `POST /api/auth/resend-confirmation` | email chưa xác nhận | `200`; token cũ vô hiệu, token mới trong DB | 🔲 | P2 |
 | IT-F1-08 | `POST /api/auth/login` | email + mật khẩu đúng, đã xác nhận | `200`; `Data.Token` + `Data.RefreshToken` + `Data.PackageTier` | ✅ `P1AuthTests::Login_issues_a_refresh_token...` | P1 |

@@ -317,6 +317,7 @@ bản e2e xác thực tự động xanh.
 | Logout / đổi mật khẩu / reset → thu hồi refresh token | ✅ | logout thu hồi 1 hoặc tất cả |
 | Thống nhất luồng xác nhận email (A2-12) | ✅ | link email trỏ trang WebApp `{BaseUrl}/Account/ConfirmEmail?token=` (gọi lại API `/api/auth/confirm-email`, hiển thị giao diện thành công / hết hạn / lỗi riêng); resend cùng luồng |
 | Endpoint gửi lại email xác nhận | ✅ | `POST /api/auth/resend-confirmation` |
+| Chống kẹt khi email không gửi được | ✅ | Login trả `Errors:["EMAIL_NOT_CONFIRMED"]` (A1) → WebApp hiện nút gửi lại + link cố định ở form login (A2) + nhắc ở toast đăng ký (A3). `SendGridEmailService` ném lỗi khi status ≠ 2xx (B4); `BackgroundEmailService` retry 5s/20s/60s + log `ILogger` (B5); email tắt (dev) → log link xác nhận (B8) |
 | Quên / đặt lại mật khẩu | ✅ | `PasswordResetToken` (1h, 1 lần), không lộ email tồn tại; `forgot-password` / `reset-password` |
 | Giới hạn đăng nhập (A1-08) | ✅ | `FailedLoginCount` + `LockoutEndsAt` tăng dần 1→30 phút sau 5 lần sai; rate-limit `auth` cấu hình được |
 | Admin khoá/mở khoá + đổi vai trò + ghi `AuditLog` | ✅ | `AdminController` (`/api/admin/users/{id}/lock|unlock|role`, `/api/admin/audit-logs`) |

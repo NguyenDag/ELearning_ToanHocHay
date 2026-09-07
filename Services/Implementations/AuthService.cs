@@ -80,7 +80,10 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 }
 
                 if (!user.IsEmailConfirmed)
-                    return ApiResponse<LoginResponseDto>.ErrorResponse("Vui lòng xác nhận email trước khi đăng nhập");
+                    // A1 — mã máy đọc được để WebApp hiện nút "Gửi lại email xác nhận" ngay tại form login.
+                    return ApiResponse<LoginResponseDto>.ErrorResponse(
+                        "Vui lòng xác nhận email trước khi đăng nhập",
+                        new List<string> { "EMAIL_NOT_CONFIRMED" });
 
                 if (!user.IsActive || user.LockedAt.HasValue)
                     return ApiResponse<LoginResponseDto>.ErrorResponse("Tài khoản đã bị vô hiệu hóa");

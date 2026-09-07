@@ -5,13 +5,25 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 {
     public class BackgroundEmailService : BackgroundService, IBackgroundEmailService
     {
+        // B5 — số lần thử và độ trễ tăng dần giữa các lần (giây).
+        private static readonly TimeSpan[] RetryBackoff =
+        {
+            TimeSpan.FromSeconds(5),
+            TimeSpan.FromSeconds(20),
+            TimeSpan.FromSeconds(60),
+        };
+
         private readonly IServiceProvider _serviceProvider;
+        private readonly ILogger<BackgroundEmailService> _logger;
         private readonly ConcurrentQueue<EmailJob> _emailQueue = new();
         private readonly SemaphoreSlim _signal = new(0);
 
-        public BackgroundEmailService(IServiceProvider serviceProvider)
+        public BackgroundEmailService(
+            IServiceProvider serviceProvider,
+            ILogger<BackgroundEmailService> logger)
         {
             _serviceProvider = serviceProvider;
+            _logger = logger;
         }
 
         public void QueueConfirmationEmail(string toEmail, string fullName, string confirmLink)
@@ -48,30 +60,64 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
                 if (!_emailQueue.TryDequeue(out var job)) continue;
 
+                await ProcessWithRetryAsync(job, stoppingToken);
+            }
+        }
+
+        // B5 — thử lại có backoff; nếu vẫn thất bại thì log ở mức Error để còn lần ra được.
+        private async Task ProcessWithRetryAsync(EmailJob job, CancellationToken stoppingToken)
+        {
+            for (var attempt = 0; ; attempt++)
+            {
                 try
                 {
-                    using var scope = _serviceProvider.CreateScope();
-                    var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
-
-                    switch (job.Kind)
-                    {
-                        case EmailKind.Confirmation:
-                            await emailService.SendConfirmEmailAsync(job.ToEmail, job.Name, job.Link!);
-                            break;
-                        case EmailKind.PasswordReset:
-                            await emailService.SendPasswordResetEmailAsync(job.ToEmail, job.Name, job.Link!);
-                            break;
-                        case EmailKind.TabSwitch:
-                            await emailService.SendTabSwitchNotificationAsync(
-                                job.ToEmail, job.Name, job.StudentName!, job.ExerciseName!,
-                                job.SwitchedAt, job.SwitchCount);
-                            break;
-                    }
+                    await SendAsync(job);
+                    if (attempt > 0)
+                        _logger.LogInformation(
+                            "✅ Email {Kind} tới {Email} gửi thành công ở lần thử {Attempt}",
+                            job.Kind, job.ToEmail, attempt + 1);
+                    return;
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Failed to send email: {ex.Message}");
+                    if (attempt >= RetryBackoff.Length)
+                    {
+                        _logger.LogError(ex,
+                            "❌ Email {Kind} tới {Email} thất bại sau {Attempts} lần thử — bỏ cuộc. " +
+                            "Người dùng có thể tự yêu cầu gửi lại.",
+                            job.Kind, job.ToEmail, attempt + 1);
+                        return;
+                    }
+
+                    var delay = RetryBackoff[attempt];
+                    _logger.LogWarning(ex,
+                        "⚠️ Email {Kind} tới {Email} lỗi (lần {Attempt}/{Max}). Thử lại sau {Delay}s.",
+                        job.Kind, job.ToEmail, attempt + 1, RetryBackoff.Length + 1, delay.TotalSeconds);
+
+                    try { await Task.Delay(delay, stoppingToken); }
+                    catch (OperationCanceledException) { return; }
                 }
+            }
+        }
+
+        private async Task SendAsync(EmailJob job)
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
+
+            switch (job.Kind)
+            {
+                case EmailKind.Confirmation:
+                    await emailService.SendConfirmEmailAsync(job.ToEmail, job.Name, job.Link!);
+                    break;
+                case EmailKind.PasswordReset:
+                    await emailService.SendPasswordResetEmailAsync(job.ToEmail, job.Name, job.Link!);
+                    break;
+                case EmailKind.TabSwitch:
+                    await emailService.SendTabSwitchNotificationAsync(
+                        job.ToEmail, job.Name, job.StudentName!, job.ExerciseName!,
+                        job.SwitchedAt, job.SwitchCount);
+                    break;
             }
         }
 

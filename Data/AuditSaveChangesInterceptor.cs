@@ -10,7 +10,9 @@ namespace ELearning_ToanHocHay_Control.Data
     /// <summary>
     /// P7 — writes an <see cref="AuditLog"/> row whenever a sensitive field changes
     /// (User role / active / lock, Subscription / Payment status, Package price / active,
-    /// Question review status). The acting user + IP come from the current HTTP context.
+    /// Question status, Course status, CourseVersion state, Exercise status / active, Refund status).
+    /// The acting user + IP come from the current HTTP context.
+    /// Create / delete of higher-level entities is audited explicitly via <c>IAuditWriter</c>.
     /// </summary>
     public class AuditSaveChangesInterceptor : SaveChangesInterceptor
     {
@@ -26,6 +28,9 @@ namespace ELearning_ToanHocHay_Control.Data
             [typeof(Question)] = new[] { nameof(Question.Status) },
             [typeof(RefundRequest)] = new[] { nameof(RefundRequest.Status), nameof(RefundRequest.Amount) },
             [typeof(RefundBatch)] = new[] { nameof(RefundBatch.Status) },
+            [typeof(Course)] = new[] { nameof(Course.Status) },
+            [typeof(CourseVersion)] = new[] { nameof(CourseVersion.State) },
+            [typeof(Exercise)] = new[] { nameof(Exercise.Status), nameof(Exercise.IsActive) },
         };
 
         public AuditSaveChangesInterceptor(IHttpContextAccessor http)

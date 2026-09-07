@@ -24,9 +24,9 @@ namespace ELearning_ToanHocHay_Control.Controllers
         // GET: api/user — only an admin may list every user (paged)
         [HttpGet]
         [AuthorizeUserType(UserType.SystemAdmin)]
-        public async Task<IActionResult> GetAll([FromQuery] PagedRequest request)
+        public async Task<IActionResult> GetAll([FromQuery] PagedRequest request, [FromQuery] UserListFilter filter)
         {
-            var response = await _userService.GetPagedAsync(request);
+            var response = await _userService.GetPagedAsync(request, filter);
             return response.ToActionResult();
         }
 

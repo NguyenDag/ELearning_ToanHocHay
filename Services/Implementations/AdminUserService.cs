@@ -13,6 +13,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         private readonly IUserRepository _userRepo;
         private readonly IAuditLogRepository _auditRepo;
         private readonly IRefreshTokenRepository _refreshRepo;
+        private readonly IPasswordHasher _passwordHasher;
         private readonly Microsoft.Extensions.Caching.Memory.IMemoryCache _cache;
         private readonly IMapper _mapper;
 
@@ -20,12 +21,14 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             IUserRepository userRepo,
             IAuditLogRepository auditRepo,
             IRefreshTokenRepository refreshRepo,
+            IPasswordHasher passwordHasher,
             Microsoft.Extensions.Caching.Memory.IMemoryCache cache,
             IMapper mapper)
         {
             _userRepo = userRepo;
             _auditRepo = auditRepo;
             _refreshRepo = refreshRepo;
+            _passwordHasher = passwordHasher;
             _cache = cache;
             _mapper = mapper;
         }
@@ -101,31 +104,98 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             return ApiResponse<UserDto>.SuccessResponse(_mapper.Map<UserDto>(user), $"Role changed to {newRole}");
         }
 
-        public async Task<ApiResponse<PagedResult<AuditLogDto>>> GetAuditLogsAsync(
-            string? entityType, int? entityId, int? userId, int page, int pageSize)
+        public async Task<ApiResponse<bool>> ResetPasswordAsync(int targetUserId, int adminUserId, string newPassword, string? ip)
         {
-            page = Math.Max(1, page);
-            pageSize = Math.Clamp(pageSize, 1, 200);
+            if (string.IsNullOrWhiteSpace(newPassword) || newPassword.Length < 6)
+                return ApiResponse<bool>.ErrorResponse("Mật khẩu mới phải có ít nhất 6 ký tự");
 
-            var (items, total) = await _auditRepo.QueryAsync(entityType, entityId, userId, page, pageSize);
+            var user = await _userRepo.GetByIdAsync(targetUserId);
+            if (user == null) return ApiResponse<bool>.NotFound("Không tìm thấy người dùng");
+
+            user.PasswordHash = _passwordHasher.HashPassword(newPassword);
+            user.SecurityStamp = Guid.NewGuid().ToString("N");
+            user.FailedLoginCount = 0;
+            user.LockoutEndsAt = null;
+            user.UpdatedAt = DateTime.UtcNow;
+            await _userRepo.UpdateUserAsync(user);
+
+            // Buộc đăng nhập lại ở mọi thiết bị.
+            await _refreshRepo.RevokeAllForUserAsync(targetUserId);
+            InvalidateSessions(targetUserId);
+            await AuditAsync(adminUserId, "AdminResetPassword", targetUserId, null, null, ip);
+
+            return ApiResponse<bool>.SuccessResponse(true, "Đã đặt lại mật khẩu");
+        }
+
+        public async Task<ApiResponse<UserDto>> SetEmailConfirmedAsync(int targetUserId, int adminUserId, string? ip)
+        {
+            var user = await _userRepo.GetByIdAsync(targetUserId);
+            if (user == null) return ApiResponse<UserDto>.NotFound("Không tìm thấy người dùng");
+            if (user.IsEmailConfirmed) return ApiResponse<UserDto>.ErrorResponse("Email đã được xác nhận");
+
+            user.IsEmailConfirmed = true;
+            user.EmailConfirmedAt = DateTime.UtcNow;
+            user.UpdatedAt = DateTime.UtcNow;
+            await _userRepo.UpdateUserAsync(user);
+
+            await AuditAsync(adminUserId, "AdminConfirmEmail", targetUserId, null, null, ip);
+            return ApiResponse<UserDto>.SuccessResponse(_mapper.Map<UserDto>(user), "Đã xác nhận email");
+        }
+
+        public async Task<ApiResponse<UserDto>> SetActiveAsync(int targetUserId, bool active, int adminUserId, string? ip)
+        {
+            var user = await _userRepo.GetByIdAsync(targetUserId);
+            if (user == null) return ApiResponse<UserDto>.NotFound("Không tìm thấy người dùng");
+            if (user.UserId == adminUserId) return ApiResponse<UserDto>.ErrorResponse("Không thể tự vô hiệu hoá tài khoản của mình");
+            if (user.LockedAt.HasValue) return ApiResponse<UserDto>.ErrorResponse("Tài khoản đang bị khoá — hãy mở khoá thay vì bật/tắt hoạt động");
+            if (user.IsActive == active) return ApiResponse<UserDto>.ErrorResponse(active ? "Tài khoản đã đang hoạt động" : "Tài khoản đã bị vô hiệu hoá");
+
+            user.IsActive = active;
+            user.UpdatedAt = DateTime.UtcNow;
+            if (!active)
+            {
+                user.SecurityStamp = Guid.NewGuid().ToString("N");
+            }
+            await _userRepo.UpdateUserAsync(user);
+
+            if (!active)
+            {
+                await _refreshRepo.RevokeAllForUserAsync(targetUserId);
+                InvalidateSessions(targetUserId);
+            }
+            await AuditAsync(adminUserId, active ? "ActivateUser" : "DeactivateUser", targetUserId, null, null, ip);
+            return ApiResponse<UserDto>.SuccessResponse(_mapper.Map<UserDto>(user), active ? "Đã kích hoạt tài khoản" : "Đã vô hiệu hoá tài khoản");
+        }
+
+        public async Task<ApiResponse<PagedResult<AuditLogDto>>> GetAuditLogsAsync(AuditLogFilter filter)
+        {
+            var (items, total) = await _auditRepo.SearchAsync(filter);
             return ApiResponse<PagedResult<AuditLogDto>>.SuccessResponse(new PagedResult<AuditLogDto>
             {
-                Items = items.Select(l => new AuditLogDto
-                {
-                    LogId = l.LogId,
-                    UserId = l.UserId,
-                    Action = l.Action,
-                    EntityType = l.EntityType,
-                    EntityId = l.EntityId,
-                    OldValueJson = l.OldValueJson,
-                    NewValueJson = l.NewValueJson,
-                    IpAddress = l.IpAddress,
-                    CreatedAt = l.CreatedAt
-                }).ToList(),
+                Items = items,
                 Total = total,
-                Page = page,
-                PageSize = pageSize
+                Page = Math.Max(1, filter.Page),
+                PageSize = Math.Clamp(filter.PageSize, 1, 200)
             });
+        }
+
+        public async Task<ApiResponse<AuditLogFacetsDto>> GetAuditFacetsAsync()
+        {
+            var (entityTypes, actions) = await _auditRepo.GetFacetsAsync();
+            return ApiResponse<AuditLogFacetsDto>.SuccessResponse(new AuditLogFacetsDto
+            {
+                EntityTypes = entityTypes,
+                Actions = actions
+            });
+        }
+
+        public async Task<byte[]> ExportAuditLogsCsvAsync(AuditLogFilter filter)
+        {
+            // Xuất tối đa 5000 dòng khớp bộ lọc.
+            filter.Page = 1;
+            filter.PageSize = 5000;
+            var (items, _) = await _auditRepo.SearchAsync(filter);
+            return Services.Helpers.AuditLogCsvWriter.Build(items);
         }
 
         private Task AuditAsync(int adminUserId, string action, int targetUserId, object? oldValue, object? newValue, string? ip)

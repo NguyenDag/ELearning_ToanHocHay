@@ -64,13 +64,51 @@ namespace ELearning_ToanHocHay_Control.Controllers
             return r.ToActionResult();
         }
 
+        [HttpPost("users/{id:int}/reset-password")]
+        public async Task<IActionResult> ResetPassword(int id, [FromBody] ResetPasswordByAdminDto dto)
+        {
+            var r = await _admin.ResetPasswordAsync(id, AdminId, dto.NewPassword, Ip);
+            return r.ToActionResult();
+        }
+
+        [HttpPost("users/{id:int}/confirm-email")]
+        public async Task<IActionResult> ConfirmEmail(int id)
+        {
+            var r = await _admin.SetEmailConfirmedAsync(id, AdminId, Ip);
+            return r.ToActionResult();
+        }
+
+        [HttpPost("users/{id:int}/deactivate")]
+        public async Task<IActionResult> Deactivate(int id)
+        {
+            var r = await _admin.SetActiveAsync(id, false, AdminId, Ip);
+            return r.ToActionResult();
+        }
+
+        [HttpPost("users/{id:int}/activate")]
+        public async Task<IActionResult> Activate(int id)
+        {
+            var r = await _admin.SetActiveAsync(id, true, AdminId, Ip);
+            return r.ToActionResult();
+        }
+
+        [HttpGet("roles")]
+        public IActionResult GetRoles()
+            => ApiResponse<object>.SuccessResponse(Common.RoleCapabilities.All).ToActionResult();
+
         [HttpGet("audit-logs")]
-        public async Task<IActionResult> GetAuditLogs(
-            [FromQuery] string? entityType,
-            [FromQuery] int? entityId,
-            [FromQuery] int? userId,
-            [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 50)
-            => (await _admin.GetAuditLogsAsync(entityType, entityId, userId, page, pageSize)).ToActionResult();
+        public async Task<IActionResult> GetAuditLogs([FromQuery] AuditLogFilter filter)
+            => (await _admin.GetAuditLogsAsync(filter)).ToActionResult();
+
+        [HttpGet("audit-logs/facets")]
+        public async Task<IActionResult> GetAuditFacets()
+            => (await _admin.GetAuditFacetsAsync()).ToActionResult();
+
+        [HttpGet("audit-logs/export")]
+        public async Task<IActionResult> ExportAuditLogs([FromQuery] AuditLogFilter filter)
+        {
+            var bytes = await _admin.ExportAuditLogsCsvAsync(filter);
+            return File(bytes, "text/csv", $"nhat-ky-{DateTime.UtcNow:yyyyMMdd-HHmmss}.csv");
+        }
     }
 }

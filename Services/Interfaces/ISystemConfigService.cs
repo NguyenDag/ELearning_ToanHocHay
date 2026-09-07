@@ -6,9 +6,11 @@ namespace ELearning_ToanHocHay_Control.Services.Interfaces
     {
         public string ConfigKey { get; set; } = "";
         public string? ConfigValue { get; set; }
+        public string ConfigType { get; set; } = "String";   // Int | Decimal | Bool | String | Json
         public string? ConfigGroup { get; set; }
         public string? Description { get; set; }
         public DateTime UpdatedAt { get; set; }
+        public string? UpdatedByName { get; set; }
     }
 
     /// <summary>P6/P7 — typed reads of the SystemConfig table + admin edit.</summary>

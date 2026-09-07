@@ -426,3 +426,6 @@ AI/.env
 
 # Test project — local only, not tracked on GitHub
 ELearning_ToanHocHay.Tests/
+
+# Kế hoạch nội bộ khu quản trị SystemAdmin — không đưa lên git
+docs/KE-HOACH-QUAN-TRI-SYSTEMADMIN.md

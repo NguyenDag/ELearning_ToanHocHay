@@ -11,28 +11,41 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
     {
         private readonly IUserRepository _userRepository;
         private readonly IPasswordHasher _passwordHasher;
+        private readonly IAuditWriter _audit;
         private readonly IMapper _mapper;
 
-        public UserService(IUserRepository userRepository, IPasswordHasher passwordHasher, IMapper mapper)
+        public UserService(IUserRepository userRepository, IPasswordHasher passwordHasher, IAuditWriter audit, IMapper mapper)
         {
             _userRepository = userRepository;
             _passwordHasher = passwordHasher;
+            _audit = audit;
             _mapper = mapper;
         }
+
+        // Vai trò nhân sự — tài khoản do admin tạo trực tiếp (Student/Parent phải qua luồng đăng ký
+        // vì còn kèm hồ sơ phụ thuộc).
+        private static readonly UserType[] StaffRoles =
+        {
+            UserType.ContentEditor, UserType.AcademicReviewer, UserType.SupportStaff,
+            UserType.FinanceManager, UserType.SystemAdmin
+        };
         public async Task<ApiResponse<UserDto>> CreateUserAsync(CreateUserDto user)
         {
             try
             {
+                if (!StaffRoles.Contains(user.UserType))
+                    return ApiResponse<UserDto>.ErrorResponse(
+                        "Chỉ có thể tạo tài khoản nhân sự (Biên tập / Thẩm định / Hỗ trợ / Tài chính / Quản trị) từ đây. " +
+                        "Tài khoản học sinh và phụ huynh phải qua luồng đăng ký.");
+
                 // check email is exist or not
                 var existingUser = await _userRepository.ExistsByEmail(user.Email);
                 if (existingUser)
                 {
-                    return ApiResponse<UserDto>.ErrorResponse(
-                        "Email already exists",
-                        new List<string> { "This email is already registered" }
-                        );
+                    return ApiResponse<UserDto>.Conflict("Email đã được đăng ký");
                 }
-                // create new user
+                var now = DateTime.UtcNow;
+                // create new user — admin tạo trực tiếp nên coi như email đã xác nhận.
                 var newUser = new User
                 {
                     Email = user.Email,
@@ -43,13 +56,16 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     AvatarUrl = user.AvatarUrl,
                     UserType = user.UserType,
                     IsActive = true,
-                    CreatedAt = DateTime.UtcNow,
+                    IsEmailConfirmed = true,
+                    EmailConfirmedAt = now,
+                    CreatedAt = now,
                 };
                 var createdUser = await _userRepository.CreateUserAsync(newUser);
-                return ApiResponse<UserDto>.SuccessResponse(
+                await _audit.WriteAsync("CreateUser", "User", createdUser.UserId,
+                    newValue: new { createdUser.Email, Role = createdUser.UserType.ToString() });
+                return ApiResponse<UserDto>.Created(
                     _mapper.Map<UserDto>(createdUser),
-                    "User created successfully"
-                    );
+                    "Đã tạo tài khoản");
             }
             catch (Exception)
             {
@@ -68,18 +84,21 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
                 if (exists == null)
                 {
-                    return ApiResponse<bool>.ErrorResponse(
-                        "User not found",
-                        new List<string> { $"No user found with ID: {userId}" }
-                    );
+                    return ApiResponse<bool>.NotFound("Không tìm thấy người dùng");
                 }
 
-                var deleted = await _userRepository.DeleteUserAsync(userId);
+                // Xoá cứng chỉ an toàn với tài khoản nhân sự chưa từng dùng hệ thống.
+                // Student/Parent có hồ sơ phụ thuộc; tài khoản đã đăng nhập có thể đã phát sinh dữ liệu.
+                if (exists.UserType is UserType.Student or UserType.Parent || exists.LastLogin.HasValue)
+                    return ApiResponse<bool>.Conflict(
+                        "Không thể xoá tài khoản đã hoạt động hoặc tài khoản học sinh/phụ huynh. " +
+                        "Hãy khoá hoặc vô hiệu hoá tài khoản thay vì xoá.");
 
-                return ApiResponse<bool>.SuccessResponse(
-                    deleted,
-                    "User deleted successfully"
-                );
+                var deleted = await _userRepository.DeleteUserAsync(userId);
+                await _audit.WriteAsync("DeleteUser", "User", userId,
+                    oldValue: new { exists.Email, Role = exists.UserType.ToString() });
+
+                return ApiResponse<bool>.SuccessResponse(deleted, "Đã xoá tài khoản");
             }
             catch (Exception)
             {
@@ -97,7 +116,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 _mapper.Map<IEnumerable<UserDto>>(users), "Users retrieved successfully");
         }
 
-        public async Task<ApiResponse<PagedResult<UserDto>>> GetPagedAsync(Common.PagedRequest request)
+        public async Task<ApiResponse<PagedResult<UserDto>>> GetPagedAsync(Common.PagedRequest request, UserListFilter? filter = null)
         {
             var query = _userRepository.Query();
 
@@ -105,6 +124,20 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             {
                 var s = request.Search.Trim().ToLower();
                 query = query.Where(u => u.Email.ToLower().Contains(s) || u.FullName.ToLower().Contains(s));
+            }
+
+            if (filter != null)
+            {
+                if (filter.UserType.HasValue)
+                    query = query.Where(u => u.UserType == filter.UserType.Value);
+                if (filter.IsActive.HasValue)
+                    query = query.Where(u => u.IsActive == filter.IsActive.Value);
+                if (filter.Locked.HasValue)
+                    query = filter.Locked.Value
+                        ? query.Where(u => u.LockedAt != null)
+                        : query.Where(u => u.LockedAt == null);
+                if (filter.EmailConfirmed.HasValue)
+                    query = query.Where(u => u.IsEmailConfirmed == filter.EmailConfirmed.Value);
             }
 
             var page = await query.OrderByDescending(u => u.CreatedAt)

@@ -10,7 +10,11 @@ namespace ELearning_ToanHocHay_Control.Services.Interfaces
         Task<ApiResponse<UserDto>> LockUserAsync(int targetUserId, int adminUserId, string reason, string? ip);
         Task<ApiResponse<UserDto>> UnlockUserAsync(int targetUserId, int adminUserId, string? ip);
         Task<ApiResponse<UserDto>> ChangeRoleAsync(int targetUserId, UserType newRole, int adminUserId, string? ip);
-        Task<ApiResponse<PagedResult<AuditLogDto>>> GetAuditLogsAsync(
-            string? entityType, int? entityId, int? userId, int page, int pageSize);
+        Task<ApiResponse<bool>> ResetPasswordAsync(int targetUserId, int adminUserId, string newPassword, string? ip);
+        Task<ApiResponse<UserDto>> SetEmailConfirmedAsync(int targetUserId, int adminUserId, string? ip);
+        Task<ApiResponse<UserDto>> SetActiveAsync(int targetUserId, bool active, int adminUserId, string? ip);
+        Task<ApiResponse<PagedResult<AuditLogDto>>> GetAuditLogsAsync(AuditLogFilter filter);
+        Task<ApiResponse<AuditLogFacetsDto>> GetAuditFacetsAsync();
+        Task<byte[]> ExportAuditLogsCsvAsync(AuditLogFilter filter);
     }
 }

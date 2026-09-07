@@ -445,6 +445,7 @@ namespace ELearning_ToanHocHay_Control
             services.AddScoped<ILearnService, LearnService>();
             services.AddScoped<IQuestionBankService, QuestionBankService>();
             services.AddScoped<IAdminUserService, AdminUserService>();
+            services.AddScoped<IAuditWriter, AuditWriter>();
             services.AddScoped<IProgressProjectionService, ProgressProjectionService>();
             services.AddScoped<ISystemConfigService, SystemConfigService>();
 

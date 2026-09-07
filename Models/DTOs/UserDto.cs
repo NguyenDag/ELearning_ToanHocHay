@@ -14,6 +14,10 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs
         public UserType UserType { get; set; }
 
         public bool IsActive { get; set; }
+        public bool IsEmailConfirmed { get; set; }
+        public DateTime? LockedAt { get; set; }
+        public string? LockedReason { get; set; }
+        public DateTime? LockoutEndsAt { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? LastLogin { get; set; }
         public DateTime? UpdatedAt { get; set; }

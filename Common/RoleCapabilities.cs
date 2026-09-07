@@ -1,0 +1,62 @@
+using ELearning_ToanHocHay_Control.Data.Entities;
+
+namespace ELearning_ToanHocHay_Control.Common
+{
+    /// <summary>
+    /// Ma trận vai trò × năng lực — <b>tĩnh, phản ánh các <c>[AuthorizeUserType]</c> hiện có</b>
+    /// (không phải RBAC lưu DB). Nguồn sự thật cho <c>GET /api/admin/roles</c> và test.
+    /// Khi đổi phân quyền ở controller, cập nhật ở đây cho khớp.
+    /// </summary>
+    public sealed record RoleCapability(
+        UserType Role,
+        string Label,
+        string Description,
+        bool CanManageUsers,
+        bool CanAuthorContent,
+        bool CanReviewContent,
+        bool CanPublishContent,
+        bool CanManageFinance,
+        bool CanManageConfig,
+        bool CanViewAuditLog);
+
+    public static class RoleCapabilities
+    {
+        public static readonly IReadOnlyList<RoleCapability> All = new List<RoleCapability>
+        {
+            new(UserType.Student, "Học sinh",
+                "Học bài, làm bài kiểm tra, xem tiến độ cá nhân",
+                CanManageUsers: false, CanAuthorContent: false, CanReviewContent: false,
+                CanPublishContent: false, CanManageFinance: false, CanManageConfig: false, CanViewAuditLog: false),
+
+            new(UserType.Parent, "Phụ huynh",
+                "Theo dõi tiến độ học tập của con đã liên kết",
+                CanManageUsers: false, CanAuthorContent: false, CanReviewContent: false,
+                CanPublishContent: false, CanManageFinance: false, CanManageConfig: false, CanViewAuditLog: false),
+
+            new(UserType.ContentEditor, "Biên tập nội dung",
+                "Soạn danh mục, khoá học, bài học, câu hỏi và bài kiểm tra (bản nháp)",
+                CanManageUsers: false, CanAuthorContent: true, CanReviewContent: false,
+                CanPublishContent: false, CanManageFinance: false, CanManageConfig: false, CanViewAuditLog: false),
+
+            new(UserType.AcademicReviewer, "Thẩm định học thuật",
+                "Soạn nội dung và duyệt / xuất bản phiên bản khoá học, duyệt câu hỏi",
+                CanManageUsers: false, CanAuthorContent: true, CanReviewContent: true,
+                CanPublishContent: true, CanManageFinance: false, CanManageConfig: false, CanViewAuditLog: false),
+
+            new(UserType.SupportStaff, "Nhân viên hỗ trợ",
+                "Xử lý yêu cầu hỗ trợ và hội thoại chuyển tiếp từ chatbot",
+                CanManageUsers: false, CanAuthorContent: false, CanReviewContent: false,
+                CanPublishContent: false, CanManageFinance: false, CanManageConfig: false, CanViewAuditLog: false),
+
+            new(UserType.FinanceManager, "Quản lý tài chính",
+                "Đối soát thanh toán, xử lý hoàn tiền, chạy vòng đời gói",
+                CanManageUsers: false, CanAuthorContent: false, CanReviewContent: false,
+                CanPublishContent: false, CanManageFinance: true, CanManageConfig: false, CanViewAuditLog: false),
+
+            new(UserType.SystemAdmin, "Quản trị hệ thống",
+                "Toàn quyền: người dùng, nội dung, tài chính, cấu hình hệ thống và nhật ký",
+                CanManageUsers: true, CanAuthorContent: true, CanReviewContent: true,
+                CanPublishContent: true, CanManageFinance: true, CanManageConfig: true, CanViewAuditLog: true),
+        };
+    }
+}

@@ -440,6 +440,7 @@ namespace ELearning_ToanHocHay_Control
             services.AddScoped<ICatalogService, CatalogService>();
             services.AddScoped<ICourseService, CourseService>();
             services.AddScoped<IContentAuthoringService, ContentAuthoringService>();
+            services.AddScoped<IContentImportService, ContentImportService>();
             services.AddScoped<IContentAccessService, ContentAccessService>();
             services.AddScoped<IEnrollmentService, EnrollmentService>();
             services.AddScoped<ILearnService, LearnService>();

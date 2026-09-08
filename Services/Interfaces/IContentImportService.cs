@@ -1,0 +1,33 @@
+using ELearning_ToanHocHay_Control.Models.DTOs;
+using ELearning_ToanHocHay_Control.Models.DTOs.Content;
+
+namespace ELearning_ToanHocHay_Control.Services.Interfaces
+{
+    /// <summary>Nội dung 5 file CSV import (đã đọc thành chuỗi ở tầng controller).</summary>
+    public sealed record ContentImportSources(
+        string? Course,
+        string? Nodes,
+        string? Blocks,
+        string? Flashcards,
+        string? Resources);
+
+    /// <summary>
+    /// A3/P2 — import khung chương trình từ bộ file CSV (ContentImportJob).
+    /// Vai trò quản lý nội dung + SystemAdmin. Mọi thao tác ghi yêu cầu CourseVersion ở trạng thái Draft.
+    /// </summary>
+    public interface IContentImportService
+    {
+        /// <summary>Chỉ kiểm tra file, không ghi gì. <paramref name="courseVersionId"/> có thì kiểm tra theo ngữ cảnh version đó.</summary>
+        Task<ApiResponse<ContentImportResultDto>> ValidateAsync(ContentImportSources sources, int? courseVersionId, int userId);
+
+        /// <summary>Import cây nội dung vào một CourseVersion đang ở Draft.</summary>
+        Task<ApiResponse<ContentImportResultDto>> ImportIntoVersionAsync(
+            ContentImportSources sources, int courseVersionId, bool replaceExisting, bool dryRun, int userId);
+
+        /// <summary>Tạo Course + CourseVersion (Draft) mới từ course.csv rồi import cây nội dung.</summary>
+        Task<ApiResponse<ContentImportResultDto>> ImportAsNewCourseAsync(ContentImportSources sources, bool dryRun, int userId);
+
+        Task<ApiResponse<List<ContentImportJobDto>>> GetJobsAsync(int take);
+        Task<ApiResponse<ContentImportJobDto>> GetJobAsync(int jobId);
+    }
+}

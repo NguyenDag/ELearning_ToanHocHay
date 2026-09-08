@@ -46,6 +46,13 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs.Content
         public int FlashcardDecks { get; set; }
         public int Flashcards { get; set; }
         public int Resources { get; set; }
+
+        // Phần đánh giá
+        public int QuestionBanks { get; set; }
+        public int Questions { get; set; }
+        public int QuestionOptions { get; set; }
+        public int Exercises { get; set; }
+        public int ExerciseQuestions { get; set; }
     }
 
     /// <summary>Kết quả kiểm tra / thực hiện import.</summary>
@@ -83,6 +90,13 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs.Content
         public IFormFile? Blocks { get; set; }
         public IFormFile? Flashcards { get; set; }
         public IFormFile? Resources { get; set; }
+
+        // Phần đánh giá (tuỳ chọn) — ngân hàng câu hỏi + bài tập / đề
+        public IFormFile? QuestionBank { get; set; }
+        public IFormFile? Questions { get; set; }
+        public IFormFile? QuestionOptions { get; set; }
+        public IFormFile? Exercises { get; set; }
+        public IFormFile? ExerciseQuestions { get; set; }
     }
 
     /// <summary>Tóm tắt một lần chạy import (ContentImportJob).</summary>

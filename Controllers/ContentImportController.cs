@@ -89,7 +89,12 @@ namespace ELearning_ToanHocHay_Control.Controllers
             if (requireCourse && form.Course == null)
                 return (default!, ApiResponse<ContentImportResultDto>.ErrorResponse("Thiếu file course.csv (bắt buộc khi tạo khoá học mới)."));
 
-            foreach (var f in new[] { form.Course, form.Nodes, form.Blocks, form.Flashcards, form.Resources })
+            var all = new[]
+            {
+                form.Course, form.Nodes, form.Blocks, form.Flashcards, form.Resources,
+                form.QuestionBank, form.Questions, form.QuestionOptions, form.Exercises, form.ExerciseQuestions
+            };
+            foreach (var f in all)
             {
                 if (f != null && f.Length > MaxFileBytes)
                     return (default!, ApiResponse<ContentImportResultDto>.ErrorResponse(
@@ -101,7 +106,12 @@ namespace ELearning_ToanHocHay_Control.Controllers
                 await ReadAsync(form.Nodes),
                 await ReadAsync(form.Blocks),
                 await ReadAsync(form.Flashcards),
-                await ReadAsync(form.Resources));
+                await ReadAsync(form.Resources),
+                await ReadAsync(form.QuestionBank),
+                await ReadAsync(form.Questions),
+                await ReadAsync(form.QuestionOptions),
+                await ReadAsync(form.Exercises),
+                await ReadAsync(form.ExerciseQuestions));
 
             return (sources, null);
         }

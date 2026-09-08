@@ -10,8 +10,15 @@ Bộ dữ liệu nội dung cho 3 khung chương trình (bộ sách giáo khoa) 
 
 Mỗi bộ sách có **2 dạng** giống hệt nhau về nội dung:
 
-- Một thư mục 5 file **CSV** (UTF-8 có BOM, mở trực tiếp bằng Excel): `course.csv`, `nodes.csv`, `blocks.csv`, `flashcards.csv`, `resources.csv`.
-- Một **workbook `.xlsx`** cùng tên, gồm 5 sheet: `Course`, `Nodes`, `Blocks`, `Flashcards`, `Resources`.
+- Một thư mục **CSV** (UTF-8 có BOM, mở trực tiếp bằng Excel):
+  - Khung chương trình: `course.csv`, `nodes.csv`, `blocks.csv`, `flashcards.csv`, `resources.csv`
+  - Đánh giá (tuỳ chọn): `question-bank.csv`, `questions.csv`, `question-options.csv`, `exercises.csv`, `exercise-questions.csv`
+- Một **workbook `.xlsx`** cùng tên, mỗi file CSV là một sheet (`Course`, `Nodes`, … `QuestionBank`, `Questions`, `QuestionOptions`, `Exercises`, `ExerciseQuestions`).
+
+Phần đánh giá đi kèm luôn trong một lần import: tạo một `QuestionBank` (theo môn + lớp, gắn khoá học),
+các `Question` + `QuestionOption` (đã duyệt), và `Exercise` (đã xuất bản) gắn vào node chương/bài theo `NodeKey`.
+Mỗi bài tập có **tier**: `Free` mở cho mọi học sinh, `Standard` / `Premium` yêu cầu gói tương ứng. KNTT có đủ
+4 dạng (Practice/Quiz Free, Test Standard, Exam Premium) cho từng chương + 4 đề học kì; CTST/CD nhẹ hơn.
 
 Nạp qua API `api/content/import` (vai trò ContentEditor / AcademicReviewer / SystemAdmin) — xem [mục "Nạp qua API"](#nạp-qua-api) bên dưới. Ghi vào một `CourseVersion` ở trạng thái `Draft`; các cột được đặt tên khớp entity để ánh xạ 1–1.
 
@@ -106,6 +113,67 @@ Quy ước nội dung trong bản KNTT:
 
 Hiện để trống cho cả 3 bộ (chưa có file tài liệu thật).
 
+### `question-bank.csv` — ngân hàng câu hỏi (`QuestionBank`, 1 dòng)
+
+| Cột | Ý nghĩa |
+|---|---|
+| `BankKey` | Khoá cục bộ, được `questions.csv` / các file khác tham chiếu |
+| `BankName` | Tên ngân hàng (≤ 255) |
+| `Description` | Mô tả |
+
+Importer tạo `QuestionBank` với `SubjectId` / `GradeLevelId` lấy từ khoá học, `CourseId` = khoá đang import, `IsActive = true`.
+
+### `questions.csv` — câu hỏi (`Question` + `QuestionOption`)
+
+| Cột | Ý nghĩa |
+|---|---|
+| `QuestionKey` | Khoá cục bộ, duy nhất |
+| `BankKey` | Trỏ tới `question-bank.csv` (khớp hoặc bỏ trống) |
+| `NodeKey` | (tuỳ chọn) gắn câu hỏi vào một node chương/bài — tạo `QuestionNode` |
+| `QuestionType` | `MultipleChoice` / `TrueFalse` / `FillBlank` / `Essay` |
+| `Difficulty` | `Easy` / `Medium` / `Hard` (mặc định `Medium`) |
+| `QuestionText` | Nội dung câu hỏi (LaTeX giữa `$...$`) |
+| `CorrectAnswer` | Đáp án. `FillBlank`: chuỗi đáp số; `TrueFalse`: `true`/`false`; `MultipleChoice`: có thể để trống (suy từ phương án đúng) |
+| `Explanation` | Lời giải / giải thích |
+
+Câu hỏi được tạo ở trạng thái `Approved` + `IsActive = true` (dùng được ngay trong bài tập).
+
+### `question-options.csv` — phương án trắc nghiệm (`QuestionOption`)
+
+| Cột | Ý nghĩa |
+|---|---|
+| `QuestionKey` | Trỏ tới `questions.csv` |
+| `OrderIndex` | Thứ tự phương án |
+| `OptionText` | Nội dung phương án |
+| `IsCorrect` | `true` cho phương án đúng |
+
+Bắt buộc với `MultipleChoice` / `TrueFalse`: ≥ 2 phương án và ≥ 1 phương án đúng.
+
+### `exercises.csv` — bài tập / đề (`Exercise`)
+
+| Cột | Ý nghĩa |
+|---|---|
+| `ExerciseKey` | Khoá cục bộ, duy nhất |
+| `NodeKey` | Node chương/bài mà bài tập gắn vào (trỏ `nodes.csv`) |
+| `ExerciseName` | Tên bài tập (≤ 255) |
+| `ExerciseType` | `Practice` (ôn luyện) / `Quiz` (bài tập) / `Test` (kiểm tra) / `Exam` (đề thi) |
+| `Tier` | `Free` → `IsFree=true`; `Standard` / `Premium` → yêu cầu gói tương ứng |
+| `DurationMinutes` | Thời gian làm bài (rỗng = không giới hạn) |
+| `MaxAttempts` | Số lượt tối đa (rỗng = không giới hạn) |
+| `PassingPercent` | % điểm để đạt (0–100, mặc định 50) — importer tính `PassingScore = TotalScores × %` |
+
+Bài tập được tạo ở trạng thái `Published` + `IsActive = true`.
+
+### `exercise-questions.csv` — câu hỏi trong bài tập (`ExerciseQuestion`)
+
+| Cột | Ý nghĩa |
+|---|---|
+| `ExerciseKey` | Trỏ `exercises.csv` |
+| `QuestionKey` | Trỏ `questions.csv` |
+| `Score` | Điểm của câu trong bài (mặc định 1) |
+
+Mỗi bài tập cần ≥ 1 dòng. `TotalScores` = tổng `Score`, `TotalQuestions` = số dòng.
+
 ## Nạp qua API
 
 Endpoint: `api/content/import` — controller [`ContentImportController`](../../Controllers/ContentImportController.cs),
@@ -146,10 +214,15 @@ POST /api/courses/versions/{id}/publish        → Published
 `ROW_CAP_EXCEEDED`, `VERSION_NOT_FOUND`, `VERSION_NOT_DRAFT`, `VERSION_NOT_EMPTY`,
 `SUBJECT_CODE_NOT_FOUND`, `GRADE_CODE_NOT_FOUND`, `COURSE_SLUG_TAKEN`, `COURSE_SGF_EXISTS`,
 `COURSE_SLUG_REQUIRED`, `COURSE_TITLE_REQUIRED`, `BAD_LIST_PRICE`.
+Phần đánh giá: `BANK_KEY_REQUIRED`, `BANK_NAME_REQUIRED`, `DUP_QUESTION_KEY`, `BAD_QUESTION_TYPE`,
+`QUESTION_TEXT_REQUIRED`, `CORRECT_ANSWER_REQUIRED`, `OPTIONS_TOO_FEW`, `NO_CORRECT_OPTION`,
+`OPTION_QUESTION_NOT_FOUND`, `OPTION_TEXT_REQUIRED`, `DUP_EXERCISE_KEY`, `EXERCISE_NAME_REQUIRED`,
+`BAD_EXERCISE_TYPE`, `BAD_TIER`, `EXERCISE_NODE_NOT_FOUND`, `BAD_PASSING_PERCENT`,
+`EXERCISE_NO_QUESTIONS`, `LINK_EXERCISE_NOT_FOUND`, `LINK_QUESTION_NOT_FOUND`.
 
 **Không chặn (`Warning`):** `SLUG_INVALID`, `BAD_BOOL`, `BLOCK_NODE_NOT_LESSON`, `BLOCK_URL_REQUIRED`,
 `BAD_METADATA_JSON`, `FRAMEWORK_WILL_BE_CREATED` (bộ sách mới sẽ được tạo), `COURSE_FILE_IGNORED`,
-`COURSE_EXTRA_ROWS`.
+`COURSE_EXTRA_ROWS`, `BAD_DIFFICULTY`, `QUESTION_NODE_NOT_FOUND`, `QUESTION_BANK_MISMATCH`, `DUP_LINK`.
 
 ### Giới hạn
 

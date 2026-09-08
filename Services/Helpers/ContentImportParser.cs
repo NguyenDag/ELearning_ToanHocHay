@@ -16,6 +16,16 @@ namespace ELearning_ToanHocHay_Control.Services.Helpers
         private static readonly string[] CardHeaders = { "NodeKey", "DeckTitle", "FrontText", "BackText" };
         private static readonly string[] ResHeaders = { "NodeKey", "Title", "ResourceType" };
         private static readonly string[] CourseHeaders = { "Slug", "Title", "SubjectCode", "GradeCode" };
+        private static readonly string[] BankHeaders = { "BankKey", "BankName" };
+        private static readonly string[] QuestionHeaders = { "QuestionKey", "QuestionType", "QuestionText" };
+        private static readonly string[] OptionHeaders = { "QuestionKey", "OptionText", "IsCorrect" };
+        private static readonly string[] ExerciseHeaders = { "ExerciseKey", "ExerciseName", "ExerciseType", "Tier" };
+        private static readonly string[] ExQuestionHeaders = { "ExerciseKey", "QuestionKey" };
+
+        private static readonly HashSet<QuestionType> ChoiceQuestionTypes = new()
+        {
+            QuestionType.MultipleChoice, QuestionType.TrueFalse
+        };
 
         private static readonly HashSet<LessonBlockType> TextBlockTypes = new()
         {
@@ -35,7 +45,12 @@ namespace ELearning_ToanHocHay_Control.Services.Helpers
             string? blocksCsv,
             string? flashcardsCsv,
             string? resourcesCsv,
-            int maxTreeDepth = 4)
+            int maxTreeDepth = 4,
+            string? questionBankCsv = null,
+            string? questionsCsv = null,
+            string? questionOptionsCsv = null,
+            string? exercisesCsv = null,
+            string? exerciseQuestionsCsv = null)
         {
             var plan = new ImportPlan();
 
@@ -52,6 +67,8 @@ namespace ELearning_ToanHocHay_Control.Services.Helpers
             ParseBlocks(blocksCsv, plan);
             ParseFlashcards(flashcardsCsv, plan);
             ParseResources(resourcesCsv, plan);
+
+            ParseAssessment(plan, questionBankCsv, questionsCsv, questionOptionsCsv, exercisesCsv, exerciseQuestionsCsv);
 
             return plan;
         }
@@ -467,6 +484,272 @@ namespace ELearning_ToanHocHay_Control.Services.Helpers
         }
 
         // ---------------------------------------------------------------
+        //  question-bank / questions / question-options / exercises / exercise-questions
+        // ---------------------------------------------------------------
+        private static void ParseAssessment(ImportPlan plan, string? bankCsv, string? questionsCsv,
+            string? optionsCsv, string? exercisesCsv, string? exQuestionsCsv)
+        {
+            var hasAny = new[] { bankCsv, questionsCsv, optionsCsv, exercisesCsv, exQuestionsCsv }
+                .Any(s => !string.IsNullOrWhiteSpace(s));
+            if (!hasAny) return;
+
+            // ----- bank -----
+            if (string.IsNullOrWhiteSpace(questionsCsv) && string.IsNullOrWhiteSpace(exercisesCsv))
+            {
+                plan.Add("questions", null, null, "MISSING_FILE", ImportIssueSeverity.Error,
+                    "Có file phần đánh giá nhưng thiếu cả questions.csv lẫn exercises.csv.");
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(bankCsv) && CheckHeaders("question-bank", bankCsv!, BankHeaders, plan))
+            {
+                var rows = CsvReader.Read(bankCsv!);
+                if (rows.Count == 0)
+                    plan.Add("question-bank", null, null, "EMPTY_FILE", ImportIssueSeverity.Error, "question-bank.csv không có dòng dữ liệu.");
+                else
+                {
+                    var r = rows[0];
+                    var key = r.Get("BankKey");
+                    var name = r.Get("BankName");
+                    if (string.IsNullOrWhiteSpace(key))
+                        plan.Add("question-bank", 1, null, "BANK_KEY_REQUIRED", ImportIssueSeverity.Error, "Thiếu BankKey.");
+                    if (string.IsNullOrWhiteSpace(name))
+                        plan.Add("question-bank", 1, null, "BANK_NAME_REQUIRED", ImportIssueSeverity.Error, "Thiếu BankName.");
+                    else if (name.Length > 255)
+                        plan.Add("question-bank", 1, null, "BANK_NAME_TOO_LONG", ImportIssueSeverity.Error, "BankName vượt quá 255 ký tự.");
+                    plan.Bank = new PlanBank { Key = key, Name = name, Description = r.GetRaw("Description").Trim() };
+                    if (rows.Count > 1)
+                        plan.Add("question-bank", 2, null, "BANK_EXTRA_ROWS", ImportIssueSeverity.Warning,
+                            "question-bank.csv có nhiều hơn 1 dòng — chỉ dòng đầu được dùng.");
+                }
+            }
+
+            ParseQuestions(plan, questionsCsv);
+            ParseQuestionOptions(plan, optionsCsv);
+            ParseExercises(plan, exercisesCsv);
+            ParseExerciseQuestions(plan, exQuestionsCsv);
+
+            // ----- cross-checks -----
+            if ((plan.Questions.Count > 0 || plan.Exercises.Count > 0) && plan.Bank == null)
+                plan.Add("question-bank", null, null, "MISSING_FILE", ImportIssueSeverity.Error,
+                    "Có câu hỏi / bài tập nhưng thiếu question-bank.csv.");
+
+            foreach (var q in plan.Questions.Values)
+            {
+                if (ChoiceQuestionTypes.Contains(q.Type))
+                {
+                    if (q.Options.Count < 2)
+                        plan.Add("questions", q.SourceRow, q.Key, "OPTIONS_TOO_FEW", ImportIssueSeverity.Error,
+                            $"Câu {q.Type} cần ít nhất 2 phương án trong question-options.csv.");
+                    if (q.Options.Count > 0 && !q.Options.Any(o => o.IsCorrect))
+                        plan.Add("questions", q.SourceRow, q.Key, "NO_CORRECT_OPTION", ImportIssueSeverity.Error,
+                            "Không có phương án nào được đánh dấu đúng.");
+                }
+            }
+
+            foreach (var ex in plan.Exercises.Values)
+                if (ex.QuestionKeys.Count == 0)
+                    plan.Add("exercises", ex.SourceRow, null, "EXERCISE_NO_QUESTIONS", ImportIssueSeverity.Error,
+                        $"Bài tập '{ex.Key}' chưa gán câu hỏi nào trong exercise-questions.csv.");
+        }
+
+        private static void ParseQuestions(ImportPlan plan, string? csv)
+        {
+            if (string.IsNullOrWhiteSpace(csv)) return;
+            if (!CheckHeaders("questions", csv!, QuestionHeaders, plan)) return;
+
+            foreach (var r in CsvReader.Read(csv!))
+            {
+                var key = r.Get("QuestionKey");
+                if (string.IsNullOrWhiteSpace(key))
+                {
+                    plan.Add("questions", r.RowNumber, null, "QUESTION_KEY_REQUIRED", ImportIssueSeverity.Error, "Thiếu QuestionKey.");
+                    continue;
+                }
+                if (plan.Questions.ContainsKey(key))
+                {
+                    plan.Add("questions", r.RowNumber, key, "DUP_QUESTION_KEY", ImportIssueSeverity.Error, $"QuestionKey '{key}' bị trùng.");
+                    continue;
+                }
+
+                var q = new PlanQuestion { Key = key, SourceRow = r.RowNumber };
+
+                if (Enum.TryParse<QuestionType>(r.Get("QuestionType"), true, out var qt)) q.Type = qt;
+                else
+                {
+                    plan.Add("questions", r.RowNumber, key, "BAD_QUESTION_TYPE", ImportIssueSeverity.Error,
+                        $"QuestionType không hợp lệ: '{r.Get("QuestionType")}'. Cho phép: MultipleChoice, TrueFalse, FillBlank, Essay.");
+                    continue;
+                }
+
+                q.Difficulty = Enum.TryParse<DifficultyLevel>(r.Get("Difficulty"), true, out var d) ? d : DifficultyLevel.Medium;
+                if (!string.IsNullOrWhiteSpace(r.Get("Difficulty")) && !Enum.TryParse<DifficultyLevel>(r.Get("Difficulty"), true, out _))
+                    plan.Add("questions", r.RowNumber, key, "BAD_DIFFICULTY", ImportIssueSeverity.Warning,
+                        $"Difficulty '{r.Get("Difficulty")}' không rõ — dùng Medium.");
+
+                q.Text = r.GetRaw("QuestionText").Trim();
+                if (string.IsNullOrWhiteSpace(q.Text))
+                    plan.Add("questions", r.RowNumber, key, "QUESTION_TEXT_REQUIRED", ImportIssueSeverity.Error, "Thiếu QuestionText.");
+
+                q.CorrectAnswer = r.GetRaw("CorrectAnswer").Trim();
+                if (q.Type != QuestionType.Essay && string.IsNullOrWhiteSpace(q.CorrectAnswer)
+                    && q.Type != QuestionType.MultipleChoice)
+                    plan.Add("questions", r.RowNumber, key, "CORRECT_ANSWER_REQUIRED", ImportIssueSeverity.Error,
+                        $"Câu {q.Type} cần CorrectAnswer.");
+
+                q.Explanation = r.GetRaw("Explanation").Trim();
+
+                var nodeKey = r.Get("NodeKey");
+                if (!string.IsNullOrWhiteSpace(nodeKey))
+                {
+                    if (plan.NodeKeys.ContainsKey(nodeKey)) q.NodeKey = nodeKey;
+                    else
+                        plan.Add("questions", r.RowNumber, key, "QUESTION_NODE_NOT_FOUND", ImportIssueSeverity.Warning,
+                            $"NodeKey '{nodeKey}' không có trong nodes.csv — câu hỏi sẽ không gắn vào node nào.");
+                }
+
+                if (!string.IsNullOrWhiteSpace(r.Get("BankKey")) && plan.Bank != null
+                    && !string.Equals(r.Get("BankKey"), plan.Bank.Key, StringComparison.OrdinalIgnoreCase))
+                    plan.Add("questions", r.RowNumber, key, "QUESTION_BANK_MISMATCH", ImportIssueSeverity.Warning,
+                        $"BankKey '{r.Get("BankKey")}' khác với question-bank.csv ('{plan.Bank.Key}').");
+
+                plan.Questions[key] = q;
+            }
+        }
+
+        private static void ParseQuestionOptions(ImportPlan plan, string? csv)
+        {
+            if (string.IsNullOrWhiteSpace(csv)) return;
+            if (!CheckHeaders("question-options", csv!, OptionHeaders, plan)) return;
+
+            foreach (var r in CsvReader.Read(csv!))
+            {
+                var qk = r.Get("QuestionKey");
+                if (string.IsNullOrWhiteSpace(qk)) continue;
+                if (!plan.Questions.TryGetValue(qk, out var q))
+                {
+                    plan.Add("question-options", r.RowNumber, qk, "OPTION_QUESTION_NOT_FOUND", ImportIssueSeverity.Error,
+                        $"QuestionKey '{qk}' không có trong questions.csv.");
+                    continue;
+                }
+
+                var text = r.GetRaw("OptionText").Trim();
+                if (string.IsNullOrWhiteSpace(text))
+                {
+                    plan.Add("question-options", r.RowNumber, qk, "OPTION_TEXT_REQUIRED", ImportIssueSeverity.Error, "Thiếu OptionText.");
+                    continue;
+                }
+
+                int.TryParse(r.Get("OrderIndex"), out var oi);
+                var isCorrect = ParseBool(r.Get("IsCorrect"), "question-options", r.RowNumber, qk, "IsCorrect", plan, false);
+                q.Options.Add(new PlanOption { Order = oi, Text = text, IsCorrect = isCorrect, SourceRow = r.RowNumber });
+            }
+        }
+
+        private static void ParseExercises(ImportPlan plan, string? csv)
+        {
+            if (string.IsNullOrWhiteSpace(csv)) return;
+            if (!CheckHeaders("exercises", csv!, ExerciseHeaders, plan)) return;
+
+            foreach (var r in CsvReader.Read(csv!))
+            {
+                var key = r.Get("ExerciseKey");
+                if (string.IsNullOrWhiteSpace(key))
+                {
+                    plan.Add("exercises", r.RowNumber, null, "EXERCISE_KEY_REQUIRED", ImportIssueSeverity.Error, "Thiếu ExerciseKey.");
+                    continue;
+                }
+                if (plan.Exercises.ContainsKey(key))
+                {
+                    plan.Add("exercises", r.RowNumber, null, "DUP_EXERCISE_KEY", ImportIssueSeverity.Error, $"ExerciseKey '{key}' bị trùng.");
+                    continue;
+                }
+
+                var ex = new PlanExercise { Key = key, SourceRow = r.RowNumber };
+
+                ex.Name = r.Get("ExerciseName");
+                if (string.IsNullOrWhiteSpace(ex.Name))
+                    plan.Add("exercises", r.RowNumber, null, "EXERCISE_NAME_REQUIRED", ImportIssueSeverity.Error, "Thiếu ExerciseName.");
+                else if (ex.Name.Length > 255)
+                    plan.Add("exercises", r.RowNumber, null, "EXERCISE_NAME_TOO_LONG", ImportIssueSeverity.Error, "ExerciseName vượt quá 255 ký tự.");
+
+                if (Enum.TryParse<ExerciseType>(r.Get("ExerciseType"), true, out var et)) ex.Type = et;
+                else
+                {
+                    plan.Add("exercises", r.RowNumber, null, "BAD_EXERCISE_TYPE", ImportIssueSeverity.Error,
+                        $"ExerciseType không hợp lệ: '{r.Get("ExerciseType")}'. Cho phép: Practice, Quiz, Test, Exam.");
+                    continue;
+                }
+
+                if (Enum.TryParse<AccessTier>(r.Get("Tier"), true, out var tier)) ex.Tier = tier;
+                else
+                {
+                    plan.Add("exercises", r.RowNumber, null, "BAD_TIER", ImportIssueSeverity.Error,
+                        $"Tier không hợp lệ: '{r.Get("Tier")}'. Cho phép: Free, Standard, Premium.");
+                    continue;
+                }
+
+                var nodeKey = r.Get("NodeKey");
+                if (!string.IsNullOrWhiteSpace(nodeKey))
+                {
+                    if (plan.NodeKeys.ContainsKey(nodeKey)) ex.NodeKey = nodeKey;
+                    else
+                        plan.Add("exercises", r.RowNumber, nodeKey, "EXERCISE_NODE_NOT_FOUND", ImportIssueSeverity.Error,
+                            $"NodeKey '{nodeKey}' không có trong nodes.csv.");
+                }
+
+                if (int.TryParse(r.Get("DurationMinutes"), out var dur) && dur > 0) ex.DurationMinutes = dur;
+                if (int.TryParse(r.Get("MaxAttempts"), out var ma) && ma > 0) ex.MaxAttempts = ma;
+
+                var pctRaw = r.Get("PassingPercent");
+                if (string.IsNullOrWhiteSpace(pctRaw)) ex.PassingPercent = 50;
+                else if (int.TryParse(pctRaw, out var pct) && pct is >= 0 and <= 100) ex.PassingPercent = pct;
+                else
+                    plan.Add("exercises", r.RowNumber, null, "BAD_PASSING_PERCENT", ImportIssueSeverity.Error,
+                        $"PassingPercent phải là số 0–100: '{pctRaw}'.");
+
+                plan.Exercises[key] = ex;
+            }
+        }
+
+        private static void ParseExerciseQuestions(ImportPlan plan, string? csv)
+        {
+            if (string.IsNullOrWhiteSpace(csv)) return;
+            if (!CheckHeaders("exercise-questions", csv!, ExQuestionHeaders, plan)) return;
+
+            foreach (var r in CsvReader.Read(csv!))
+            {
+                var ek = r.Get("ExerciseKey");
+                var qk = r.Get("QuestionKey");
+                if (string.IsNullOrWhiteSpace(ek) || string.IsNullOrWhiteSpace(qk)) continue;
+
+                if (!plan.Exercises.TryGetValue(ek, out var ex))
+                {
+                    plan.Add("exercise-questions", r.RowNumber, null, "LINK_EXERCISE_NOT_FOUND", ImportIssueSeverity.Error,
+                        $"ExerciseKey '{ek}' không có trong exercises.csv.");
+                    continue;
+                }
+                if (!plan.Questions.ContainsKey(qk))
+                {
+                    plan.Add("exercise-questions", r.RowNumber, qk, "LINK_QUESTION_NOT_FOUND", ImportIssueSeverity.Error,
+                        $"QuestionKey '{qk}' không có trong questions.csv.");
+                    continue;
+                }
+                if (ex.QuestionKeys.Contains(qk))
+                {
+                    plan.Add("exercise-questions", r.RowNumber, qk, "DUP_LINK", ImportIssueSeverity.Warning,
+                        $"Câu '{qk}' đã có trong bài tập '{ek}' — bỏ qua dòng lặp.");
+                    continue;
+                }
+
+                var score = double.TryParse(r.Get("Score"), System.Globalization.NumberStyles.Number,
+                    System.Globalization.CultureInfo.InvariantCulture, out var s) && s > 0 ? s : 1.0;
+                ex.QuestionKeys.Add(qk);
+                ex.Scores.Add(score);
+            }
+        }
+
+        // ---------------------------------------------------------------
         //  helpers
         // ---------------------------------------------------------------
         private static bool CheckHeaders(string file, string csv, string[] required, ImportPlan plan)
@@ -532,6 +815,12 @@ namespace ELearning_ToanHocHay_Control.Services.Helpers
         public List<PlanResource> Resources { get; } = new();
         public List<ImportIssueDto> Issues { get; } = new();
 
+        // ----- phần đánh giá -----
+        public PlanBank? Bank { get; set; }
+        public Dictionary<string, PlanQuestion> Questions { get; } = new(StringComparer.OrdinalIgnoreCase);
+        public Dictionary<string, PlanExercise> Exercises { get; } = new(StringComparer.OrdinalIgnoreCase);
+        public bool HasAssessment => Bank != null || Questions.Count > 0 || Exercises.Count > 0;
+
         /// <summary>Map NodeKey → node, không phân biệt hoa/thường (gán trong lúc parse nodes).</summary>
         public Dictionary<string, PlanNode> NodeKeys { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
@@ -539,7 +828,9 @@ namespace ELearning_ToanHocHay_Control.Services.Helpers
         public int WarningCount => Issues.Count(i => i.Severity == ImportIssueSeverity.Warning);
         public bool HasErrors => ErrorCount > 0;
 
-        public int TotalRows => Nodes.Count + Blocks.Count + Decks.Sum(d => d.Cards.Count) + Resources.Count;
+        public int TotalRows => Nodes.Count + Blocks.Count + Decks.Sum(d => d.Cards.Count) + Resources.Count
+            + Questions.Count + Questions.Values.Sum(q => q.Options.Count)
+            + Exercises.Count + Exercises.Values.Sum(e => e.QuestionKeys.Count);
 
         public void Add(string file, int? row, string? nodeKey, string code, ImportIssueSeverity severity, string message)
             => Issues.Add(new ImportIssueDto
@@ -620,5 +911,52 @@ namespace ELearning_ToanHocHay_Control.Services.Helpers
         public bool IsDownloadable { get; set; }
         public int OrderIndex { get; set; }
         public int SourceRow { get; set; }
+    }
+
+    public sealed class PlanBank
+    {
+        public string Key { get; set; } = "";
+        public string Name { get; set; } = "";
+        public string Description { get; set; } = "";
+        public int PersistedId { get; set; }
+    }
+
+    public sealed class PlanQuestion
+    {
+        public string Key { get; set; } = "";
+        public string? NodeKey { get; set; }
+        public QuestionType Type { get; set; }
+        public DifficultyLevel Difficulty { get; set; } = DifficultyLevel.Medium;
+        public string Text { get; set; } = "";
+        public string CorrectAnswer { get; set; } = "";
+        public string Explanation { get; set; } = "";
+        public List<PlanOption> Options { get; } = new();
+        public int SourceRow { get; set; }
+        public int PersistedId { get; set; }
+        public Data.Entities.Question? PersistedEntity { get; set; }
+    }
+
+    public sealed class PlanOption
+    {
+        public int Order { get; set; }
+        public string Text { get; set; } = "";
+        public bool IsCorrect { get; set; }
+        public int SourceRow { get; set; }
+    }
+
+    public sealed class PlanExercise
+    {
+        public string Key { get; set; } = "";
+        public string? NodeKey { get; set; }
+        public string Name { get; set; } = "";
+        public ExerciseType Type { get; set; }
+        public AccessTier Tier { get; set; }
+        public int? DurationMinutes { get; set; }
+        public int? MaxAttempts { get; set; }
+        public int PassingPercent { get; set; } = 50;
+        public List<string> QuestionKeys { get; } = new();
+        public List<double> Scores { get; } = new();
+        public int SourceRow { get; set; }
+        public Data.Entities.Exercise? PersistedEntity { get; set; }
     }
 }

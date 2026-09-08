@@ -93,7 +93,8 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             var maxRows = await _config.GetIntAsync(CfgMaxRows, DefaultMaxRows);
 
             var plan = ContentImportParser.Parse(
-                sources.Course, sources.Nodes, sources.Blocks, sources.Flashcards, sources.Resources, maxDepth);
+                sources.Course, sources.Nodes, sources.Blocks, sources.Flashcards, sources.Resources, maxDepth,
+                sources.QuestionBank, sources.Questions, sources.QuestionOptions, sources.Exercises, sources.ExerciseQuestions);
 
             if (plan.TotalRows > maxRows)
                 plan.Add("nodes", null, null, "ROW_CAP_EXCEEDED", ImportIssueSeverity.Error,
@@ -254,6 +255,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
             // ---- course + version (new-course path) ----
             CourseVersion version;
+            int courseGradeLevelId;
             if (ctx.NewCourseHeader != null)
             {
                 if (ctx.FrameworkWillBeCreated)
@@ -304,14 +306,16 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 await _context.SaveChangesAsync();
 
                 result.CourseId = course.CourseId;
+                courseGradeLevelId = course.GradeLevelId;
             }
             else
             {
                 version = ctx.ExistingVersion!;
                 result.CourseId = version.CourseId;
+                courseGradeLevelId = ctx.ExistingCourse?.GradeLevelId ?? 0;
 
                 if (replaceExisting && ctx.VersionAlreadyHasNodes)
-                    await ClearVersionAsync(version.CourseVersionId);
+                    await ClearVersionAsync(version.CourseVersionId, version.CourseId);
             }
 
             result.CourseVersionId = version.CourseVersionId;
@@ -413,18 +417,138 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             }
 
             await _context.SaveChangesAsync();
+
+            // ---- phần đánh giá: ngân hàng câu hỏi + bài tập ----
+            if (plan.HasAssessment && !plan.HasErrors)
+                await CommitAssessmentAsync(plan, ctx.SubjectId ?? 0, courseGradeLevelId, version.CourseId, userId, now);
+
             await tx.CommitAsync();
 
             result.Committed = true;
         }
 
-        private async Task ClearVersionAsync(int versionId)
+        private async Task CommitAssessmentAsync(
+            ImportPlan plan, int subjectId, int gradeLevelId, int courseId, int userId, DateTime now)
+        {
+            if (plan.Bank == null) return;
+
+            var bank = new QuestionBank
+            {
+                BankName = Truncate(plan.Bank.Name.Trim(), 255),
+                Description = string.IsNullOrWhiteSpace(plan.Bank.Description) ? null : plan.Bank.Description,
+                SubjectId = subjectId,
+                GradeLevelId = gradeLevelId,
+                CourseId = courseId,
+                CreatedBy = userId,
+                IsActive = true,
+                CreatedAt = now
+            };
+            _context.Add(bank);
+            await _context.SaveChangesAsync();
+            plan.Bank.PersistedId = bank.BankId;
+
+            // questions + options
+            foreach (var pq in plan.Questions.Values)
+            {
+                var q = new Question
+                {
+                    BankId = bank.BankId,
+                    SubjectId = subjectId,
+                    QuestionText = pq.Text,
+                    QuestionType = pq.Type,
+                    DifficultyLevel = pq.Difficulty,
+                    CorrectAnswer = string.IsNullOrWhiteSpace(pq.CorrectAnswer) ? null : pq.CorrectAnswer,
+                    Explanation = string.IsNullOrWhiteSpace(pq.Explanation) ? null : pq.Explanation,
+                    Status = QuestionStatus.Approved,
+                    IsActive = true,
+                    CreatedBy = userId,
+                    ReviewedBy = userId,
+                    ReviewedAt = now,
+                    PublishedAt = now,
+                    CreatedAt = now,
+                    QuestionOptions = pq.Options
+                        .OrderBy(o => o.Order == 0 ? int.MaxValue : o.Order).ThenBy(o => o.SourceRow)
+                        .Select((o, idx) => new QuestionOption { OptionText = o.Text, IsCorrect = o.IsCorrect, OrderIndex = idx + 1 })
+                        .ToList()
+                };
+                _context.Add(q);
+                pq.PersistedEntity = q;
+            }
+            await _context.SaveChangesAsync();
+
+            foreach (var pq in plan.Questions.Values)
+            {
+                pq.PersistedId = pq.PersistedEntity!.QuestionId;
+                if (pq.NodeKey != null && plan.NodeKeys.TryGetValue(pq.NodeKey, out var node) && node.PersistedId > 0)
+                    _context.Add(new QuestionNode { QuestionId = pq.PersistedId, NodeId = node.PersistedId });
+            }
+
+            // exercises + exercise-questions
+            foreach (var pe in plan.Exercises.Values)
+            {
+                var totalScore = pe.Scores.Sum();
+                var exercise = new Exercise
+                {
+                    NodeId = pe.NodeKey != null && plan.NodeKeys.TryGetValue(pe.NodeKey, out var exNode) && exNode.PersistedId > 0
+                        ? exNode.PersistedId
+                        : null,
+                    ExerciseName = Truncate(pe.Name.Trim(), 255),
+                    ExerciseType = pe.Type,
+                    TotalQuestions = pe.QuestionKeys.Count,
+                    DurationMinutes = pe.DurationMinutes,
+                    MaxAttempts = pe.MaxAttempts,
+                    IsFree = pe.Tier == AccessTier.Free,
+                    RequiredTier = pe.Tier,
+                    IsActive = true,
+                    TotalScores = totalScore,
+                    PassingScore = Math.Round(totalScore * pe.PassingPercent / 100.0, 2),
+                    Status = ExerciseStatus.Published,
+                    CreatedBy = userId,
+                    CreatedAt = now
+                };
+                _context.Add(exercise);
+                pe.PersistedEntity = exercise;
+            }
+            await _context.SaveChangesAsync();
+
+            foreach (var pe in plan.Exercises.Values)
+            {
+                var exId = pe.PersistedEntity!.ExerciseId;
+                for (var i = 0; i < pe.QuestionKeys.Count; i++)
+                {
+                    var qId = plan.Questions[pe.QuestionKeys[i]].PersistedId;
+                    _context.Add(new ExerciseQuestion { ExerciseId = exId, QuestionId = qId, Score = pe.Scores[i], OrderIndex = i + 1 });
+                }
+            }
+            await _context.SaveChangesAsync();
+        }
+
+        private async Task ClearVersionAsync(int versionId, int courseId)
         {
             var nodeIds = await _context.ContentNodes
                 .Where(n => n.CourseVersionId == versionId)
                 .Select(n => n.NodeId)
                 .ToListAsync();
             if (nodeIds.Count == 0) return;
+
+            // phần đánh giá gắn với course / node của version này (import trước đó)
+            var exIds = await _context.Exercises
+                .Where(x => x.NodeId != null && nodeIds.Contains(x.NodeId.Value))
+                .Select(x => x.ExerciseId).ToListAsync();
+            await _context.Set<ExerciseQuestion>().Where(eq => exIds.Contains(eq.ExerciseId)).ExecuteDeleteAsync();
+            await _context.Exercises.Where(x => exIds.Contains(x.ExerciseId)).ExecuteDeleteAsync();
+
+            var bankIds = await _context.QuestionBanks
+                .Where(b => b.CourseId == courseId).Select(b => b.BankId).ToListAsync();
+            if (bankIds.Count > 0)
+            {
+                var qIds = await _context.Questions.Where(q => bankIds.Contains(q.BankId)).Select(q => q.QuestionId).ToListAsync();
+                await _context.Set<ExerciseQuestion>().Where(eq => qIds.Contains(eq.QuestionId)).ExecuteDeleteAsync();
+                await _context.Set<QuestionNode>().Where(qn => qIds.Contains(qn.QuestionId)).ExecuteDeleteAsync();
+                await _context.QuestionOptions.Where(o => qIds.Contains(o.QuestionId)).ExecuteDeleteAsync();
+                await _context.Questions.Where(q => bankIds.Contains(q.BankId)).ExecuteDeleteAsync();
+                await _context.QuestionBanks.Where(b => bankIds.Contains(b.BankId)).ExecuteDeleteAsync();
+            }
 
             var deckIds = await _context.FlashcardDecks
                 .Where(d => nodeIds.Contains(d.NodeId)).Select(d => d.DeckId).ToListAsync();
@@ -435,6 +559,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             await _context.LessonResources.Where(r => nodeIds.Contains(r.NodeId)).ExecuteDeleteAsync();
             await _context.LessonDetails.Where(d => nodeIds.Contains(d.NodeId)).ExecuteDeleteAsync();
             await _context.NodeRevisions.Where(r => nodeIds.Contains(r.NodeId)).ExecuteDeleteAsync();
+            await _context.Set<QuestionNode>().Where(qn => nodeIds.Contains(qn.NodeId)).ExecuteDeleteAsync();
 
             // delete deepest nodes first — ParentNodeId FK is Restrict
             var nodes = await _context.ContentNodes
@@ -458,6 +583,11 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             if (sources.Blocks != null) parts.Add("blocks.csv");
             if (sources.Flashcards != null) parts.Add("flashcards.csv");
             if (sources.Resources != null) parts.Add("resources.csv");
+            if (sources.QuestionBank != null) parts.Add("question-bank.csv");
+            if (sources.Questions != null) parts.Add("questions.csv");
+            if (sources.QuestionOptions != null) parts.Add("question-options.csv");
+            if (sources.Exercises != null) parts.Add("exercises.csv");
+            if (sources.ExerciseQuestions != null) parts.Add("exercise-questions.csv");
 
             var report = JsonSerializer.Serialize(new
             {
@@ -477,12 +607,8 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 CourseVersionId = result.CourseVersionId ?? courseVersionId,
                 // Commit là toàn-bộ-hoặc-không: đã ghi ⇒ Completed (cảnh báo không phải lỗi dòng).
                 Status = committed ? ImportJobStatus.Completed : ImportJobStatus.Failed,
-                TotalRows = result.Counts.Chapters + result.Counts.Lessons + result.Counts.OtherNodes
-                            + result.Counts.Blocks + result.Counts.Flashcards + result.Counts.Resources,
-                SuccessRows = committed
-                    ? result.Counts.Chapters + result.Counts.Lessons + result.Counts.OtherNodes
-                      + result.Counts.Blocks + result.Counts.Flashcards + result.Counts.Resources
-                    : 0,
+                TotalRows = TotalRowsOf(result.Counts),
+                SuccessRows = committed ? TotalRowsOf(result.Counts) : 0,
                 ErrorReport = report,
                 CreatedAt = DateTime.UtcNow,
                 CompletedAt = DateTime.UtcNow
@@ -571,7 +697,12 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     Blocks = plan.Blocks.Count,
                     FlashcardDecks = plan.Decks.Count,
                     Flashcards = plan.Decks.Sum(d => d.Cards.Count),
-                    Resources = plan.Resources.Count
+                    Resources = plan.Resources.Count,
+                    QuestionBanks = plan.Bank != null ? 1 : 0,
+                    Questions = plan.Questions.Count,
+                    QuestionOptions = plan.Questions.Values.Sum(q => q.Options.Count),
+                    Exercises = plan.Exercises.Count,
+                    ExerciseQuestions = plan.Exercises.Values.Sum(e => e.QuestionKeys.Count)
                 }
             };
             return result;
@@ -597,6 +728,10 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 StatusCode = 400
             };
         }
+
+        private static int TotalRowsOf(ContentImportCountsDto c) =>
+            c.Chapters + c.Lessons + c.OtherNodes + c.Blocks + c.Flashcards + c.Resources
+            + c.QuestionBanks + c.Questions + c.QuestionOptions + c.Exercises + c.ExerciseQuestions;
 
         private static int NextOrder(Dictionary<string, int> map, string key)
         {

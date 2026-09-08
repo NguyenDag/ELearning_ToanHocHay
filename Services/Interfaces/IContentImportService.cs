@@ -3,13 +3,23 @@ using ELearning_ToanHocHay_Control.Models.DTOs.Content;
 
 namespace ELearning_ToanHocHay_Control.Services.Interfaces
 {
-    /// <summary>Nội dung 5 file CSV import (đã đọc thành chuỗi ở tầng controller).</summary>
+    /// <summary>Nội dung các file CSV import (đã đọc thành chuỗi ở tầng controller).</summary>
     public sealed record ContentImportSources(
         string? Course,
         string? Nodes,
         string? Blocks,
         string? Flashcards,
-        string? Resources);
+        string? Resources,
+        string? QuestionBank = null,
+        string? Questions = null,
+        string? QuestionOptions = null,
+        string? Exercises = null,
+        string? ExerciseQuestions = null)
+    {
+        /// <summary>Có file phần đánh giá (ngân hàng câu hỏi / bài tập) đi kèm.</summary>
+        public bool HasAssessment =>
+            !string.IsNullOrWhiteSpace(Questions) || !string.IsNullOrWhiteSpace(Exercises);
+    }
 
     /// <summary>
     /// A3/P2 — import khung chương trình từ bộ file CSV (ContentImportJob).

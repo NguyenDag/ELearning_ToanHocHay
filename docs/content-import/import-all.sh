@@ -58,8 +58,12 @@ AUTH=(-H "Authorization: Bearer $TOKEN")
 
 files_of() {
   local slug="$1" out=()
-  for name in course nodes blocks flashcards resources; do
-    [ -f "$slug/$name.csv" ] && out+=(-F "${name^}=@$slug/$name.csv;type=text/csv")
+  # "tên file (không .csv):Tên trường form"
+  local map="course:Course nodes:Nodes blocks:Blocks flashcards:Flashcards resources:Resources \
+question-bank:QuestionBank questions:Questions question-options:QuestionOptions exercises:Exercises exercise-questions:ExerciseQuestions"
+  for pair in $map; do
+    local name="${pair%%:*}" field="${pair##*:}"
+    [ -f "$slug/$name.csv" ] && out+=(-F "$field=@$slug/$name.csv;type=text/csv")
   done
   printf '%s\n' "${out[@]}"
 }

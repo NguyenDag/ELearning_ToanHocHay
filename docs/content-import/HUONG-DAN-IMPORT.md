@@ -21,7 +21,11 @@ Có 2 cách: **Swagger UI** (bấm nút) hoặc **script / curl**. Xem [`import-
 | Reverse proxy cho phép upload vài MB | request thực tế ~0,3 MB; nginx mặc định `client_max_body_size` chỉ 1 MB |
 | Bộ file trong thư mục này | lấy từ repo, hoặc tạo lại bằng `tools/CurriculumImportBuilder` (`dotnet run -c Release`) |
 
-Các file mỗi bộ sách: `course.csv`, `nodes.csv`, `blocks.csv`, `flashcards.csv`, `resources.csv`.
+Các file mỗi bộ sách:
+- Khung chương trình: `course.csv`, `nodes.csv`, `blocks.csv`, `flashcards.csv`, `resources.csv`
+- Đánh giá (tuỳ chọn, nạp cùng lúc): `question-bank.csv`, `questions.csv`, `question-options.csv`, `exercises.csv`, `exercise-questions.csv`
+  — tạo ngân hàng câu hỏi + bài tập gắn vào node chương/bài; mỗi bài tập có tier `Free` / `Standard` / `Premium`.
+
 Lược đồ từng cột: xem [README.md](README.md).
 
 ---
@@ -32,10 +36,10 @@ Lược đồ từng cột: xem [README.md](README.md).
 2. `POST /api/auth/login` → "Try it out" → nhập email/mật khẩu admin → **Execute** → copy `Data.Token`.
 3. Bấm **Authorize** (góc trên phải) → nhập `Bearer <token>` → Authorize.
 4. Nhóm **ContentImport**:
-   - `POST /api/content/import/validate` → "Try it out" → chọn 5 file của bộ KNTT → **Execute**.
+   - `POST /api/content/import/validate` → "Try it out" → chọn các file của bộ KNTT (5 file khung + 5 file đánh giá) → **Execute**.
      Xem `Data.Valid = true`. Nếu có `Issues` mức `Error` thì sửa file rồi thử lại.
-   - `POST /api/content/import/course` → chọn lại 5 file → **Execute**.
-     Ghi lại `Data.CourseId` và `Data.CourseVersionId`.
+   - `POST /api/content/import/course` → chọn lại các file → **Execute**.
+     Ghi lại `Data.CourseId` và `Data.CourseVersionId`. `Data.Counts` có cả số `Questions` / `Exercises`.
 5. Lặp bước 4 cho `toan-6-chan-troi-sang-tao` và `toan-6-canh-dieu`.
 6. Nhóm **Courses**, với mỗi `CourseVersionId`:
    - `POST /api/courses/versions/{versionId}/submit`
@@ -75,17 +79,22 @@ SLUG=toan-6-ket-noi-tri-thuc          # đổi cho từng bộ
 TOKEN=$(curl -s -X POST "$API/api/auth/login" -H "Content-Type: application/json" \
   -d "{\"Email\":\"$EMAIL\",\"Password\":\"$PASS\"}" | jq -r '.Data.Token')
 
+# các phần -F dùng chung (5 file khung + 5 file đánh giá)
+FILES=(
+  -F "Course=@$SLUG/course.csv"                 -F "Nodes=@$SLUG/nodes.csv"
+  -F "Blocks=@$SLUG/blocks.csv"                 -F "Flashcards=@$SLUG/flashcards.csv"
+  -F "Resources=@$SLUG/resources.csv"           -F "QuestionBank=@$SLUG/question-bank.csv"
+  -F "Questions=@$SLUG/questions.csv"           -F "QuestionOptions=@$SLUG/question-options.csv"
+  -F "Exercises=@$SLUG/exercises.csv"           -F "ExerciseQuestions=@$SLUG/exercise-questions.csv"
+)
+
 # 3.2 validate (không ghi)
 curl -s -X POST "$API/api/content/import/validate" -H "Authorization: Bearer $TOKEN" \
-  -F "Course=@$SLUG/course.csv"       -F "Nodes=@$SLUG/nodes.csv" \
-  -F "Blocks=@$SLUG/blocks.csv"       -F "Flashcards=@$SLUG/flashcards.csv" \
-  -F "Resources=@$SLUG/resources.csv" | jq '{Valid, ErrorCount, WarningCount, Counts}'
+  "${FILES[@]}" | jq '{Valid, ErrorCount, WarningCount, Counts}'
 
-# 3.3 import → tạo khoá học + version Draft v1
+# 3.3 import → tạo khoá học + version Draft v1 (kèm ngân hàng câu hỏi + bài tập)
 VID=$(curl -s -X POST "$API/api/content/import/course" -H "Authorization: Bearer $TOKEN" \
-  -F "Course=@$SLUG/course.csv"       -F "Nodes=@$SLUG/nodes.csv" \
-  -F "Blocks=@$SLUG/blocks.csv"       -F "Flashcards=@$SLUG/flashcards.csv" \
-  -F "Resources=@$SLUG/resources.csv" | jq -r '.Data.CourseVersionId')
+  "${FILES[@]}" | jq -r '.Data.CourseVersionId')
 
 # 3.4 Draft → Published
 curl -s -X POST "$API/api/courses/versions/$VID/submit"  -H "Authorization: Bearer $TOKEN" >/dev/null

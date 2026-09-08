@@ -15,6 +15,8 @@ Mỗi bộ sách có **2 dạng** giống hệt nhau về nội dung:
 
 Nạp qua API `api/content/import` (vai trò ContentEditor / AcademicReviewer / SystemAdmin) — xem [mục "Nạp qua API"](#nạp-qua-api) bên dưới. Ghi vào một `CourseVersion` ở trạng thái `Draft`; các cột được đặt tên khớp entity để ánh xạ 1–1.
 
+> **Quy trình đưa lên production** (đăng nhập → import → duyệt → publish, kèm script chạy cả 3 bộ một lệnh): [HUONG-DAN-IMPORT.md](HUONG-DAN-IMPORT.md) · [import-all.sh](import-all.sh).
+
 ## Nguồn sinh & cách tạo lại
 
 Các file trong thư mục này là **đầu ra** của bộ sinh [`tools/CurriculumImportBuilder`](../../tools/CurriculumImportBuilder). Nội dung được giữ dạng dữ liệu có cấu trúc trong mã C# (mỗi bài là một chuỗi `Block`), tách theo file:

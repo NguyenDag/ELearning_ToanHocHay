@@ -84,6 +84,84 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         }
 
         // ================================================================
+        //  Import phần đánh giá độc lập (không kèm khung chương trình)
+        // ================================================================
+        public async Task<ApiResponse<ContentImportResultDto>> ImportAssessmentAsync(
+            ContentImportSources sources, int? bankId, int? subjectId, int? gradeLevelId, bool dryRun, int userId)
+        {
+            var maxRows = await _config.GetIntAsync(CfgMaxRows, DefaultMaxRows);
+
+            var plan = ContentImportParser.ParseAssessmentOnly(
+                sources.QuestionBank, sources.Questions, sources.QuestionOptions,
+                sources.Exercises, sources.ExerciseQuestions,
+                appendToExistingBank: bankId.HasValue);
+
+            if (plan.TotalRows > maxRows)
+                plan.Add("questions", null, null, "ROW_CAP_EXCEEDED", ImportIssueSeverity.Error,
+                    $"Bộ file có {plan.TotalRows} dòng, vượt giới hạn {maxRows} dòng / lần import.");
+
+            if (!plan.HasAssessment)
+                plan.Add("questions", null, null, "MISSING_FILE", ImportIssueSeverity.Error,
+                    "Chưa có file nào — cần questions.csv (và question-options.csv nếu có trắc nghiệm).");
+
+            // ---- resolve target bank / subject-grade ----
+            QuestionBank? existingBank = null;
+            int resolvedSubjectId = 0, resolvedGradeId = 0;
+            int? resolvedCourseId = null;
+
+            if (bankId.HasValue)
+            {
+                existingBank = await _context.QuestionBanks.FirstOrDefaultAsync(b => b.BankId == bankId.Value);
+                if (existingBank == null)
+                    plan.Add("questions", null, null, "BANK_NOT_FOUND", ImportIssueSeverity.Error,
+                        $"Không tìm thấy ngân hàng câu hỏi #{bankId}.");
+                else
+                {
+                    resolvedSubjectId = existingBank.SubjectId;
+                    resolvedGradeId = existingBank.GradeLevelId;
+                    resolvedCourseId = existingBank.CourseId;
+                }
+            }
+            else
+            {
+                if (subjectId is not > 0 || gradeLevelId is not > 0)
+                    plan.Add("question-bank", null, null, "TARGET_REQUIRED", ImportIssueSeverity.Error,
+                        "Cần chọn Môn và Lớp cho ngân hàng câu hỏi mới.");
+                else
+                {
+                    if (await _context.Subjects.AnyAsync(s => s.SubjectId == subjectId))
+                        resolvedSubjectId = subjectId.Value;
+                    else
+                        plan.Add("question-bank", null, null, "SUBJECT_NOT_FOUND", ImportIssueSeverity.Error, "Môn học không tồn tại.");
+
+                    if (await _context.GradeLevels.AnyAsync(g => g.GradeLevelId == gradeLevelId))
+                        resolvedGradeId = gradeLevelId.Value;
+                    else
+                        plan.Add("question-bank", null, null, "GRADE_NOT_FOUND", ImportIssueSeverity.Error, "Khối lớp không tồn tại.");
+                }
+            }
+
+            var result = ToResult(plan);
+            result.DryRun = dryRun;
+
+            if (!result.Valid || dryRun)
+            {
+                if (!dryRun) await RecordJobAsync(userId, sources, null, result, committed: false);
+                return Envelope(result);
+            }
+
+            var now = DateTime.UtcNow;
+            await using var tx = await _context.Database.BeginTransactionAsync();
+            await CommitAssessmentAsync(plan, resolvedSubjectId, resolvedGradeId, resolvedCourseId, userId, now, existingBank);
+            await tx.CommitAsync();
+
+            result.Committed = true;
+            result.CourseId = resolvedCourseId;
+            await RecordJobAsync(userId, sources, null, result, committed: true);
+            return Envelope(result);
+        }
+
+        // ================================================================
         //  Build + validate (no writes)
         // ================================================================
         private async Task<(ContentImportResultDto Result, ImportPlan Plan, ImportContext? Ctx)> BuildAsync(
@@ -428,24 +506,32 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         }
 
         private async Task CommitAssessmentAsync(
-            ImportPlan plan, int subjectId, int gradeLevelId, int courseId, int userId, DateTime now)
+            ImportPlan plan, int subjectId, int gradeLevelId, int? courseId, int userId, DateTime now,
+            QuestionBank? existingBank = null)
         {
-            if (plan.Bank == null) return;
-
-            var bank = new QuestionBank
+            QuestionBank bank;
+            if (existingBank != null)
             {
-                BankName = Truncate(plan.Bank.Name.Trim(), 255),
-                Description = string.IsNullOrWhiteSpace(plan.Bank.Description) ? null : plan.Bank.Description,
-                SubjectId = subjectId,
-                GradeLevelId = gradeLevelId,
-                CourseId = courseId,
-                CreatedBy = userId,
-                IsActive = true,
-                CreatedAt = now
-            };
-            _context.Add(bank);
-            await _context.SaveChangesAsync();
-            plan.Bank.PersistedId = bank.BankId;
+                bank = existingBank;
+            }
+            else
+            {
+                if (plan.Bank == null) return;
+                bank = new QuestionBank
+                {
+                    BankName = Truncate(plan.Bank.Name.Trim(), 255),
+                    Description = string.IsNullOrWhiteSpace(plan.Bank.Description) ? null : plan.Bank.Description,
+                    SubjectId = subjectId,
+                    GradeLevelId = gradeLevelId,
+                    CourseId = courseId,
+                    CreatedBy = userId,
+                    IsActive = true,
+                    CreatedAt = now
+                };
+                _context.Add(bank);
+                await _context.SaveChangesAsync();
+                plan.Bank.PersistedId = bank.BankId;
+            }
 
             // questions + options
             foreach (var pq in plan.Questions.Values)
@@ -603,7 +689,9 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             {
                 UploadedBy = userId,
                 FileUrl = Truncate("upload://" + string.Join("+", parts), 1000),
-                TargetType = ImportTargetType.ContentNode,
+                TargetType = sources.Nodes == null && sources.Course == null
+                    ? ImportTargetType.Question
+                    : ImportTargetType.ContentNode,
                 CourseVersionId = result.CourseVersionId ?? courseVersionId,
                 // Commit là toàn-bộ-hoặc-không: đã ghi ⇒ Completed (cảnh báo không phải lỗi dòng).
                 Status = committed ? ImportJobStatus.Completed : ImportJobStatus.Failed,

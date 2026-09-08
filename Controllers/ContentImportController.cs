@@ -70,6 +70,38 @@ namespace ELearning_ToanHocHay_Control.Controllers
             return r.ToActionResult();
         }
 
+        /// <summary>
+        /// Import ngân hàng câu hỏi + bài tập / đề độc lập (không kèm khung chương trình).
+        /// <c>bankId</c> → thêm câu hỏi vào ngân hàng đó; ngược lại cần <c>subjectId</c> + <c>gradeLevelId</c> để tạo ngân hàng mới.
+        /// </summary>
+        [HttpPost("question-bank")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> ImportQuestionBank(
+            [FromForm] ContentImportFormDto form,
+            [FromQuery] int? bankId,
+            [FromQuery] int? subjectId,
+            [FromQuery] int? gradeLevelId,
+            [FromQuery] bool dryRun = false)
+        {
+            foreach (var f in new[] { form.QuestionBank, form.Questions, form.QuestionOptions, form.Exercises, form.ExerciseQuestions })
+            {
+                if (f != null && f.Length > MaxFileBytes)
+                    return ApiResponse<ContentImportResultDto>.ErrorResponse(
+                        $"File '{f.FileName}' vượt quá {MaxFileBytes / 1_000_000} MB.").ToActionResult();
+            }
+
+            var sources = new ContentImportSources(
+                null, null, null, null, null,
+                await ReadAsync(form.QuestionBank),
+                await ReadAsync(form.Questions),
+                await ReadAsync(form.QuestionOptions),
+                await ReadAsync(form.Exercises),
+                await ReadAsync(form.ExerciseQuestions));
+
+            var r = await _import.ImportAssessmentAsync(sources, bankId, subjectId, gradeLevelId, dryRun, Uid);
+            return r.ToActionResult();
+        }
+
         /// <summary>Lịch sử các lần import gần đây.</summary>
         [HttpGet("jobs")]
         public async Task<IActionResult> GetJobs([FromQuery] int take = 20)

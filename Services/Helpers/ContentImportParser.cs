@@ -73,6 +73,20 @@ namespace ELearning_ToanHocHay_Control.Services.Helpers
             return plan;
         }
 
+        /// <summary>
+        /// Chỉ đọc phần đánh giá (ngân hàng câu hỏi + bài tập / đề), không có cây nội dung.
+        /// <paramref name="appendToExistingBank"/> = true khi thêm câu hỏi vào một ngân hàng đã có
+        /// (không cần question-bank.csv). Bài tập standalone không gắn node — <c>NodeKey</c> bị bỏ qua.
+        /// </summary>
+        public static ImportPlan ParseAssessmentOnly(
+            string? questionBankCsv, string? questionsCsv, string? questionOptionsCsv,
+            string? exercisesCsv, string? exerciseQuestionsCsv, bool appendToExistingBank = false)
+        {
+            var plan = new ImportPlan { Standalone = true, AppendToExistingBank = appendToExistingBank };
+            ParseAssessment(plan, questionBankCsv, questionsCsv, questionOptionsCsv, exercisesCsv, exerciseQuestionsCsv);
+            return plan;
+        }
+
         // ---------------------------------------------------------------
         //  course.csv
         // ---------------------------------------------------------------
@@ -530,9 +544,13 @@ namespace ELearning_ToanHocHay_Control.Services.Helpers
             ParseExerciseQuestions(plan, exQuestionsCsv);
 
             // ----- cross-checks -----
-            if ((plan.Questions.Count > 0 || plan.Exercises.Count > 0) && plan.Bank == null)
+            // Bank là bắt buộc, TRỪ khi đang thêm câu hỏi vào một ngân hàng đã có.
+            if (plan.Questions.Count > 0 && plan.Bank == null && !plan.AppendToExistingBank)
                 plan.Add("question-bank", null, null, "MISSING_FILE", ImportIssueSeverity.Error,
-                    "Có câu hỏi / bài tập nhưng thiếu question-bank.csv.");
+                    "Có câu hỏi nhưng thiếu question-bank.csv (hoặc chưa chọn ngân hàng để thêm vào).");
+            if (plan.Exercises.Count > 0 && plan.Questions.Count == 0 && !plan.AppendToExistingBank)
+                plan.Add("questions", null, null, "MISSING_FILE", ImportIssueSeverity.Error,
+                    "Có bài tập nhưng không có câu hỏi nào để đưa vào.");
 
             foreach (var q in plan.Questions.Values)
             {
@@ -693,6 +711,9 @@ namespace ELearning_ToanHocHay_Control.Services.Helpers
                 if (!string.IsNullOrWhiteSpace(nodeKey))
                 {
                     if (plan.NodeKeys.ContainsKey(nodeKey)) ex.NodeKey = nodeKey;
+                    else if (plan.Standalone)
+                        plan.Add("exercises", r.RowNumber, nodeKey, "EXERCISE_NODE_IGNORED", ImportIssueSeverity.Warning,
+                            $"Import độc lập (không có khung chương trình) — bỏ qua NodeKey '{nodeKey}', bài tập không gắn vào bài học.");
                     else
                         plan.Add("exercises", r.RowNumber, nodeKey, "EXERCISE_NODE_NOT_FOUND", ImportIssueSeverity.Error,
                             $"NodeKey '{nodeKey}' không có trong nodes.csv.");
@@ -820,6 +841,12 @@ namespace ELearning_ToanHocHay_Control.Services.Helpers
         public Dictionary<string, PlanQuestion> Questions { get; } = new(StringComparer.OrdinalIgnoreCase);
         public Dictionary<string, PlanExercise> Exercises { get; } = new(StringComparer.OrdinalIgnoreCase);
         public bool HasAssessment => Bank != null || Questions.Count > 0 || Exercises.Count > 0;
+
+        /// <summary>Import phần đánh giá độc lập, không kèm cây nội dung.</summary>
+        public bool Standalone { get; set; }
+
+        /// <summary>Thêm câu hỏi vào một ngân hàng đã tồn tại (không cần question-bank.csv).</summary>
+        public bool AppendToExistingBank { get; set; }
 
         /// <summary>Map NodeKey → node, không phân biệt hoa/thường (gán trong lúc parse nodes).</summary>
         public Dictionary<string, PlanNode> NodeKeys { get; set; } = new(StringComparer.OrdinalIgnoreCase);

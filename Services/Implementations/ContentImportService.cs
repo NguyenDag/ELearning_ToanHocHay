@@ -40,7 +40,10 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         public async Task<ApiResponse<ContentImportResultDto>> ValidateAsync(
             ContentImportSources sources, int? courseVersionId, int userId)
         {
-            var (result, _, _) = await BuildAsync(sources, courseVersionId, creatingCourse: false, replaceExisting: true);
+            // Không có versionId nhưng có course.csv ⇒ kiểm tra như luồng "tạo khoá học mới".
+            var creatingCourse = courseVersionId is null && sources.Course != null;
+            var (result, _, _) = await BuildAsync(
+                sources, courseVersionId, creatingCourse, replaceExisting: true);
             result.DryRun = true;
             return ApiResponse<ContentImportResultDto>.SuccessResponse(result,
                 result.Valid ? "File hợp lệ để import." : "File có lỗi cần sửa trước khi import.");
@@ -472,9 +475,8 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 FileUrl = Truncate("upload://" + string.Join("+", parts), 1000),
                 TargetType = ImportTargetType.ContentNode,
                 CourseVersionId = result.CourseVersionId ?? courseVersionId,
-                Status = committed
-                    ? (result.WarningCount > 0 ? ImportJobStatus.CompletedWithErrors : ImportJobStatus.Completed)
-                    : ImportJobStatus.Failed,
+                // Commit là toàn-bộ-hoặc-không: đã ghi ⇒ Completed (cảnh báo không phải lỗi dòng).
+                Status = committed ? ImportJobStatus.Completed : ImportJobStatus.Failed,
                 TotalRows = result.Counts.Chapters + result.Counts.Lessons + result.Counts.OtherNodes
                             + result.Counts.Blocks + result.Counts.Flashcards + result.Counts.Resources,
                 SuccessRows = committed

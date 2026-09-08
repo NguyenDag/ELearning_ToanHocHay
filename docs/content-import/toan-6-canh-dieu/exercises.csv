@@ -1,0 +1,13 @@
+﻿ExerciseKey,NodeKey,ExerciseName,ExerciseType,Tier,DurationMinutes,MaxAttempts,PassingPercent
+cd6-ex-c1-lt,c1,Luyện tập — Số tự nhiên,Practice,Free,,,50
+cd6-ex-c1-kt,c1,Đề kiểm tra — Số tự nhiên,Test,Standard,30,2,50
+cd6-ex-c2-lt,c2,Luyện tập — Số nguyên,Practice,Free,,,50
+cd6-ex-c2-kt,c2,Đề kiểm tra — Số nguyên,Test,Standard,30,2,50
+cd6-ex-c3-lt,c3,Luyện tập — Hình học trực quan,Practice,Free,,,50
+cd6-ex-c3-kt,c3,Đề kiểm tra — Hình học trực quan,Test,Standard,30,2,50
+cd6-ex-c4-lt,c4,Luyện tập — Một số yếu tố thống kê và xác suất,Practice,Free,,,50
+cd6-ex-c4-kt,c4,Đề kiểm tra — Một số yếu tố thống kê và xác suất,Test,Standard,30,2,50
+cd6-ex-c5-lt,c5,Luyện tập — Phân số và số thập phân,Practice,Free,,,50
+cd6-ex-c5-kt,c5,Đề kiểm tra — Phân số và số thập phân,Test,Standard,30,2,50
+cd6-ex-c6-lt,c6,Luyện tập — Hình học phẳng,Practice,Free,,,50
+cd6-ex-c6-kt,c6,Đề kiểm tra — Hình học phẳng,Test,Standard,30,2,50

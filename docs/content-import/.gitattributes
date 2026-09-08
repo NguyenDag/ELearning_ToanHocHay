@@ -1,0 +1,4 @@
+# Bộ file import do tools/CurriculumImportBuilder sinh ra — luôn LF để git không
+# báo "đã sửa" chỉ vì khác kiểu xuống dòng khi chạy lại trên Windows.
+*.csv text eol=lf
+*.xlsx binary

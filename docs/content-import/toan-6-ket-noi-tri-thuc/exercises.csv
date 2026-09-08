@@ -1,0 +1,41 @@
+﻿ExerciseKey,NodeKey,ExerciseName,ExerciseType,Tier,DurationMinutes,MaxAttempts,PassingPercent
+kntt6-ex-c1-lt,c1,Luyện tập — Tập hợp các số tự nhiên,Practice,Free,,,50
+kntt6-ex-c1-bt,c1,Bài tập trắc nghiệm — Tập hợp các số tự nhiên,Quiz,Free,,,50
+kntt6-ex-c1-kt15,c1,Đề kiểm tra 15 phút — Tập hợp các số tự nhiên,Test,Standard,15,2,50
+kntt6-ex-c1-kt45,c1,Đề kiểm tra 45 phút — Tập hợp các số tự nhiên,Exam,Premium,45,1,50
+kntt6-ex-c2-lt,c2,Luyện tập — Tính chia hết trong tập hợp các số tự nhiên,Practice,Free,,,50
+kntt6-ex-c2-bt,c2,Bài tập trắc nghiệm — Tính chia hết trong tập hợp các số tự nhiên,Quiz,Free,,,50
+kntt6-ex-c2-kt15,c2,Đề kiểm tra 15 phút — Tính chia hết trong tập hợp các số tự nhiên,Test,Standard,15,2,50
+kntt6-ex-c2-kt45,c2,Đề kiểm tra 45 phút — Tính chia hết trong tập hợp các số tự nhiên,Exam,Premium,45,1,50
+kntt6-ex-c3-lt,c3,Luyện tập — Số nguyên,Practice,Free,,,50
+kntt6-ex-c3-bt,c3,Bài tập trắc nghiệm — Số nguyên,Quiz,Free,,,50
+kntt6-ex-c3-kt15,c3,Đề kiểm tra 15 phút — Số nguyên,Test,Standard,15,2,50
+kntt6-ex-c3-kt45,c3,Đề kiểm tra 45 phút — Số nguyên,Exam,Premium,45,1,50
+kntt6-ex-c4-lt,c4,Luyện tập — Một số hình phẳng trong thực tiễn,Practice,Free,,,50
+kntt6-ex-c4-bt,c4,Bài tập trắc nghiệm — Một số hình phẳng trong thực tiễn,Quiz,Free,,,50
+kntt6-ex-c4-kt15,c4,Đề kiểm tra 15 phút — Một số hình phẳng trong thực tiễn,Test,Standard,15,2,50
+kntt6-ex-c4-kt45,c4,Đề kiểm tra 45 phút — Một số hình phẳng trong thực tiễn,Exam,Premium,45,1,50
+kntt6-ex-c5-lt,c5,Luyện tập — Tính đối xứng của hình phẳng trong tự nhiên,Practice,Free,,,50
+kntt6-ex-c5-bt,c5,Bài tập trắc nghiệm — Tính đối xứng của hình phẳng trong tự nhiên,Quiz,Free,,,50
+kntt6-ex-c5-kt15,c5,Đề kiểm tra 15 phút — Tính đối xứng của hình phẳng trong tự nhiên,Test,Standard,15,2,50
+kntt6-ex-c5-kt45,c5,Đề kiểm tra 45 phút — Tính đối xứng của hình phẳng trong tự nhiên,Exam,Premium,45,1,50
+kntt6-ex-c6-lt,c6,Luyện tập — Phân số,Practice,Free,,,50
+kntt6-ex-c6-bt,c6,Bài tập trắc nghiệm — Phân số,Quiz,Free,,,50
+kntt6-ex-c6-kt15,c6,Đề kiểm tra 15 phút — Phân số,Test,Standard,15,2,50
+kntt6-ex-c6-kt45,c6,Đề kiểm tra 45 phút — Phân số,Exam,Premium,45,1,50
+kntt6-ex-c7-lt,c7,Luyện tập — Số thập phân,Practice,Free,,,50
+kntt6-ex-c7-bt,c7,Bài tập trắc nghiệm — Số thập phân,Quiz,Free,,,50
+kntt6-ex-c7-kt15,c7,Đề kiểm tra 15 phút — Số thập phân,Test,Standard,15,2,50
+kntt6-ex-c7-kt45,c7,Đề kiểm tra 45 phút — Số thập phân,Exam,Premium,45,1,50
+kntt6-ex-c8-lt,c8,Luyện tập — Những hình hình học cơ bản,Practice,Free,,,50
+kntt6-ex-c8-bt,c8,Bài tập trắc nghiệm — Những hình hình học cơ bản,Quiz,Free,,,50
+kntt6-ex-c8-kt15,c8,Đề kiểm tra 15 phút — Những hình hình học cơ bản,Test,Standard,15,2,50
+kntt6-ex-c8-kt45,c8,Đề kiểm tra 45 phút — Những hình hình học cơ bản,Exam,Premium,45,1,50
+kntt6-ex-c9-lt,c9,Luyện tập — Dữ liệu và xác suất thực nghiệm,Practice,Free,,,50
+kntt6-ex-c9-bt,c9,Bài tập trắc nghiệm — Dữ liệu và xác suất thực nghiệm,Quiz,Free,,,50
+kntt6-ex-c9-kt15,c9,Đề kiểm tra 15 phút — Dữ liệu và xác suất thực nghiệm,Test,Standard,15,2,50
+kntt6-ex-c9-kt45,c9,Đề kiểm tra 45 phút — Dữ liệu và xác suất thực nghiệm,Exam,Premium,45,1,50
+kntt6-ex-gk1,c1,Đề thi giữa học kì I,Test,Standard,45,2,50
+kntt6-ex-ck1,c1,Đề thi cuối học kì I,Exam,Premium,60,1,50
+kntt6-ex-gk2,c1,Đề thi giữa học kì II,Test,Standard,45,2,50
+kntt6-ex-ck2,c1,Đề thi cuối học kì II,Exam,Premium,60,1,50

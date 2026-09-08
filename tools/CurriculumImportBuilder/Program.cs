@@ -16,6 +16,37 @@ internal static class Program
     private static readonly string[] ResHeaders = ["NodeKey", "Title", "ResourceType", "ExternalUrl", "IsDownloadable", "OrderIndex"];
     private static readonly string[] CourseHeaders =
         ["Slug", "Title", "SubjectCode", "GradeCode", "FrameworkCode", "FrameworkName", "Publisher", "ListPrice", "VersionLabel", "Description"];
+    private static readonly string[] BankHeaders = ["BankKey", "BankName", "Description"];
+    private static readonly string[] QuestionHeaders =
+        ["QuestionKey", "BankKey", "NodeKey", "QuestionType", "Difficulty", "QuestionText", "CorrectAnswer", "Explanation"];
+    private static readonly string[] OptionHeaders = ["QuestionKey", "OrderIndex", "OptionText", "IsCorrect"];
+    private static readonly string[] ExerciseHeaders =
+        ["ExerciseKey", "NodeKey", "ExerciseName", "ExerciseType", "Tier", "DurationMinutes", "MaxAttempts", "PassingPercent"];
+    private static readonly string[] ExQuestionHeaders = ["ExerciseKey", "QuestionKey", "Score"];
+
+    /// <summary>Ánh xạ chương → chủ đề câu hỏi (1–9, đánh số theo KNTT).</summary>
+    private static Book WithAssessment(Book book) => book.FrameworkCode switch
+    {
+        "KNTT" => book with
+        {
+            Assessment = AssessmentFactory.Build(book, "kntt6",
+                chapterThemes: new[] { new[] { 1 }, new[] { 2 }, new[] { 3 }, new[] { 4 }, new[] { 5 }, new[] { 6 }, new[] { 7 }, new[] { 8 }, new[] { 9 } },
+                questionsPerChapter: 16, fullExamSet: true, seed: 6006)
+        },
+        "CTST" => book with
+        {
+            Assessment = AssessmentFactory.Build(book, "ctst6",
+                chapterThemes: new[] { new[] { 1, 2 }, new[] { 3 }, new[] { 4 }, new[] { 9 }, new[] { 6 }, new[] { 7 }, new[] { 5 }, new[] { 8 }, new[] { 9 } },
+                questionsPerChapter: 8, fullExamSet: false, seed: 6007)
+        },
+        "CD" => book with
+        {
+            Assessment = AssessmentFactory.Build(book, "cd6",
+                chapterThemes: new[] { new[] { 1, 2 }, new[] { 3 }, new[] { 4, 5 }, new[] { 9 }, new[] { 6, 7 }, new[] { 8 } },
+                questionsPerChapter: 8, fullExamSet: false, seed: 6008)
+        },
+        _ => book
+    };
 
     private static int Main(string[] args)
     {
@@ -25,11 +56,14 @@ internal static class Program
 
         Directory.CreateDirectory(outDir);
 
-        var books = new[] { KnttBook.Build(), CtstBook.Build(), CanhDieuBook.Build() };
+        var books = new[] { KnttBook.Build(), CtstBook.Build(), CanhDieuBook.Build() }
+            .Select(WithAssessment)
+            .ToArray();
 
         foreach (var book in books)
         {
             var (nodes, blocks, cards, resources) = Flatten(book);
+            var (banks, questions, options, exercises, exQuestions) = FlattenAssessment(book);
             var bookDir = Path.Combine(outDir, book.Slug);
             Directory.CreateDirectory(bookDir);
 
@@ -38,6 +72,11 @@ internal static class Program
             WriteCsv(Path.Combine(bookDir, "blocks.csv"), BlockHeaders, blocks);
             WriteCsv(Path.Combine(bookDir, "flashcards.csv"), CardHeaders, cards);
             WriteCsv(Path.Combine(bookDir, "resources.csv"), ResHeaders, resources);
+            WriteCsv(Path.Combine(bookDir, "question-bank.csv"), BankHeaders, banks);
+            WriteCsv(Path.Combine(bookDir, "questions.csv"), QuestionHeaders, questions);
+            WriteCsv(Path.Combine(bookDir, "question-options.csv"), OptionHeaders, options);
+            WriteCsv(Path.Combine(bookDir, "exercises.csv"), ExerciseHeaders, exercises);
+            WriteCsv(Path.Combine(bookDir, "exercise-questions.csv"), ExQuestionHeaders, exQuestions);
 
             WriteXlsx(Path.Combine(outDir, book.Slug + ".xlsx"), new (string Name, string[] Headers, List<string[]> Rows)[]
             {
@@ -46,9 +85,15 @@ internal static class Program
                 ("Blocks", BlockHeaders, blocks),
                 ("Flashcards", CardHeaders, cards),
                 ("Resources", ResHeaders, resources),
+                ("QuestionBank", BankHeaders, banks),
+                ("Questions", QuestionHeaders, questions),
+                ("QuestionOptions", OptionHeaders, options),
+                ("Exercises", ExerciseHeaders, exercises),
+                ("ExerciseQuestions", ExQuestionHeaders, exQuestions),
             });
 
-            Console.WriteLine($"{book.Slug,-32}  {nodes.Count,4} nodes  {blocks.Count,5} blocks  {cards.Count,4} cards  {resources.Count,3} resources");
+            Console.WriteLine($"{book.Slug,-32}  {nodes.Count,4} nodes  {blocks.Count,5} blocks  {cards.Count,4} cards  "
+                + $"{questions.Count,4} câu  {options.Count,4} opt  {exercises.Count,3} bài tập");
         }
 
         Console.WriteLine($"\nĐã xuất vào: {outDir}");
@@ -108,6 +153,39 @@ internal static class Program
         return (nodes, blocks, cards, resources);
     }
 
+    private static (List<string[]> Banks, List<string[]> Questions, List<string[]> Options, List<string[]> Exercises, List<string[]> ExQuestions)
+        FlattenAssessment(Book book)
+    {
+        var banks = new List<string[]>();
+        var questions = new List<string[]>();
+        var options = new List<string[]>();
+        var exercises = new List<string[]>();
+        var exQuestions = new List<string[]>();
+
+        if (book.Assessment is not { } a) return (banks, questions, options, exercises, exQuestions);
+
+        banks.Add([a.Bank.Key, a.Bank.Name, a.Bank.Description]);
+
+        foreach (var q in a.Questions)
+        {
+            questions.Add([q.Key, q.BankKey, q.NodeKey ?? "", q.Type, q.Difficulty, q.Text, q.CorrectAnswer, q.Explanation]);
+            foreach (var o in q.Options)
+                options.Add([q.Key, o.Order.ToString(), o.Text, Bool(o.IsCorrect)]);
+        }
+
+        foreach (var ex in a.Exercises)
+        {
+            exercises.Add([
+                ex.Key, ex.NodeKey ?? "", ex.Name, ex.Type, ex.Tier,
+                ex.DurationMinutes?.ToString() ?? "", ex.MaxAttempts?.ToString() ?? "", ex.PassingPercent.ToString()
+            ]);
+            foreach (var link in ex.Questions)
+                exQuestions.Add([ex.Key, link.QuestionKey, link.Score.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)]);
+        }
+
+        return (banks, questions, options, exercises, exQuestions);
+    }
+
     private static string Bool(bool v) => v ? "true" : "false";
 
     private static string StripPrefix(string title)
@@ -122,9 +200,11 @@ internal static class Program
     {
         var sb = new StringBuilder();
         sb.Append('﻿'); // BOM để Excel đọc đúng UTF-8 tiếng Việt
-        sb.AppendLine(string.Join(',', headers.Select(CsvField)));
+        // LF thuần: file đồng nhất một kiểu xuống dòng (tránh git coi là "đã sửa" do CRLF trộn
+        // với \n nằm trong ô có dấu ngoặc kép). Excel + bộ đọc CSV đều nhận LF.
+        sb.Append(string.Join(',', headers.Select(CsvField))).Append('\n');
         foreach (var row in rows)
-            sb.AppendLine(string.Join(',', row.Select(CsvField)));
+            sb.Append(string.Join(',', row.Select(CsvField))).Append('\n');
         File.WriteAllText(path, sb.ToString(), new UTF8Encoding(false));
     }
 

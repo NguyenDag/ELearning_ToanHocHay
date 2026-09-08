@@ -12,7 +12,8 @@ public sealed record Book(
     decimal ListPrice,
     string VersionLabel,
     string Description,
-    List<Chapter> Chapters);
+    List<Chapter> Chapters,
+    Assessment? Assessment = null);
 
 /// <summary>Chương — node <c>Chapter</c> trong cây nội dung.</summary>
 public sealed record Chapter(

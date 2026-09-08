@@ -1,0 +1,145 @@
+﻿QuestionKey,BankKey,NodeKey,QuestionType,Difficulty,QuestionText,CorrectAnswer,Explanation
+kntt6-c1-01,kntt6,c1,MultipleChoice,Hard,Kết quả của phép tính 441 × 54 là:,23814,441 × 54 = 23814.
+kntt6-c1-02,kntt6,c1,TrueFalse,Medium,Khẳng định sau đúng hay sai: 2103 < 1118.,false,So sánh: 2103 > 1118.
+kntt6-c1-03,kntt6,c1,FillBlank,Hard,"Trong số 74016, chữ số 4 ở hàng nghìn có giá trị bằng bao nhiêu?",4000,Giá trị = 4 × 1000 = 4000.
+kntt6-c1-04,kntt6,c1,MultipleChoice,Easy,Giá trị của luỹ thừa 6^3 là:,216,6^3 = 6 × 6 × 6 = 216.
+kntt6-c1-05,kntt6,c1,MultipleChoice,Easy,Kết quả của phép tính 652 − 40 là:,612,652 − 40 = 612.
+kntt6-c1-06,kntt6,c1,TrueFalse,Medium,Khẳng định sau đúng hay sai: 2644 > 3582.,false,So sánh: 2644 < 3582.
+kntt6-c1-07,kntt6,c1,FillBlank,Hard,"Trong số 94278, chữ số 2 ở hàng trăm có giá trị bằng bao nhiêu?",200,Giá trị = 2 × 100 = 200.
+kntt6-c1-08,kntt6,c1,MultipleChoice,Hard,Giá trị của luỹ thừa 5^3 là:,125,5^3 = 5 × 5 × 5 = 125.
+kntt6-c1-09,kntt6,c1,MultipleChoice,Hard,Kết quả của phép tính 529 × 47 là:,24863,529 × 47 = 24863.
+kntt6-c1-10,kntt6,c1,TrueFalse,Easy,Khẳng định sau đúng hay sai: 6586 < 9860.,true,So sánh: 6586 < 9860.
+kntt6-c1-11,kntt6,c1,FillBlank,Easy,"Trong số 96586, chữ số 6 ở hàng đơn vị có giá trị bằng bao nhiêu?",6,Giá trị = 6 × 1 = 6.
+kntt6-c1-12,kntt6,c1,MultipleChoice,Medium,Giá trị của luỹ thừa 6^2 là:,36,6^2 = 6 × 6 = 36.
+kntt6-c1-13,kntt6,c1,MultipleChoice,Medium,Kết quả của phép tính 679 × 173 là:,117467,679 × 173 = 117467.
+kntt6-c1-14,kntt6,c1,TrueFalse,Hard,Khẳng định sau đúng hay sai: 4693 < 3598.,false,So sánh: 4693 > 3598.
+kntt6-c1-15,kntt6,c1,FillBlank,Medium,"Trong số 46490, chữ số 6 ở hàng nghìn có giá trị bằng bao nhiêu?",6000,Giá trị = 6 × 1000 = 6000.
+kntt6-c1-16,kntt6,c1,MultipleChoice,Hard,Giá trị của luỹ thừa 4^4 là:,256,4^4 = 4 × 4 × 4 × 4 = 256.
+kntt6-c2-01,kntt6,c2,TrueFalse,Hard,Khẳng định sau đúng hay sai: 196 chia hết cho 2.,true,196 : 2 là phép chia hết.
+kntt6-c2-02,kntt6,c2,MultipleChoice,Medium,Số nào sau đây là số nguyên tố?,13,13 chỉ có hai ước là 1 và 13 nên là số nguyên tố.
+kntt6-c2-03,kntt6,c2,FillBlank,Medium,"Phân tích số 18 ra thừa số nguyên tố (viết dạng tích luỹ thừa, ví dụ 2^2 × 3):",2 × 3^2,18 = 2 × 3^2.
+kntt6-c2-04,kntt6,c2,MultipleChoice,Medium,"Giá trị của ƯCLN(16, 23) là:",1,"ƯCLN(16, 23) = 1."
+kntt6-c2-05,kntt6,c2,TrueFalse,Easy,Khẳng định sau đúng hay sai: 911 chia hết cho 9.,false,911 : 9 dư 2.
+kntt6-c2-06,kntt6,c2,MultipleChoice,Hard,Số nào sau đây là số nguyên tố?,5,5 chỉ có hai ước là 1 và 5 nên là số nguyên tố.
+kntt6-c2-07,kntt6,c2,FillBlank,Medium,"Phân tích số 84 ra thừa số nguyên tố (viết dạng tích luỹ thừa, ví dụ 2^2 × 3):",2^2 × 3 × 7,84 = 2^2 × 3 × 7.
+kntt6-c2-08,kntt6,c2,MultipleChoice,Medium,"Giá trị của BCNN(9, 11) là:",99,"BCNN(9, 11) = 99."
+kntt6-c2-09,kntt6,c2,TrueFalse,Easy,Khẳng định sau đúng hay sai: 204 chia hết cho 3.,true,204 : 3 là phép chia hết.
+kntt6-c2-10,kntt6,c2,MultipleChoice,Medium,Số nào sau đây là số nguyên tố?,19,19 chỉ có hai ước là 1 và 19 nên là số nguyên tố.
+kntt6-c2-11,kntt6,c2,FillBlank,Medium,"Phân tích số 45 ra thừa số nguyên tố (viết dạng tích luỹ thừa, ví dụ 2^2 × 3):",3^2 × 5,45 = 3^2 × 5.
+kntt6-c2-12,kntt6,c2,MultipleChoice,Medium,"Giá trị của BCNN(17, 6) là:",102,"BCNN(17, 6) = 102."
+kntt6-c2-13,kntt6,c2,TrueFalse,Easy,Khẳng định sau đúng hay sai: 798 chia hết cho 9.,false,798 : 9 dư 6.
+kntt6-c2-14,kntt6,c2,MultipleChoice,Medium,Số nào sau đây là số nguyên tố?,5,5 chỉ có hai ước là 1 và 5 nên là số nguyên tố.
+kntt6-c2-15,kntt6,c2,FillBlank,Medium,"Phân tích số 100 ra thừa số nguyên tố (viết dạng tích luỹ thừa, ví dụ 2^2 × 3):",2^2 × 5^2,100 = 2^2 × 5^2.
+kntt6-c2-16,kntt6,c2,MultipleChoice,Medium,"Giá trị của BCNN(20, 12) là:",60,"BCNN(20, 12) = 60."
+kntt6-c3-01,kntt6,c3,MultipleChoice,Hard,Kết quả của phép tính (-27) + (-20) là:,-47,(-27) + (-20) = -47.
+kntt6-c3-02,kntt6,c3,TrueFalse,Easy,Khẳng định sau đúng hay sai: -42 > -21.,false,"Trên trục số, -21 nằm bên phải -42."
+kntt6-c3-03,kntt6,c3,FillBlank,Easy,Giá trị tuyệt đối |-48| bằng bao nhiêu?,48,|-48| = 48 (khoảng cách từ điểm -48 đến gốc 0).
+kntt6-c3-04,kntt6,c3,MultipleChoice,Hard,"Nhiệt độ lúc đầu là -4°C, sau đó giảm 6°C. Nhiệt độ lúc sau là:",-10°C,-4 − 6 = -10.
+kntt6-c3-05,kntt6,c3,MultipleChoice,Medium,Kết quả của phép tính (22) + (-27) là:,-5,(22) + (-27) = -5.
+kntt6-c3-06,kntt6,c3,TrueFalse,Easy,Khẳng định sau đúng hay sai: -38 > -50.,true,"Trên trục số, -38 nằm bên phải -50."
+kntt6-c3-07,kntt6,c3,FillBlank,Easy,Giá trị tuyệt đối |-32| bằng bao nhiêu?,32,|-32| = 32 (khoảng cách từ điểm -32 đến gốc 0).
+kntt6-c3-08,kntt6,c3,MultipleChoice,Medium,"Nhiệt độ lúc đầu là -3°C, sau đó giảm 11°C. Nhiệt độ lúc sau là:",-14°C,-3 − 11 = -14.
+kntt6-c3-09,kntt6,c3,MultipleChoice,Hard,Kết quả của phép tính (7) − (-28) là:,35,(7) − (-28) = 35.
+kntt6-c3-10,kntt6,c3,TrueFalse,Easy,Khẳng định sau đúng hay sai: -18 > -32.,true,"Trên trục số, -18 nằm bên phải -32."
+kntt6-c3-11,kntt6,c3,FillBlank,Easy,Giá trị tuyệt đối |-46| bằng bao nhiêu?,46,|-46| = 46 (khoảng cách từ điểm -46 đến gốc 0).
+kntt6-c3-12,kntt6,c3,MultipleChoice,Easy,"Nhiệt độ lúc đầu là 1°C, sau đó tăng 5°C. Nhiệt độ lúc sau là:",6°C,1 + 5 = 6.
+kntt6-c3-13,kntt6,c3,MultipleChoice,Hard,Kết quả của phép tính (-6) × (-22) là:,132,(-6) × (-22) = 132.
+kntt6-c3-14,kntt6,c3,TrueFalse,Easy,Khẳng định sau đúng hay sai: -44 > -46.,true,"Trên trục số, -44 nằm bên phải -46."
+kntt6-c3-15,kntt6,c3,FillBlank,Easy,Giá trị tuyệt đối |-59| bằng bao nhiêu?,59,|-59| = 59 (khoảng cách từ điểm -59 đến gốc 0).
+kntt6-c3-16,kntt6,c3,MultipleChoice,Easy,"Nhiệt độ lúc đầu là -6°C, sau đó tăng 7°C. Nhiệt độ lúc sau là:",1°C,-6 + 7 = 1.
+kntt6-c4-01,kntt6,c4,MultipleChoice,Medium,"Hình chữ nhật dài 9 cm, rộng 10 cm. Diện tích của nó là:",90 cm²,S = 9 × 10 = 90 (cm²).
+kntt6-c4-02,kntt6,c4,TrueFalse,Easy,Khẳng định sau đúng hay sai: Hình chữ nhật có bốn cạnh luôn bằng nhau.,false,Khẳng định này sai với định nghĩa.
+kntt6-c4-03,kntt6,c4,FillBlank,Easy,"Chu vi hình chữ nhật dài 5 m, rộng 13 m bằng bao nhiêu mét?",36,P = 2 × (5 + 13) = 36 (m).
+kntt6-c4-04,kntt6,c4,MultipleChoice,Medium,"Tam giác có đáy 18 cm, chiều cao 4 cm. Diện tích của tam giác là:",36 cm²,S = (đáy × chiều cao) : 2 = (18 × 4) : 2 = 36 (cm²).
+kntt6-c4-05,kntt6,c4,MultipleChoice,Easy,"Hình chữ nhật dài 15 cm, rộng 9 cm. Diện tích của nó là:",135 cm²,S = 15 × 9 = 135 (cm²).
+kntt6-c4-06,kntt6,c4,TrueFalse,Medium,Khẳng định sau đúng hay sai: Hình thang cân có hai đường chéo bằng nhau.,true,Đây là tính chất đúng của hình đó.
+kntt6-c4-07,kntt6,c4,FillBlank,Easy,"Chu vi hình chữ nhật dài 8 m, rộng 19 m bằng bao nhiêu mét?",54,P = 2 × (8 + 19) = 54 (m).
+kntt6-c4-08,kntt6,c4,MultipleChoice,Medium,"Tam giác có đáy 38 cm, chiều cao 11 cm. Diện tích của tam giác là:",209 cm²,S = (đáy × chiều cao) : 2 = (38 × 11) : 2 = 209 (cm²).
+kntt6-c4-09,kntt6,c4,MultipleChoice,Easy,"Hình chữ nhật dài 17 cm, rộng 12 cm. Diện tích của nó là:",204 cm²,S = 17 × 12 = 204 (cm²).
+kntt6-c4-10,kntt6,c4,TrueFalse,Hard,Khẳng định sau đúng hay sai: Hình thang cân có hai đường chéo bằng nhau.,true,Đây là tính chất đúng của hình đó.
+kntt6-c4-11,kntt6,c4,FillBlank,Easy,"Chu vi hình chữ nhật dài 22 m, rộng 11 m bằng bao nhiêu mét?",66,P = 2 × (22 + 11) = 66 (m).
+kntt6-c4-12,kntt6,c4,MultipleChoice,Medium,"Tam giác có đáy 12 cm, chiều cao 9 cm. Diện tích của tam giác là:",54 cm²,S = (đáy × chiều cao) : 2 = (12 × 9) : 2 = 54 (cm²).
+kntt6-c4-13,kntt6,c4,MultipleChoice,Medium,"Hình chữ nhật dài 18 cm, rộng 8 cm. Diện tích của nó là:",144 cm²,S = 18 × 8 = 144 (cm²).
+kntt6-c4-14,kntt6,c4,TrueFalse,Medium,Khẳng định sau đúng hay sai: Hình thoi có bốn góc vuông.,false,Khẳng định này sai với định nghĩa.
+kntt6-c4-15,kntt6,c4,FillBlank,Easy,"Chu vi hình chữ nhật dài 18 m, rộng 9 m bằng bao nhiêu mét?",54,P = 2 × (18 + 9) = 54 (m).
+kntt6-c4-16,kntt6,c4,MultipleChoice,Medium,"Tam giác có đáy 28 cm, chiều cao 3 cm. Diện tích của tam giác là:",42 cm²,S = (đáy × chiều cao) : 2 = (28 × 3) : 2 = 42 (cm²).
+kntt6-c5-01,kntt6,c5,MultipleChoice,Medium,Số trục đối xứng của hình thoi (không phải hình vuông) là:,2,hình thoi (không phải hình vuông) có 2 trục đối xứng.
+kntt6-c5-02,kntt6,c5,TrueFalse,Easy,"Khẳng định sau đúng hay sai: chữ in hoa ""F"" có trục đối xứng.",false,Chữ F không có trục đối xứng.
+kntt6-c5-03,kntt6,c5,TrueFalse,Hard,Khẳng định sau đúng hay sai: Hình chữ nhật có tâm đối xứng.,true,Quay nửa vòng quanh tâm thì hình trùng chính nó.
+kntt6-c5-04,kntt6,c5,FillBlank,Easy,Số trục đối xứng của hình vuông là bao nhiêu?,4,hình vuông có 4 trục đối xứng.
+kntt6-c5-05,kntt6,c5,MultipleChoice,Hard,Số trục đối xứng của hình vuông là:,4,hình vuông có 4 trục đối xứng.
+kntt6-c5-06,kntt6,c5,TrueFalse,Hard,"Khẳng định sau đúng hay sai: chữ in hoa ""N"" có trục đối xứng.",false,Chữ N không có trục đối xứng.
+kntt6-c5-07,kntt6,c5,TrueFalse,Medium,Khẳng định sau đúng hay sai: Hình lục giác đều có tâm đối xứng.,true,Quay nửa vòng quanh tâm thì hình trùng chính nó.
+kntt6-c5-08,kntt6,c5,FillBlank,Easy,Số trục đối xứng của hình vuông là bao nhiêu?,4,hình vuông có 4 trục đối xứng.
+kntt6-c5-09,kntt6,c5,MultipleChoice,Easy,Số trục đối xứng của tam giác đều là:,3,tam giác đều có 3 trục đối xứng.
+kntt6-c5-10,kntt6,c5,TrueFalse,Medium,"Khẳng định sau đúng hay sai: chữ in hoa ""F"" có trục đối xứng.",false,Chữ F không có trục đối xứng.
+kntt6-c5-11,kntt6,c5,TrueFalse,Easy,Khẳng định sau đúng hay sai: Tam giác đều có tâm đối xứng.,false,Hình này không có tâm đối xứng.
+kntt6-c5-12,kntt6,c5,FillBlank,Easy,Số trục đối xứng của hình vuông là bao nhiêu?,4,hình vuông có 4 trục đối xứng.
+kntt6-c5-13,kntt6,c5,MultipleChoice,Easy,Số trục đối xứng của hình chữ nhật (không phải hình vuông) là:,2,hình chữ nhật (không phải hình vuông) có 2 trục đối xứng.
+kntt6-c5-14,kntt6,c5,TrueFalse,Easy,"Khẳng định sau đúng hay sai: chữ in hoa ""F"" có trục đối xứng.",false,Chữ F không có trục đối xứng.
+kntt6-c5-15,kntt6,c5,TrueFalse,Hard,Khẳng định sau đúng hay sai: Hình chữ nhật có tâm đối xứng.,true,Quay nửa vòng quanh tâm thì hình trùng chính nó.
+kntt6-c5-16,kntt6,c5,FillBlank,Easy,Số trục đối xứng của hình vuông là bao nhiêu?,4,hình vuông có 4 trục đối xứng.
+kntt6-c6-01,kntt6,c6,FillBlank,Medium,Tính và rút gọn: 5/8 + 1/3 = ? (viết phân số tối giản dạng a/b),23/24,5/8 + 1/3 = 23/24 = 23/24.
+kntt6-c6-02,kntt6,c6,MultipleChoice,Medium,Phân số nào lớn hơn: 2/7 hay 1/7?,2/7,Quy đồng: 2/7 = 14/49; 1/7 = 7/49.
+kntt6-c6-03,kntt6,c6,MultipleChoice,Medium,Kết quả của 2/2 × 5/7 (rút gọn) là:,5/7,2/2 × 5/7 = 10/14 = 5/7.
+kntt6-c6-04,kntt6,c6,TrueFalse,Easy,Khẳng định sau đúng hay sai: 4/3 = 8/7.,false,4/3 ≠ 8/7 vì tích chéo khác nhau.
+kntt6-c6-05,kntt6,c6,FillBlank,Medium,Tính và rút gọn: 5/6 + 4/7 = ? (viết phân số tối giản dạng a/b),59/42,5/6 + 4/7 = 59/42 = 59/42.
+kntt6-c6-06,kntt6,c6,MultipleChoice,Medium,Phân số nào lớn hơn: 3/4 hay 5/7?,3/4,Quy đồng: 3/4 = 21/28; 5/7 = 20/28.
+kntt6-c6-07,kntt6,c6,MultipleChoice,Medium,Kết quả của 2/2 × 1/3 (rút gọn) là:,1/3,2/2 × 1/3 = 2/6 = 1/3.
+kntt6-c6-08,kntt6,c6,TrueFalse,Easy,Khẳng định sau đúng hay sai: 2/2 = 6/6.,true,Nhân cả tử và mẫu của 2/2 với 3 được 6/6.
+kntt6-c6-09,kntt6,c6,FillBlank,Medium,Tính và rút gọn: 2/4 + 4/5 = ? (viết phân số tối giản dạng a/b),13/10,2/4 + 4/5 = 26/20 = 13/10.
+kntt6-c6-10,kntt6,c6,MultipleChoice,Easy,Phân số nào lớn hơn: 3/5 hay 5/8?,5/8,Quy đồng: 3/5 = 24/40; 5/8 = 25/40.
+kntt6-c6-11,kntt6,c6,MultipleChoice,Medium,Kết quả của 5/7 × 1/4 (rút gọn) là:,5/28,5/7 × 1/4 = 5/28 = 5/28.
+kntt6-c6-12,kntt6,c6,TrueFalse,Medium,Khẳng định sau đúng hay sai: 4/5 = 12/15.,true,Nhân cả tử và mẫu của 4/5 với 3 được 12/15.
+kntt6-c6-13,kntt6,c6,FillBlank,Medium,Tính và rút gọn: 2/5 + 2/3 = ? (viết phân số tối giản dạng a/b),16/15,2/5 + 2/3 = 16/15 = 16/15.
+kntt6-c6-14,kntt6,c6,MultipleChoice,Medium,Phân số nào lớn hơn: 8/9 hay 4/5?,8/9,Quy đồng: 8/9 = 40/45; 4/5 = 36/45.
+kntt6-c6-15,kntt6,c6,MultipleChoice,Medium,Kết quả của 1/5 × 6/5 (rút gọn) là:,6/25,1/5 × 6/5 = 6/25 = 6/25.
+kntt6-c6-16,kntt6,c6,TrueFalse,Hard,Khẳng định sau đúng hay sai: 5/6 = 10/12.,true,Nhân cả tử và mẫu của 5/6 với 2 được 10/12.
+kntt6-c7-01,kntt6,c7,MultipleChoice,Hard,"Kết quả của phép tính 6,7 − 6,4 là:","0,3","6,7 − 6,4 = 0,3."
+kntt6-c7-02,kntt6,c7,FillBlank,Easy,"Làm tròn số 47,07 đến hàng phần mười.","47,1","Nhìn chữ số hàng phần trăm: 47,07 ≈ 47,1."
+kntt6-c7-03,kntt6,c7,MultipleChoice,Easy,12% của 165 là:,"19,8","165 × 12/100 = 19,8."
+kntt6-c7-04,kntt6,c7,TrueFalse,Hard,"Khẳng định sau đúng hay sai: 6,68 > 5,07.",true,"So sánh phần nguyên rồi phần thập phân: 6,68 > 5,07."
+kntt6-c7-05,kntt6,c7,MultipleChoice,Medium,"Kết quả của phép tính 6,3 + 9,5 là:","15,8","6,3 + 9,5 = 15,8."
+kntt6-c7-06,kntt6,c7,FillBlank,Easy,"Làm tròn số 99,22 đến hàng phần mười.","99,2","Nhìn chữ số hàng phần trăm: 99,22 ≈ 99,2."
+kntt6-c7-07,kntt6,c7,MultipleChoice,Hard,10% của 25 là:,"2,5","25 × 10/100 = 2,5."
+kntt6-c7-08,kntt6,c7,TrueFalse,Medium,"Khẳng định sau đúng hay sai: 9,77 > 4,75.",true,"So sánh phần nguyên rồi phần thập phân: 9,77 > 4,75."
+kntt6-c7-09,kntt6,c7,MultipleChoice,Easy,"Kết quả của phép tính 18,3 + 9,1 là:","27,4","18,3 + 9,1 = 27,4."
+kntt6-c7-10,kntt6,c7,FillBlank,Easy,"Làm tròn số 28,17 đến hàng phần mười.","28,2","Nhìn chữ số hàng phần trăm: 28,17 ≈ 28,2."
+kntt6-c7-11,kntt6,c7,MultipleChoice,Medium,5% của 125 là:,"6,25","125 × 5/100 = 6,25."
+kntt6-c7-12,kntt6,c7,TrueFalse,Easy,"Khẳng định sau đúng hay sai: 1,66 > 9,29.",false,"So sánh phần nguyên rồi phần thập phân: 1,66 < 9,29."
+kntt6-c7-13,kntt6,c7,MultipleChoice,Easy,"Kết quả của phép tính 11,7 + 5,9 là:","17,6","11,7 + 5,9 = 17,6."
+kntt6-c7-14,kntt6,c7,FillBlank,Easy,"Làm tròn số 86,25 đến hàng phần mười.","86,3","Nhìn chữ số hàng phần trăm: 86,25 ≈ 86,3."
+kntt6-c7-15,kntt6,c7,MultipleChoice,Hard,10% của 80 là:,8,80 × 10/100 = 8.
+kntt6-c7-16,kntt6,c7,TrueFalse,Medium,"Khẳng định sau đúng hay sai: 1,67 > 3,74.",false,"So sánh phần nguyên rồi phần thập phân: 1,67 < 3,74."
+kntt6-c8-01,kntt6,c8,MultipleChoice,Hard,Góc có số đo 48° là góc gì?,Góc nhọn,48° < 90° → góc nhọn.
+kntt6-c8-02,kntt6,c8,FillBlank,Easy,"Cho đoạn thẳng AB = 12 cm, M là trung điểm của AB. Độ dài MA bằng bao nhiêu cm?",6,MA = MB = AB : 2 = 12 : 2 = 6 (cm).
+kntt6-c8-03,kntt6,c8,TrueFalse,Medium,Khẳng định sau đúng hay sai: Qua hai điểm phân biệt có duy nhất một đường thẳng.,true,Đây là tính chất hình học đúng.
+kntt6-c8-04,kntt6,c8,MultipleChoice,Medium,"Hai góc bù nhau, một góc có số đo 61°. Góc còn lại có số đo:",119°,Tổng hai góc bù nhau bằng 180° nên góc còn lại = 180° − 61° = 119°.
+kntt6-c8-05,kntt6,c8,MultipleChoice,Easy,Góc có số đo 139° là góc gì?,Góc tù,139° trong (90°; 180°) → góc tù.
+kntt6-c8-06,kntt6,c8,FillBlank,Easy,"Cho đoạn thẳng AB = 18 cm, M là trung điểm của AB. Độ dài MA bằng bao nhiêu cm?",9,MA = MB = AB : 2 = 18 : 2 = 9 (cm).
+kntt6-c8-07,kntt6,c8,TrueFalse,Easy,Khẳng định sau đúng hay sai: Qua một điểm có duy nhất một đường thẳng.,false,Khẳng định này sai.
+kntt6-c8-08,kntt6,c8,MultipleChoice,Easy,"Hai góc phụ nhau, một góc có số đo 57°. Góc còn lại có số đo:",33°,Tổng hai góc phụ nhau bằng 90° nên góc còn lại = 90° − 57° = 33°.
+kntt6-c8-09,kntt6,c8,MultipleChoice,Hard,Góc có số đo 6° là góc gì?,Góc nhọn,6° < 90° → góc nhọn.
+kntt6-c8-10,kntt6,c8,FillBlank,Easy,"Cho đoạn thẳng AB = 22 cm, M là trung điểm của AB. Độ dài MA bằng bao nhiêu cm?",11,MA = MB = AB : 2 = 22 : 2 = 11 (cm).
+kntt6-c8-11,kntt6,c8,TrueFalse,Easy,Khẳng định sau đúng hay sai: Hai đường thẳng phân biệt có nhiều nhất một điểm chung.,true,Đây là tính chất hình học đúng.
+kntt6-c8-12,kntt6,c8,MultipleChoice,Medium,"Hai góc phụ nhau, một góc có số đo 54°. Góc còn lại có số đo:",36°,Tổng hai góc phụ nhau bằng 90° nên góc còn lại = 90° − 54° = 36°.
+kntt6-c8-13,kntt6,c8,MultipleChoice,Easy,Góc có số đo 162° là góc gì?,Góc tù,162° trong (90°; 180°) → góc tù.
+kntt6-c8-14,kntt6,c8,FillBlank,Easy,"Cho đoạn thẳng AB = 4 cm, M là trung điểm của AB. Độ dài MA bằng bao nhiêu cm?",2,MA = MB = AB : 2 = 4 : 2 = 2 (cm).
+kntt6-c8-15,kntt6,c8,TrueFalse,Hard,Khẳng định sau đúng hay sai: Qua hai điểm phân biệt có duy nhất một đường thẳng.,true,Đây là tính chất hình học đúng.
+kntt6-c8-16,kntt6,c8,MultipleChoice,Medium,"Hai góc phụ nhau, một góc có số đo 22°. Góc còn lại có số đo:",68°,Tổng hai góc phụ nhau bằng 90° nên góc còn lại = 90° − 22° = 68°.
+kntt6-c9-01,kntt6,c9,FillBlank,Medium,"Gieo một con xúc xắc 14 lần thì có 12 lần xuất hiện mặt 6 chấm. Xác suất thực nghiệm của sự kiện ""mặt 6 chấm"" là bao nhiêu? (viết phân số tối giản)",6/7,Xác suất thực nghiệm = 12/14 = 6/7.
+kntt6-c9-02,kntt6,c9,MultipleChoice,Easy,Bảng số học sinh yêu thích 5 môn thể thao: 7; 11; 2; 9; 5. Tổng số học sinh được khảo sát là:,34,Cộng các giá trị: 7 + 11 + 2 + 9 + 5 = 34.
+kntt6-c9-03,kntt6,c9,TrueFalse,Medium,Khẳng định sau đúng hay sai: Xác suất thực nghiệm của một sự kiện luôn lớn hơn 1.,false,Khẳng định này sai.
+kntt6-c9-04,kntt6,c9,MultipleChoice,Easy,Bảng số học sinh đạt điểm giỏi: Toán: 13; Văn: 10; Anh: 10; Khoa học: 11; Thể dục: 10. Môn nào có nhiều học sinh đạt điểm giỏi nhất?,Toán,Giá trị lớn nhất là 13 ứng với môn Toán.
+kntt6-c9-05,kntt6,c9,FillBlank,Medium,"Gieo một con xúc xắc 13 lần thì có 3 lần xuất hiện mặt 6 chấm. Xác suất thực nghiệm của sự kiện ""mặt 6 chấm"" là bao nhiêu? (viết phân số tối giản)",3/13,Xác suất thực nghiệm = 3/13 = 3/13.
+kntt6-c9-06,kntt6,c9,MultipleChoice,Easy,Bảng số học sinh yêu thích 5 môn thể thao: 3; 3; 9; 6; 11. Tổng số học sinh được khảo sát là:,32,Cộng các giá trị: 3 + 3 + 9 + 6 + 11 = 32.
+kntt6-c9-07,kntt6,c9,TrueFalse,Hard,"Khẳng định sau đúng hay sai: Khi gieo một con xúc xắc, sự kiện ""số chấm không vượt quá 6"" là sự kiện chắc chắn.",true,Khẳng định đúng theo định nghĩa.
+kntt6-c9-08,kntt6,c9,MultipleChoice,Easy,Bảng số học sinh đạt điểm giỏi: Toán: 10; Văn: 9; Anh: 5; Khoa học: 5; Thể dục: 9. Môn nào có nhiều học sinh đạt điểm giỏi nhất?,Toán,Giá trị lớn nhất là 10 ứng với môn Toán.
+kntt6-c9-09,kntt6,c9,FillBlank,Medium,"Gieo một con xúc xắc 16 lần thì có 6 lần xuất hiện mặt 6 chấm. Xác suất thực nghiệm của sự kiện ""mặt 6 chấm"" là bao nhiêu? (viết phân số tối giản)",3/8,Xác suất thực nghiệm = 6/16 = 3/8.
+kntt6-c9-10,kntt6,c9,MultipleChoice,Easy,Bảng số học sinh yêu thích 5 môn thể thao: 5; 4; 7; 10; 10. Tổng số học sinh được khảo sát là:,36,Cộng các giá trị: 5 + 4 + 7 + 10 + 10 = 36.
+kntt6-c9-11,kntt6,c9,TrueFalse,Hard,Khẳng định sau đúng hay sai: Sự kiện ngẫu nhiên là sự kiện luôn xảy ra.,false,Khẳng định này sai.
+kntt6-c9-12,kntt6,c9,MultipleChoice,Easy,Bảng số học sinh đạt điểm giỏi: Toán: 9; Văn: 5; Anh: 7; Khoa học: 14; Thể dục: 14. Môn nào có nhiều học sinh đạt điểm giỏi nhất?,Khoa học,Giá trị lớn nhất là 14 ứng với môn Khoa học.
+kntt6-c9-13,kntt6,c9,FillBlank,Medium,"Gieo một con xúc xắc 12 lần thì có 2 lần xuất hiện mặt 6 chấm. Xác suất thực nghiệm của sự kiện ""mặt 6 chấm"" là bao nhiêu? (viết phân số tối giản)",1/6,Xác suất thực nghiệm = 2/12 = 1/6.
+kntt6-c9-14,kntt6,c9,MultipleChoice,Easy,Bảng số học sinh yêu thích 5 môn thể thao: 10; 6; 2; 5; 4. Tổng số học sinh được khảo sát là:,27,Cộng các giá trị: 10 + 6 + 2 + 5 + 4 = 27.
+kntt6-c9-15,kntt6,c9,TrueFalse,Medium,Khẳng định sau đúng hay sai: Sự kiện ngẫu nhiên là sự kiện luôn xảy ra.,false,Khẳng định này sai.
+kntt6-c9-16,kntt6,c9,MultipleChoice,Easy,Bảng số học sinh đạt điểm giỏi: Toán: 3; Văn: 10; Anh: 4; Khoa học: 8; Thể dục: 9. Môn nào có nhiều học sinh đạt điểm giỏi nhất?,Văn,Giá trị lớn nhất là 10 ứng với môn Văn.

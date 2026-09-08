@@ -1,0 +1,49 @@
+﻿QuestionKey,BankKey,NodeKey,QuestionType,Difficulty,QuestionText,CorrectAnswer,Explanation
+cd6-c1-01,cd6,c1,MultipleChoice,Hard,Kết quả của phép tính 476 + 277 là:,753,476 + 277 = 753.
+cd6-c1-02,cd6,c1,TrueFalse,Easy,Khẳng định sau đúng hay sai: 2367 < 4416.,true,So sánh: 2367 < 4416.
+cd6-c1-03,cd6,c1,FillBlank,Hard,"Trong số 67736, chữ số 6 ở hàng chục nghìn có giá trị bằng bao nhiêu?",60000,Giá trị = 6 × 10000 = 60000.
+cd6-c1-04,cd6,c1,MultipleChoice,Medium,Giá trị của luỹ thừa 3^4 là:,81,3^4 = 3 × 3 × 3 × 3 = 81.
+cd6-c1-05,cd6,c1,TrueFalse,Easy,Khẳng định sau đúng hay sai: 712 chia hết cho 2.,true,712 : 2 là phép chia hết.
+cd6-c1-06,cd6,c1,MultipleChoice,Easy,Số nào sau đây là số nguyên tố?,2,2 chỉ có hai ước là 1 và 2 nên là số nguyên tố.
+cd6-c1-07,cd6,c1,FillBlank,Medium,"Phân tích số 36 ra thừa số nguyên tố (viết dạng tích luỹ thừa, ví dụ 2^2 × 3):",2^2 × 3^2,36 = 2^2 × 3^2.
+cd6-c1-08,cd6,c1,MultipleChoice,Medium,"Giá trị của ƯCLN(16, 7) là:",1,"ƯCLN(16, 7) = 1."
+cd6-c2-01,cd6,c2,MultipleChoice,Hard,Kết quả của phép tính (27) − (2) là:,25,(27) − (2) = 25.
+cd6-c2-02,cd6,c2,TrueFalse,Medium,Khẳng định sau đúng hay sai: -38 > -40.,true,"Trên trục số, -38 nằm bên phải -40."
+cd6-c2-03,cd6,c2,FillBlank,Easy,Giá trị tuyệt đối |-17| bằng bao nhiêu?,17,|-17| = 17 (khoảng cách từ điểm -17 đến gốc 0).
+cd6-c2-04,cd6,c2,MultipleChoice,Hard,"Nhiệt độ lúc đầu là -4°C, sau đó tăng 10°C. Nhiệt độ lúc sau là:",6°C,-4 + 10 = 6.
+cd6-c2-05,cd6,c2,MultipleChoice,Medium,Kết quả của phép tính (16) × (-4) là:,-64,(16) × (-4) = -64.
+cd6-c2-06,cd6,c2,TrueFalse,Hard,Khẳng định sau đúng hay sai: -4 > -10.,true,"Trên trục số, -4 nằm bên phải -10."
+cd6-c2-07,cd6,c2,FillBlank,Easy,Giá trị tuyệt đối |-15| bằng bao nhiêu?,15,|-15| = 15 (khoảng cách từ điểm -15 đến gốc 0).
+cd6-c2-08,cd6,c2,MultipleChoice,Hard,"Nhiệt độ lúc đầu là 0°C, sau đó giảm 11°C. Nhiệt độ lúc sau là:",-11°C,0 − 11 = -11.
+cd6-c3-01,cd6,c3,MultipleChoice,Hard,"Hình chữ nhật dài 13 cm, rộng 9 cm. Diện tích của nó là:",117 cm²,S = 13 × 9 = 117 (cm²).
+cd6-c3-02,cd6,c3,TrueFalse,Medium,Khẳng định sau đúng hay sai: Hình lục giác đều có sáu cạnh bằng nhau.,true,Đây là tính chất đúng của hình đó.
+cd6-c3-03,cd6,c3,FillBlank,Easy,"Chu vi hình chữ nhật dài 24 m, rộng 16 m bằng bao nhiêu mét?",80,P = 2 × (24 + 16) = 80 (m).
+cd6-c3-04,cd6,c3,MultipleChoice,Medium,"Tam giác có đáy 32 cm, chiều cao 8 cm. Diện tích của tam giác là:",128 cm²,S = (đáy × chiều cao) : 2 = (32 × 8) : 2 = 128 (cm²).
+cd6-c3-05,cd6,c3,MultipleChoice,Medium,Số trục đối xứng của hình chữ nhật (không phải hình vuông) là:,2,hình chữ nhật (không phải hình vuông) có 2 trục đối xứng.
+cd6-c3-06,cd6,c3,TrueFalse,Hard,"Khẳng định sau đúng hay sai: chữ in hoa ""H"" có trục đối xứng.",true,Chữ H có ít nhất một trục đối xứng.
+cd6-c3-07,cd6,c3,TrueFalse,Hard,Khẳng định sau đúng hay sai: Hình chữ nhật có tâm đối xứng.,true,Quay nửa vòng quanh tâm thì hình trùng chính nó.
+cd6-c3-08,cd6,c3,FillBlank,Easy,Số trục đối xứng của tam giác đều là bao nhiêu?,3,tam giác đều có 3 trục đối xứng.
+cd6-c4-01,cd6,c4,FillBlank,Medium,"Gieo một con xúc xắc 35 lần thì có 14 lần xuất hiện mặt 6 chấm. Xác suất thực nghiệm của sự kiện ""mặt 6 chấm"" là bao nhiêu? (viết phân số tối giản)",2/5,Xác suất thực nghiệm = 14/35 = 2/5.
+cd6-c4-02,cd6,c4,MultipleChoice,Easy,Bảng số học sinh yêu thích 5 môn thể thao: 10; 2; 3; 6; 7. Tổng số học sinh được khảo sát là:,28,Cộng các giá trị: 10 + 2 + 3 + 6 + 7 = 28.
+cd6-c4-03,cd6,c4,TrueFalse,Easy,"Khẳng định sau đúng hay sai: Khi tung đồng xu, khả năng ra mặt sấp và mặt ngửa là như nhau.",true,Khẳng định đúng theo định nghĩa.
+cd6-c4-04,cd6,c4,MultipleChoice,Easy,Bảng số học sinh đạt điểm giỏi: Toán: 14; Văn: 9; Anh: 11; Khoa học: 12; Thể dục: 8. Môn nào có nhiều học sinh đạt điểm giỏi nhất?,Toán,Giá trị lớn nhất là 14 ứng với môn Toán.
+cd6-c4-05,cd6,c4,FillBlank,Medium,"Gieo một con xúc xắc 33 lần thì có 4 lần xuất hiện mặt 6 chấm. Xác suất thực nghiệm của sự kiện ""mặt 6 chấm"" là bao nhiêu? (viết phân số tối giản)",4/33,Xác suất thực nghiệm = 4/33 = 4/33.
+cd6-c4-06,cd6,c4,MultipleChoice,Easy,Bảng số học sinh yêu thích 5 môn thể thao: 2; 3; 7; 8; 8. Tổng số học sinh được khảo sát là:,28,Cộng các giá trị: 2 + 3 + 7 + 8 + 8 = 28.
+cd6-c4-07,cd6,c4,TrueFalse,Hard,Khẳng định sau đúng hay sai: Sự kiện ngẫu nhiên là sự kiện luôn xảy ra.,false,Khẳng định này sai.
+cd6-c4-08,cd6,c4,MultipleChoice,Easy,Bảng số học sinh đạt điểm giỏi: Toán: 14; Văn: 9; Anh: 13; Khoa học: 6; Thể dục: 6. Môn nào có nhiều học sinh đạt điểm giỏi nhất?,Toán,Giá trị lớn nhất là 14 ứng với môn Toán.
+cd6-c5-01,cd6,c5,FillBlank,Medium,Tính và rút gọn: 5/6 + 6/7 = ? (viết phân số tối giản dạng a/b),71/42,5/6 + 6/7 = 71/42 = 71/42.
+cd6-c5-02,cd6,c5,MultipleChoice,Hard,Phân số nào lớn hơn: 1/8 hay 7/8?,7/8,Quy đồng: 1/8 = 8/64; 7/8 = 56/64.
+cd6-c5-03,cd6,c5,MultipleChoice,Medium,Kết quả của 4/7 × 2/4 (rút gọn) là:,2/7,4/7 × 2/4 = 8/28 = 2/7.
+cd6-c5-04,cd6,c5,TrueFalse,Hard,Khẳng định sau đúng hay sai: 2/6 = 6/19.,false,2/6 ≠ 6/19 vì tích chéo khác nhau.
+cd6-c5-05,cd6,c5,MultipleChoice,Hard,"Kết quả của phép tính 18,6 + 2,4 là:",21,"18,6 + 2,4 = 21."
+cd6-c5-06,cd6,c5,FillBlank,Easy,"Làm tròn số 59,80 đến hàng phần mười.","59,8","Nhìn chữ số hàng phần trăm: 59,80 ≈ 59,8."
+cd6-c5-07,cd6,c5,MultipleChoice,Hard,50% của 115 là:,"57,5","115 × 50/100 = 57,5."
+cd6-c5-08,cd6,c5,TrueFalse,Easy,"Khẳng định sau đúng hay sai: 7,64 > 5,58.",true,"So sánh phần nguyên rồi phần thập phân: 7,64 > 5,58."
+cd6-c6-01,cd6,c6,MultipleChoice,Hard,Góc có số đo 169° là góc gì?,Góc tù,169° trong (90°; 180°) → góc tù.
+cd6-c6-02,cd6,c6,FillBlank,Easy,"Cho đoạn thẳng AB = 34 cm, M là trung điểm của AB. Độ dài MA bằng bao nhiêu cm?",17,MA = MB = AB : 2 = 34 : 2 = 17 (cm).
+cd6-c6-03,cd6,c6,TrueFalse,Hard,Khẳng định sau đúng hay sai: Trung điểm chia đoạn thẳng thành hai phần bằng nhau.,true,Đây là tính chất hình học đúng.
+cd6-c6-04,cd6,c6,MultipleChoice,Easy,"Hai góc bù nhau, một góc có số đo 43°. Góc còn lại có số đo:",137°,Tổng hai góc bù nhau bằng 180° nên góc còn lại = 180° − 43° = 137°.
+cd6-c6-05,cd6,c6,MultipleChoice,Hard,Góc có số đo 122° là góc gì?,Góc tù,122° trong (90°; 180°) → góc tù.
+cd6-c6-06,cd6,c6,FillBlank,Easy,"Cho đoạn thẳng AB = 30 cm, M là trung điểm của AB. Độ dài MA bằng bao nhiêu cm?",15,MA = MB = AB : 2 = 30 : 2 = 15 (cm).
+cd6-c6-07,cd6,c6,TrueFalse,Easy,Khẳng định sau đúng hay sai: Trung điểm chia đoạn thẳng thành hai phần bằng nhau.,true,Đây là tính chất hình học đúng.
+cd6-c6-08,cd6,c6,MultipleChoice,Hard,"Hai góc phụ nhau, một góc có số đo 60°. Góc còn lại có số đo:",30°,Tổng hai góc phụ nhau bằng 90° nên góc còn lại = 90° − 60° = 30°.

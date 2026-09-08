@@ -1,0 +1,73 @@
+﻿QuestionKey,BankKey,NodeKey,QuestionType,Difficulty,QuestionText,CorrectAnswer,Explanation
+ctst6-c1-01,ctst6,c1,MultipleChoice,Easy,Kết quả của phép tính 849 − 165 là:,684,849 − 165 = 684.
+ctst6-c1-02,ctst6,c1,TrueFalse,Easy,Khẳng định sau đúng hay sai: 5745 > 9632.,false,So sánh: 5745 < 9632.
+ctst6-c1-03,ctst6,c1,FillBlank,Medium,"Trong số 32888, chữ số 8 ở hàng đơn vị có giá trị bằng bao nhiêu?",8,Giá trị = 8 × 1 = 8.
+ctst6-c1-04,ctst6,c1,MultipleChoice,Medium,Giá trị của luỹ thừa 3^3 là:,27,3^3 = 3 × 3 × 3 = 27.
+ctst6-c1-05,ctst6,c1,TrueFalse,Hard,Khẳng định sau đúng hay sai: 887 chia hết cho 9.,false,887 : 9 dư 5.
+ctst6-c1-06,ctst6,c1,MultipleChoice,Hard,Số nào sau đây là số nguyên tố?,23,23 chỉ có hai ước là 1 và 23 nên là số nguyên tố.
+ctst6-c1-07,ctst6,c1,FillBlank,Medium,"Phân tích số 12 ra thừa số nguyên tố (viết dạng tích luỹ thừa, ví dụ 2^2 × 3):",2^2 × 3,12 = 2^2 × 3.
+ctst6-c1-08,ctst6,c1,MultipleChoice,Medium,"Giá trị của ƯCLN(16, 23) là:",1,"ƯCLN(16, 23) = 1."
+ctst6-c2-01,ctst6,c2,MultipleChoice,Medium,Kết quả của phép tính (12) + (-12) là:,0,(12) + (-12) = 0.
+ctst6-c2-02,ctst6,c2,TrueFalse,Medium,Khẳng định sau đúng hay sai: -41 > -32.,false,"Trên trục số, -32 nằm bên phải -41."
+ctst6-c2-03,ctst6,c2,FillBlank,Easy,Giá trị tuyệt đối |-84| bằng bao nhiêu?,84,|-84| = 84 (khoảng cách từ điểm -84 đến gốc 0).
+ctst6-c2-04,ctst6,c2,MultipleChoice,Hard,"Nhiệt độ lúc đầu là -3°C, sau đó tăng 8°C. Nhiệt độ lúc sau là:",5°C,-3 + 8 = 5.
+ctst6-c2-05,ctst6,c2,MultipleChoice,Easy,Kết quả của phép tính (15) − (-1) là:,16,(15) − (-1) = 16.
+ctst6-c2-06,ctst6,c2,TrueFalse,Medium,Khẳng định sau đúng hay sai: -24 > -5.,false,"Trên trục số, -5 nằm bên phải -24."
+ctst6-c2-07,ctst6,c2,FillBlank,Easy,Giá trị tuyệt đối |-52| bằng bao nhiêu?,52,|-52| = 52 (khoảng cách từ điểm -52 đến gốc 0).
+ctst6-c2-08,ctst6,c2,MultipleChoice,Medium,"Nhiệt độ lúc đầu là -8°C, sau đó giảm 6°C. Nhiệt độ lúc sau là:",-14°C,-8 − 6 = -14.
+ctst6-c3-01,ctst6,c3,MultipleChoice,Easy,"Hình chữ nhật dài 13 cm, rộng 12 cm. Diện tích của nó là:",156 cm²,S = 13 × 12 = 156 (cm²).
+ctst6-c3-02,ctst6,c3,TrueFalse,Easy,Khẳng định sau đúng hay sai: Hình thang cân có hai đường chéo bằng nhau.,true,Đây là tính chất đúng của hình đó.
+ctst6-c3-03,ctst6,c3,FillBlank,Easy,"Chu vi hình chữ nhật dài 19 m, rộng 15 m bằng bao nhiêu mét?",68,P = 2 × (19 + 15) = 68 (m).
+ctst6-c3-04,ctst6,c3,MultipleChoice,Medium,"Tam giác có đáy 32 cm, chiều cao 10 cm. Diện tích của tam giác là:",160 cm²,S = (đáy × chiều cao) : 2 = (32 × 10) : 2 = 160 (cm²).
+ctst6-c3-05,ctst6,c3,MultipleChoice,Hard,"Hình chữ nhật dài 15 cm, rộng 11 cm. Diện tích của nó là:",165 cm²,S = 15 × 11 = 165 (cm²).
+ctst6-c3-06,ctst6,c3,TrueFalse,Hard,Khẳng định sau đúng hay sai: Hình vuông có bốn cạnh bằng nhau và bốn góc vuông.,true,Đây là tính chất đúng của hình đó.
+ctst6-c3-07,ctst6,c3,FillBlank,Easy,"Chu vi hình chữ nhật dài 17 m, rộng 13 m bằng bao nhiêu mét?",60,P = 2 × (17 + 13) = 60 (m).
+ctst6-c3-08,ctst6,c3,MultipleChoice,Medium,"Tam giác có đáy 12 cm, chiều cao 10 cm. Diện tích của tam giác là:",60 cm²,S = (đáy × chiều cao) : 2 = (12 × 10) : 2 = 60 (cm²).
+ctst6-c4-01,ctst6,c4,FillBlank,Medium,"Gieo một con xúc xắc 12 lần thì có 11 lần xuất hiện mặt 6 chấm. Xác suất thực nghiệm của sự kiện ""mặt 6 chấm"" là bao nhiêu? (viết phân số tối giản)",11/12,Xác suất thực nghiệm = 11/12 = 11/12.
+ctst6-c4-02,ctst6,c4,MultipleChoice,Easy,Bảng số học sinh yêu thích 5 môn thể thao: 9; 7; 2; 2; 10. Tổng số học sinh được khảo sát là:,30,Cộng các giá trị: 9 + 7 + 2 + 2 + 10 = 30.
+ctst6-c4-03,ctst6,c4,TrueFalse,Easy,"Khẳng định sau đúng hay sai: Khi tung đồng xu, khả năng ra mặt sấp và mặt ngửa là như nhau.",true,Khẳng định đúng theo định nghĩa.
+ctst6-c4-04,ctst6,c4,MultipleChoice,Easy,Bảng số học sinh đạt điểm giỏi: Toán: 10; Văn: 3; Anh: 12; Khoa học: 6; Thể dục: 10. Môn nào có nhiều học sinh đạt điểm giỏi nhất?,Anh,Giá trị lớn nhất là 12 ứng với môn Anh.
+ctst6-c4-05,ctst6,c4,FillBlank,Medium,"Gieo một con xúc xắc 16 lần thì có 9 lần xuất hiện mặt 6 chấm. Xác suất thực nghiệm của sự kiện ""mặt 6 chấm"" là bao nhiêu? (viết phân số tối giản)",9/16,Xác suất thực nghiệm = 9/16 = 9/16.
+ctst6-c4-06,ctst6,c4,MultipleChoice,Easy,Bảng số học sinh yêu thích 5 môn thể thao: 11; 5; 10; 6; 6. Tổng số học sinh được khảo sát là:,38,Cộng các giá trị: 11 + 5 + 10 + 6 + 6 = 38.
+ctst6-c4-07,ctst6,c4,TrueFalse,Hard,Khẳng định sau đúng hay sai: Xác suất thực nghiệm của một sự kiện luôn lớn hơn 1.,false,Khẳng định này sai.
+ctst6-c4-08,ctst6,c4,MultipleChoice,Easy,Bảng số học sinh đạt điểm giỏi: Toán: 13; Văn: 6; Anh: 14; Khoa học: 10; Thể dục: 12. Môn nào có nhiều học sinh đạt điểm giỏi nhất?,Anh,Giá trị lớn nhất là 14 ứng với môn Anh.
+ctst6-c5-01,ctst6,c5,FillBlank,Medium,Tính và rút gọn: 4/8 + 1/4 = ? (viết phân số tối giản dạng a/b),3/4,4/8 + 1/4 = 24/32 = 3/4.
+ctst6-c5-02,ctst6,c5,MultipleChoice,Medium,Phân số nào lớn hơn: 1/6 hay 4/7?,4/7,Quy đồng: 1/6 = 7/42; 4/7 = 24/42.
+ctst6-c5-03,ctst6,c5,MultipleChoice,Medium,Kết quả của 3/4 × 2/2 (rút gọn) là:,3/4,3/4 × 2/2 = 6/8 = 3/4.
+ctst6-c5-04,ctst6,c5,TrueFalse,Hard,Khẳng định sau đúng hay sai: 1/4 = 4/16.,true,Nhân cả tử và mẫu của 1/4 với 4 được 4/16.
+ctst6-c5-05,ctst6,c5,FillBlank,Medium,Tính và rút gọn: 3/5 + 3/4 = ? (viết phân số tối giản dạng a/b),27/20,3/5 + 3/4 = 27/20 = 27/20.
+ctst6-c5-06,ctst6,c5,MultipleChoice,Hard,Phân số nào lớn hơn: 7/9 hay 5/6?,5/6,Quy đồng: 7/9 = 42/54; 5/6 = 45/54.
+ctst6-c5-07,ctst6,c5,MultipleChoice,Medium,Kết quả của 2/2 × 6/5 (rút gọn) là:,6/5,2/2 × 6/5 = 12/10 = 6/5.
+ctst6-c5-08,ctst6,c5,TrueFalse,Hard,Khẳng định sau đúng hay sai: 3/2 = 6/4.,true,Nhân cả tử và mẫu của 3/2 với 2 được 6/4.
+ctst6-c6-01,ctst6,c6,MultipleChoice,Hard,"Kết quả của phép tính 10,4 + 6,6 là:",17,"10,4 + 6,6 = 17."
+ctst6-c6-02,ctst6,c6,FillBlank,Easy,"Làm tròn số 95,57 đến hàng phần mười.","95,6","Nhìn chữ số hàng phần trăm: 95,57 ≈ 95,6."
+ctst6-c6-03,ctst6,c6,MultipleChoice,Hard,50% của 80 là:,40,80 × 50/100 = 40.
+ctst6-c6-04,ctst6,c6,TrueFalse,Medium,"Khẳng định sau đúng hay sai: 7,56 > 7,92.",false,"So sánh phần nguyên rồi phần thập phân: 7,56 < 7,92."
+ctst6-c6-05,ctst6,c6,MultipleChoice,Medium,"Kết quả của phép tính 16,6 − 8,4 là:","8,2","16,6 − 8,4 = 8,2."
+ctst6-c6-06,ctst6,c6,FillBlank,Easy,"Làm tròn số 95,56 đến hàng phần mười.","95,6","Nhìn chữ số hàng phần trăm: 95,56 ≈ 95,6."
+ctst6-c6-07,ctst6,c6,MultipleChoice,Hard,5% của 185 là:,"9,25","185 × 5/100 = 9,25."
+ctst6-c6-08,ctst6,c6,TrueFalse,Medium,"Khẳng định sau đúng hay sai: 7,37 > 1,04.",true,"So sánh phần nguyên rồi phần thập phân: 7,37 > 1,04."
+ctst6-c7-01,ctst6,c7,MultipleChoice,Easy,Số trục đối xứng của hình vuông là:,4,hình vuông có 4 trục đối xứng.
+ctst6-c7-02,ctst6,c7,TrueFalse,Easy,"Khẳng định sau đúng hay sai: chữ in hoa ""G"" có trục đối xứng.",false,Chữ G không có trục đối xứng.
+ctst6-c7-03,ctst6,c7,TrueFalse,Medium,Khẳng định sau đúng hay sai: Hình thang cân có tâm đối xứng.,false,Hình này không có tâm đối xứng.
+ctst6-c7-04,ctst6,c7,FillBlank,Easy,Số trục đối xứng của hình thang cân là bao nhiêu?,1,hình thang cân có 1 trục đối xứng.
+ctst6-c7-05,ctst6,c7,MultipleChoice,Hard,Số trục đối xứng của hình tròn là:,Vô số,hình tròn có vô số trục đối xứng.
+ctst6-c7-06,ctst6,c7,TrueFalse,Hard,"Khẳng định sau đúng hay sai: chữ in hoa ""H"" có trục đối xứng.",true,Chữ H có ít nhất một trục đối xứng.
+ctst6-c7-07,ctst6,c7,TrueFalse,Medium,Khẳng định sau đúng hay sai: Hình chữ nhật có tâm đối xứng.,true,Quay nửa vòng quanh tâm thì hình trùng chính nó.
+ctst6-c7-08,ctst6,c7,FillBlank,Easy,Số trục đối xứng của hình thang cân là bao nhiêu?,1,hình thang cân có 1 trục đối xứng.
+ctst6-c8-01,ctst6,c8,MultipleChoice,Easy,Góc có số đo 71° là góc gì?,Góc nhọn,71° < 90° → góc nhọn.
+ctst6-c8-02,ctst6,c8,FillBlank,Easy,"Cho đoạn thẳng AB = 14 cm, M là trung điểm của AB. Độ dài MA bằng bao nhiêu cm?",7,MA = MB = AB : 2 = 14 : 2 = 7 (cm).
+ctst6-c8-03,ctst6,c8,TrueFalse,Medium,Khẳng định sau đúng hay sai: Qua một điểm có duy nhất một đường thẳng.,false,Khẳng định này sai.
+ctst6-c8-04,ctst6,c8,MultipleChoice,Hard,"Hai góc phụ nhau, một góc có số đo 42°. Góc còn lại có số đo:",48°,Tổng hai góc phụ nhau bằng 90° nên góc còn lại = 90° − 42° = 48°.
+ctst6-c8-05,ctst6,c8,MultipleChoice,Medium,Góc có số đo 67° là góc gì?,Góc nhọn,67° < 90° → góc nhọn.
+ctst6-c8-06,ctst6,c8,FillBlank,Easy,"Cho đoạn thẳng AB = 4 cm, M là trung điểm của AB. Độ dài MA bằng bao nhiêu cm?",2,MA = MB = AB : 2 = 4 : 2 = 2 (cm).
+ctst6-c8-07,ctst6,c8,TrueFalse,Hard,Khẳng định sau đúng hay sai: Qua một điểm có duy nhất một đường thẳng.,false,Khẳng định này sai.
+ctst6-c8-08,ctst6,c8,MultipleChoice,Medium,"Hai góc phụ nhau, một góc có số đo 63°. Góc còn lại có số đo:",27°,Tổng hai góc phụ nhau bằng 90° nên góc còn lại = 90° − 63° = 27°.
+ctst6-c9-01,ctst6,c9,FillBlank,Medium,"Gieo một con xúc xắc 24 lần thì có 5 lần xuất hiện mặt 6 chấm. Xác suất thực nghiệm của sự kiện ""mặt 6 chấm"" là bao nhiêu? (viết phân số tối giản)",5/24,Xác suất thực nghiệm = 5/24 = 5/24.
+ctst6-c9-02,ctst6,c9,MultipleChoice,Easy,Bảng số học sinh yêu thích 5 môn thể thao: 8; 4; 3; 3; 11. Tổng số học sinh được khảo sát là:,29,Cộng các giá trị: 8 + 4 + 3 + 3 + 11 = 29.
+ctst6-c9-03,ctst6,c9,TrueFalse,Medium,Khẳng định sau đúng hay sai: Sự kiện ngẫu nhiên là sự kiện luôn xảy ra.,false,Khẳng định này sai.
+ctst6-c9-04,ctst6,c9,MultipleChoice,Easy,Bảng số học sinh đạt điểm giỏi: Toán: 7; Văn: 9; Anh: 6; Khoa học: 8; Thể dục: 13. Môn nào có nhiều học sinh đạt điểm giỏi nhất?,Thể dục,Giá trị lớn nhất là 13 ứng với môn Thể dục.
+ctst6-c9-05,ctst6,c9,FillBlank,Medium,"Gieo một con xúc xắc 12 lần thì có 7 lần xuất hiện mặt 6 chấm. Xác suất thực nghiệm của sự kiện ""mặt 6 chấm"" là bao nhiêu? (viết phân số tối giản)",7/12,Xác suất thực nghiệm = 7/12 = 7/12.
+ctst6-c9-06,ctst6,c9,MultipleChoice,Easy,Bảng số học sinh yêu thích 5 môn thể thao: 7; 7; 4; 5; 11. Tổng số học sinh được khảo sát là:,34,Cộng các giá trị: 7 + 7 + 4 + 5 + 11 = 34.
+ctst6-c9-07,ctst6,c9,TrueFalse,Easy,"Khẳng định sau đúng hay sai: Khi gieo một con xúc xắc, sự kiện ""số chấm không vượt quá 6"" là sự kiện chắc chắn.",true,Khẳng định đúng theo định nghĩa.
+ctst6-c9-08,ctst6,c9,MultipleChoice,Easy,Bảng số học sinh đạt điểm giỏi: Toán: 8; Văn: 11; Anh: 3; Khoa học: 11; Thể dục: 12. Môn nào có nhiều học sinh đạt điểm giỏi nhất?,Thể dục,Giá trị lớn nhất là 12 ứng với môn Thể dục.

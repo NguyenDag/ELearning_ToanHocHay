@@ -1,0 +1,19 @@
+﻿ExerciseKey,NodeKey,ExerciseName,ExerciseType,Tier,DurationMinutes,MaxAttempts,PassingPercent
+ctst6-ex-c1-lt,c1,Luyện tập — Số tự nhiên,Practice,Free,,,50
+ctst6-ex-c1-kt,c1,Đề kiểm tra — Số tự nhiên,Test,Standard,30,2,50
+ctst6-ex-c2-lt,c2,Luyện tập — Số nguyên,Practice,Free,,,50
+ctst6-ex-c2-kt,c2,Đề kiểm tra — Số nguyên,Test,Standard,30,2,50
+ctst6-ex-c3-lt,c3,Luyện tập — Các hình phẳng trong thực tiễn,Practice,Free,,,50
+ctst6-ex-c3-kt,c3,Đề kiểm tra — Các hình phẳng trong thực tiễn,Test,Standard,30,2,50
+ctst6-ex-c4-lt,c4,Luyện tập — Một số yếu tố thống kê,Practice,Free,,,50
+ctst6-ex-c4-kt,c4,Đề kiểm tra — Một số yếu tố thống kê,Test,Standard,30,2,50
+ctst6-ex-c5-lt,c5,Luyện tập — Phân số,Practice,Free,,,50
+ctst6-ex-c5-kt,c5,Đề kiểm tra — Phân số,Test,Standard,30,2,50
+ctst6-ex-c6-lt,c6,Luyện tập — Số thập phân,Practice,Free,,,50
+ctst6-ex-c6-kt,c6,Đề kiểm tra — Số thập phân,Test,Standard,30,2,50
+ctst6-ex-c7-lt,c7,Luyện tập — Hình học trực quan. Tính đối xứng,Practice,Free,,,50
+ctst6-ex-c7-kt,c7,Đề kiểm tra — Hình học trực quan. Tính đối xứng,Test,Standard,30,2,50
+ctst6-ex-c8-lt,c8,Luyện tập — Các hình hình học cơ bản,Practice,Free,,,50
+ctst6-ex-c8-kt,c8,Đề kiểm tra — Các hình hình học cơ bản,Test,Standard,30,2,50
+ctst6-ex-c9-lt,c9,Luyện tập — Một số yếu tố xác suất,Practice,Free,,,50
+ctst6-ex-c9-kt,c9,Đề kiểm tra — Một số yếu tố xác suất,Test,Standard,30,2,50

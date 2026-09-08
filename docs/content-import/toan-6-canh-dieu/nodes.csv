@@ -1,0 +1,55 @@
+﻿NodeKey,ParentKey,NodeType,Title,OrderIndex,IsFree,DurationMinutes
+c1,,Chapter,Chương 1. Số tự nhiên,1,true,
+c1b1,c1,Lesson,Bài 1. Tập hợp,1,true,45
+c1b2,c1,Lesson,Bài 2. Tập hợp các số tự nhiên,2,true,45
+c1b3,c1,Lesson,"Bài 3. Phép cộng, phép trừ các số tự nhiên",3,true,45
+c1b4,c1,Lesson,"Bài 4. Phép nhân, phép chia các số tự nhiên",4,true,45
+c1b5,c1,Lesson,Bài 5. Phép tính luỹ thừa với số mũ tự nhiên,5,true,45
+c1b6,c1,Lesson,Bài 6. Thứ tự thực hiện các phép tính,6,true,45
+c1b7,c1,Lesson,Bài 7. Quan hệ chia hết. Tính chất chia hết,7,true,45
+c1b8,c1,Lesson,"Bài 8. Dấu hiệu chia hết cho 2, cho 5",8,true,45
+c1b9,c1,Lesson,"Bài 9. Dấu hiệu chia hết cho 3, cho 9",9,true,45
+c1b10,c1,Lesson,Bài 10. Số nguyên tố. Hợp số,10,true,45
+c1b11,c1,Lesson,Bài 11. Phân tích một số ra thừa số nguyên tố,11,true,45
+c1b12,c1,Lesson,Bài 12. Ước chung và ước chung lớn nhất,12,true,45
+c1b13,c1,Lesson,Bài 13. Bội chung và bội chung nhỏ nhất,13,true,45
+c2,,Chapter,Chương 2. Số nguyên,2,false,
+c2b1,c2,Lesson,Bài 1. Số nguyên âm,1,false,45
+c2b2,c2,Lesson,Bài 2. Tập hợp các số nguyên,2,false,45
+c2b3,c2,Lesson,Bài 3. Phép cộng các số nguyên,3,false,45
+c2b4,c2,Lesson,Bài 4. Phép trừ số nguyên. Quy tắc dấu ngoặc,4,false,45
+c2b5,c2,Lesson,Bài 5. Phép nhân các số nguyên,5,false,45
+c2b6,c2,Lesson,Bài 6. Phép chia hết hai số nguyên. Quan hệ chia hết trong tập hợp số nguyên,6,false,45
+c3,,Chapter,Chương 3. Hình học trực quan,3,false,
+c3b1,c3,Lesson,Bài 1. Tam giác đều. Hình vuông. Lục giác đều,1,false,45
+c3b2,c3,Lesson,Bài 2. Hình chữ nhật. Hình thoi,2,false,45
+c3b3,c3,Lesson,Bài 3. Hình bình hành,3,false,45
+c3b4,c3,Lesson,Bài 4. Hình thang cân,4,false,45
+c3b5,c3,Lesson,Bài 5. Hình có trục đối xứng,5,false,45
+c3b6,c3,Lesson,Bài 6. Hình có tâm đối xứng,6,false,45
+c3b7,c3,Lesson,Bài 7. Đối xứng trong thực tiễn,7,false,45
+c3b8,c3,Lesson,Bài 8. Chu vi và diện tích của một số hình trong thực tiễn,8,false,45
+c4,,Chapter,Chương 4. Một số yếu tố thống kê và xác suất,4,false,
+c4b1,c4,Lesson,"Bài 1. Thu thập, tổ chức, biểu diễn, phân tích và xử lí dữ liệu",1,false,45
+c4b2,c4,Lesson,Bài 2. Biểu đồ cột,2,false,45
+c4b3,c4,Lesson,Bài 3. Biểu đồ cột kép,3,false,45
+c4b4,c4,Lesson,Bài 4. Mô hình xác suất trong một số trò chơi và thí nghiệm đơn giản,4,false,45
+c4b5,c4,Lesson,Bài 5. Xác suất thực nghiệm trong một số trò chơi và thí nghiệm đơn giản,5,false,45
+c5,,Chapter,Chương 5. Phân số và số thập phân,5,false,
+c5b1,c5,Lesson,Bài 1. Phân số với tử và mẫu là số nguyên,1,false,45
+c5b2,c5,Lesson,Bài 2. So sánh các phân số. Hỗn số dương,2,false,45
+c5b3,c5,Lesson,"Bài 3. Phép cộng, phép trừ phân số",3,false,45
+c5b4,c5,Lesson,"Bài 4. Phép nhân, phép chia phân số",4,false,45
+c5b5,c5,Lesson,Bài 5. Số thập phân,5,false,45
+c5b6,c5,Lesson,"Bài 6. Phép cộng, phép trừ số thập phân",6,false,45
+c5b7,c5,Lesson,"Bài 7. Phép nhân, phép chia số thập phân",7,false,45
+c5b8,c5,Lesson,Bài 8. Ước lượng và làm tròn số,8,false,45
+c5b9,c5,Lesson,Bài 9. Tỉ số. Tỉ số phần trăm,9,false,45
+c5b10,c5,Lesson,Bài 10. Hai bài toán về phân số,10,false,45
+c6,,Chapter,Chương 6. Hình học phẳng,6,false,
+c6b1,c6,Lesson,Bài 1. Điểm. Đường thẳng,1,false,45
+c6b2,c6,Lesson,Bài 2. Hai đường thẳng cắt nhau. Hai đường thẳng song song,2,false,45
+c6b3,c6,Lesson,Bài 3. Đoạn thẳng,3,false,45
+c6b4,c6,Lesson,Bài 4. Tia,4,false,45
+c6b5,c6,Lesson,Bài 5. Góc,5,false,45
+c6b6,c6,Lesson,Bài 6. Số đo góc,6,false,45

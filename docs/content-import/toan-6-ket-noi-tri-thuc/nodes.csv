@@ -1,0 +1,71 @@
+﻿NodeKey,ParentKey,NodeType,Title,OrderIndex,IsFree,DurationMinutes
+c1,,Chapter,Chương I. Tập hợp các số tự nhiên,1,true,
+c1b1,c1,Lesson,Bài 1. Tập hợp,1,true,45
+c1b2,c1,Lesson,Bài 2. Cách ghi số tự nhiên,2,true,45
+c1b3,c1,Lesson,Bài 3. Thứ tự trong tập hợp các số tự nhiên,3,true,45
+c1b4,c1,Lesson,Bài 4. Phép cộng và phép trừ số tự nhiên,4,true,45
+c1b5,c1,Lesson,Bài 5. Phép nhân và phép chia số tự nhiên,5,true,45
+c1b6,c1,Lesson,Bài 6. Luỹ thừa với số mũ tự nhiên,6,true,45
+c1b7,c1,Lesson,Bài 7. Thứ tự thực hiện các phép tính,7,true,45
+c1lt,c1,Lesson,Luyện tập chung — Chương I,8,true,45
+c1cc,c1,Lesson,Bài tập cuối chương I,9,true,45
+c2,,Chapter,Chương II. Tính chia hết trong tập hợp các số tự nhiên,2,false,
+c2b8,c2,Lesson,Bài 8. Quan hệ chia hết và tính chất,1,false,45
+c2b9,c2,Lesson,Bài 9. Dấu hiệu chia hết,2,false,45
+c2b10,c2,Lesson,Bài 10. Số nguyên tố,3,false,45
+c2b11,c2,Lesson,Bài 11. Ước chung. Ước chung lớn nhất,4,false,45
+c2b12,c2,Lesson,Bài 12. Bội chung. Bội chung nhỏ nhất,5,false,45
+c2lt,c2,Lesson,Luyện tập chung — Chương II,6,false,45
+c2cc,c2,Lesson,Bài tập cuối chương II,7,false,45
+c3,,Chapter,Chương III. Số nguyên,3,false,
+c3b13,c3,Lesson,Bài 13. Tập hợp các số nguyên,1,false,45
+c3b14,c3,Lesson,Bài 14. Phép cộng và phép trừ số nguyên,2,false,45
+c3b15,c3,Lesson,Bài 15. Quy tắc dấu ngoặc,3,false,45
+c3b16,c3,Lesson,Bài 16. Phép nhân số nguyên,4,false,45
+c3b17,c3,Lesson,Bài 17. Phép chia hết. Ước và bội của một số nguyên,5,false,45
+c3lt,c3,Lesson,Luyện tập chung — Chương III,6,false,45
+c3cc,c3,Lesson,Bài tập cuối chương III,7,false,45
+c4,,Chapter,Chương IV. Một số hình phẳng trong thực tiễn,4,false,
+c4b18,c4,Lesson,Bài 18. Hình tam giác đều. Hình vuông. Hình lục giác đều,1,false,45
+c4b19,c4,Lesson,Bài 19. Hình chữ nhật. Hình thoi. Hình bình hành. Hình thang cân,2,false,45
+c4b20,c4,Lesson,Bài 20. Chu vi và diện tích của một số tứ giác đã học,3,false,45
+c4lt,c4,Lesson,Luyện tập chung — Chương IV,4,false,45
+c4cc,c4,Lesson,Bài tập cuối chương IV,5,false,45
+c5,,Chapter,Chương V. Tính đối xứng của hình phẳng trong tự nhiên,5,false,
+c5b21,c5,Lesson,Bài 21. Hình có trục đối xứng,1,false,45
+c5b22,c5,Lesson,Bài 22. Hình có tâm đối xứng,2,false,45
+c5b23,c5,Lesson,Bài 23. Vai trò của tính đối xứng trong thế giới tự nhiên,3,false,45
+c5lt,c5,Lesson,Luyện tập chung — Chương V,4,false,45
+c5cc,c5,Lesson,Bài tập cuối chương V,5,false,45
+c6,,Chapter,Chương VI. Phân số,6,false,
+c6b24,c6,Lesson,Bài 24. Mở rộng phân số. Phân số bằng nhau,1,false,45
+c6b25,c6,Lesson,Bài 25. Phép cộng và phép trừ phân số,2,false,45
+c6b26,c6,Lesson,Bài 26. Phép nhân và phép chia phân số,3,false,45
+c6b27,c6,Lesson,Bài 27. Hai bài toán về phân số,4,false,45
+c6lt,c6,Lesson,Luyện tập chung — Chương VI,5,false,45
+c6cc,c6,Lesson,Bài tập cuối chương VI,6,false,45
+c7,,Chapter,Chương VII. Số thập phân,7,false,
+c7b28,c7,Lesson,Bài 28. Số thập phân,1,false,45
+c7b29,c7,Lesson,Bài 29. Tính toán với số thập phân,2,false,45
+c7b30,c7,Lesson,Bài 30. Làm tròn và ước lượng,3,false,45
+c7b31,c7,Lesson,Bài 31. Một số bài toán về tỉ số và tỉ số phần trăm,4,false,45
+c7lt,c7,Lesson,Luyện tập chung — Chương VII,5,false,45
+c7cc,c7,Lesson,Bài tập cuối chương VII,6,false,45
+c8,,Chapter,Chương VIII. Những hình hình học cơ bản,8,false,
+c8b32,c8,Lesson,Bài 32. Điểm và đường thẳng,1,false,45
+c8b33,c8,Lesson,Bài 33. Điểm nằm giữa hai điểm. Tia,2,false,45
+c8b34,c8,Lesson,Bài 34. Đoạn thẳng. Độ dài đoạn thẳng,3,false,45
+c8b35,c8,Lesson,Bài 35. Trung điểm của đoạn thẳng,4,false,45
+c8b36,c8,Lesson,Bài 36. Góc,5,false,45
+c8b37,c8,Lesson,Bài 37. Số đo góc,6,false,45
+c8lt,c8,Lesson,Luyện tập chung — Chương VIII,7,false,45
+c8cc,c8,Lesson,Bài tập cuối chương VIII,8,false,45
+c9,,Chapter,Chương IX. Dữ liệu và xác suất thực nghiệm,9,false,
+c9b38,c9,Lesson,Bài 38. Dữ liệu và thu thập dữ liệu,1,false,45
+c9b39,c9,Lesson,Bài 39. Bảng thống kê và biểu đồ tranh,2,false,45
+c9b40,c9,Lesson,Bài 40. Biểu đồ cột,3,false,45
+c9b41,c9,Lesson,Bài 41. Biểu đồ cột kép,4,false,45
+c9b42,c9,Lesson,"Bài 42. Kết quả có thể và sự kiện trong một trò chơi, thí nghiệm",5,false,45
+c9b43,c9,Lesson,Bài 43. Xác suất thực nghiệm,6,false,45
+c9lt,c9,Lesson,Luyện tập chung — Chương IX,7,false,45
+c9cc,c9,Lesson,Bài tập cuối chương IX,8,false,45

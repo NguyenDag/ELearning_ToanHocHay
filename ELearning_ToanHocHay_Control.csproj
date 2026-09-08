@@ -40,6 +40,14 @@
     <EmbeddedResource Remove="ELearning_ToanHocHay.Tests/**" />
   </ItemGroup>
 
+  <!-- tools/ — tiện ích build độc lập (CurriculumImportBuilder…), không thuộc project API -->
+  <ItemGroup>
+    <Compile Remove="tools/**/*.cs" />
+    <Content Remove="tools/**" />
+    <None Remove="tools/**" />
+    <EmbeddedResource Remove="tools/**" />
+  </ItemGroup>
+
   <!-- Cho phép project test đọc thành viên internal (§1.3 / §2 refactor Covers, ProgressRollup…) -->
   <ItemGroup>
     <InternalsVisibleTo Include="ELearning_ToanHocHay.Tests" />

@@ -1,0 +1,454 @@
+﻿NodeKey,OrderIndex,BlockType,ContentText,ContentUrl,MetadataJson
+c1b1,1,Heading,# Bài 1. Tập hợp,,
+c1b1,2,Text,"Trong đời sống, ta thường gặp những nhóm đối tượng gộp lại với nhau: bộ sưu tập tem, đàn ong trong tổ, các bạn trong tổ học tập… Toán học gọi mỗi nhóm như vậy là một *tập hợp*.",,
+c1b1,3,Definition,**Tập hợp.** một nhóm các đối tượng được xác định rõ ràng. Mỗi đối tượng trong nhóm là một *phần tử* của tập hợp đó.,,
+c1b1,4,Text,"Người ta thường đặt tên tập hợp bằng chữ cái in hoa: $A$, $B$, $M$, … Nếu $x$ là phần tử của tập hợp $A$ ta viết $x \in A$ (đọc: $x$ thuộc $A$); nếu $x$ không phải phần tử của $A$ ta viết $x \notin A$.",,
+c1b1,5,Definition,"**Hai cách mô tả một tập hợp.** **Cách 1** – liệt kê các phần tử: viết tất cả phần tử trong dấu ngoặc nhọn, cách nhau bởi dấu "";"". **Cách 2** – chỉ ra tính chất đặc trưng cho các phần tử.",,
+c1b1,6,Formula,"A=\{0;\,1;\,2;\,3;\,4\}\qquad\text{hoặc}\qquad A=\{x\in\mathbb{N}\mid x<5\}",,
+c1b1,7,Example,"**Ví dụ.** Viết tập hợp $B$ các số tự nhiên lớn hơn 5 và nhỏ hơn 10 bằng hai cách.
+
+**Lời giải.** Liệt kê: $B=\{6;7;8;9\}$. Nêu tính chất đặc trưng: $B=\{x\in\mathbb{N}\mid 5<x<10\}$. Tập hợp $B$ có 4 phần tử; $7\in B$ còn $10\notin B$.",,
+c1b1,8,Note,**Chú ý.** Mỗi phần tử chỉ được liệt kê một lần; thứ tự liệt kê không quan trọng. Kí hiệu $\mathbb{N}$ chỉ tập hợp các số tự nhiên $0;1;2;3;\dots$,,
+c1b2,1,Heading,# Bài 2. Cách ghi số tự nhiên,,
+c1b2,2,Text,"Để ghi các số tự nhiên ta dùng **hệ thập phân**: mười chữ số $0,1,2,3,4,5,6,7,8,9$ và quy tắc ""cứ mười đơn vị ở một hàng thì bằng một đơn vị ở hàng liền trước"".",,
+c1b2,3,Definition,"**Giá trị theo vị trí.** Trong một số, mỗi chữ số có một giá trị phụ thuộc vị trí (hàng) của nó: hàng đơn vị, hàng chục, hàng trăm, hàng nghìn, …",,
+c1b2,4,Formula,\overline{abcd}=a\cdot 1000+b\cdot 100+c\cdot 10+d,,
+c1b2,5,Example,"**Ví dụ.** Viết số 3457 thành tổng giá trị các chữ số.
+
+**Lời giải.** $3457=3\cdot 1000+4\cdot 100+5\cdot 10+7$. Chữ số 4 nằm ở hàng trăm nên có giá trị $400$.",,
+c1b2,6,Definition,"**Số La Mã.** Dùng các kí hiệu $I=1$, $V=5$, $X=10$ (cùng $L=50$, $C=100$) ghép theo quy tắc cộng/trừ để viết số. Ví dụ $IV=4$, $VI=6$, $XII=12$, $XXVII=27$.",,
+c1b2,7,Note,"**Chú ý.** Khi viết một số tự nhiên có nhiều hơn ba chữ số, người ta thường tách nhóm ba chữ số từ phải sang trái cho dễ đọc: $1\,234\,567$.",,
+c1b3,1,Heading,# Bài 3. Thứ tự trong tập hợp các số tự nhiên,,
+c1b3,2,Text,"Các số tự nhiên được biểu diễn trên tia số: gốc là điểm 0, các điểm cách đều nhau và tăng dần từ trái sang phải.",,
+c1b3,3,Definition,"**So sánh hai số tự nhiên.** Trong hai số tự nhiên khác nhau luôn có một số nhỏ hơn số kia. Nếu $a$ nhỏ hơn $b$ ta viết $a<b$ (hoặc $b>a$). Trên tia số, điểm biểu diễn số nhỏ nằm bên trái điểm biểu diễn số lớn.",,
+c1b3,4,Formula,a\le b \iff (a<b \text{ hoặc } a=b);\qquad a<b \text{ và } b<c \Rightarrow a<c,,
+c1b3,5,Definition,**Số liền trước – số liền sau.** Số liền sau của $a$ là $a+1$; số liền trước của $a$ (với $a\ge 1$) là $a-1$. Hai số tự nhiên liên tiếp hơn kém nhau 1 đơn vị.,,
+c1b3,6,Example,"**Ví dụ.** Viết các số tự nhiên $x$ thoả mãn $12\le x<17$.
+
+**Lời giải.** $x\in\{12;13;14;15;16\}$ — gồm 5 số.",,
+c1b3,7,Note,**Chú ý.** Số 0 là số tự nhiên nhỏ nhất. Không có số tự nhiên lớn nhất vì mỗi số đều có số liền sau.,,
+c1b4,1,Heading,# Bài 4. Phép cộng và phép trừ số tự nhiên,,
+c1b4,2,Text,Phép cộng hai số tự nhiên $a$ và $b$ cho kết quả là tổng $a+b$. Phép trừ $a-b$ chỉ thực hiện được trong tập số tự nhiên khi $a\ge b$.,,
+c1b4,3,Definition,"**Tính chất của phép cộng.** giao hoán, kết hợp và cộng với số 0.",,
+c1b4,4,Formula,a+b=b+a;\qquad (a+b)+c=a+(b+c);\qquad a+0=0+a=a,,
+c1b4,5,Example,"**Ví dụ.** Tính hợp lí: $37+58+63$.
+
+**Lời giải.** $37+58+63=(37+63)+58=100+58=158$ (dùng tính chất giao hoán và kết hợp để ghép số tròn trăm).",,
+c1b4,6,Definition,**Quan hệ giữa phép cộng và phép trừ.** nếu $a-b=c$ thì $a=b+c$ và $b=a-c$. Ta dùng quan hệ này để tìm số chưa biết.,,
+c1b4,7,Example,"**Ví dụ.** Tìm $x$ biết $x-124=237$.
+
+**Lời giải.** $x=237+124=361$.",,
+c1b4,8,Note,"**Chú ý.** Khi tính một dãy phép cộng và trừ không có dấu ngoặc, ta thực hiện lần lượt từ trái sang phải.",,
+c1b5,1,Heading,# Bài 5. Phép nhân và phép chia số tự nhiên,,
+c1b5,2,Text,Tích của hai số tự nhiên $a$ và $b$ kí hiệu $a\cdot b$ (hoặc $ab$). Phép chia có hai loại: chia hết và chia có dư.,,
+c1b5,3,Definition,"**Tính chất của phép nhân.** giao hoán, kết hợp, nhân với số 1 và tính chất phân phối của phép nhân đối với phép cộng.",,
+c1b5,4,Formula,ab=ba;\quad (ab)c=a(bc);\quad a\cdot 1=a;\quad a(b+c)=ab+ac,,
+c1b5,5,Example,"**Ví dụ.** Tính nhanh $25\cdot 12$.
+
+**Lời giải.** $25\cdot 12=25\cdot 4\cdot 3=100\cdot 3=300$.",,
+c1b5,6,Definition,"**Phép chia có dư.** với $a,b\in\mathbb{N}$, $b\ne 0$, luôn có duy nhất cặp số $q$ (thương) và $r$ (số dư) sao cho $a=b\cdot q+r$ với $0\le r<b$. Khi $r=0$ ta có phép chia hết.",,
+c1b5,7,Formula,a=b\cdot q+r\qquad (0\le r<b),,
+c1b5,8,Example,"**Ví dụ.** Thực hiện phép chia $2023:5$.
+
+**Lời giải.** $2023=5\cdot 404+3$, vậy thương là 404 và số dư là 3.",,
+c1b5,9,Note,**Chú ý.** Không có phép chia cho 0. Nếu $a\cdot b=0$ thì $a=0$ hoặc $b=0$.,,
+c1b6,1,Heading,# Bài 6. Luỹ thừa với số mũ tự nhiên,,
+c1b6,2,Text,"Khi nhân nhiều thừa số bằng nhau, ta viết gọn bằng luỹ thừa.",,
+c1b6,3,Definition,"**Luỹ thừa.** $a^n$ (đọc: $a$ mũ $n$) là tích của $n$ thừa số $a$, với $n\ne 0$. $a$ gọi là *cơ số*, $n$ gọi là *số mũ*.",,
+c1b6,4,Formula,a^n=\underbrace{a\cdot a\cdots a}_{n\text{ thừa số}}\quad(n\ne 0);\qquad a^1=a;\qquad a^2\text{ đọc là }a\text{ bình phương},,
+c1b6,5,Example,"**Ví dụ.** Viết gọn $7\cdot 7\cdot 7\cdot 7$ và tính $2^5$.
+
+**Lời giải.** $7\cdot 7\cdot 7\cdot 7=7^4$. $2^5=2\cdot2\cdot2\cdot2\cdot2=32$.",,
+c1b6,6,Definition,"**Nhân và chia hai luỹ thừa cùng cơ số.** khi nhân, ta giữ nguyên cơ số và cộng các số mũ; khi chia (cơ số khác 0), ta giữ nguyên cơ số và trừ các số mũ.",,
+c1b6,7,Formula,"a^m\cdot a^n=a^{m+n};\qquad a^m:a^n=a^{m-n}\ (a\ne 0,\ m\ge n)",,
+c1b6,8,Example,"**Ví dụ.** Viết kết quả dưới dạng một luỹ thừa: $3^4\cdot 3^3$ và $5^8:5^5$.
+
+**Lời giải.** $3^4\cdot 3^3=3^{7}$; $5^8:5^5=5^{3}=125$.",,
+c1b6,9,Note,**Chú ý.** Quy ước $a^0=1$ với $a\ne 0$. Luỹ thừa của 10: $10^n$ là số gồm chữ số 1 theo sau bởi $n$ chữ số 0.,,
+c1b7,1,Heading,# Bài 7. Thứ tự thực hiện các phép tính,,
+c1b7,2,Text,"Một biểu thức có thể chứa nhiều phép tính. Để mọi người tính ra cùng một kết quả, cần thống nhất thứ tự thực hiện.",,
+c1b7,3,Definition,**Quy tắc (biểu thức không có dấu ngoặc).** Luỹ thừa $\to$ nhân và chia $\to$ cộng và trừ. Các phép cùng mức thực hiện từ trái sang phải.,,
+c1b7,4,Definition,"**Quy tắc (biểu thức có dấu ngoặc).** Thực hiện trong ngoặc tròn $(\ )$ trước, rồi ngoặc vuông $[\ ]$, rồi ngoặc nhọn $\{\ \}$.",,
+c1b7,5,Formula,(\ )\ \to\ [\ ]\ \to\ \{\ \},,
+c1b7,6,Example,"**Ví dụ.** Tính $5+3\cdot 2^3$.
+
+**Lời giải.** $5+3\cdot 2^3=5+3\cdot 8=5+24=29$ (luỹ thừa trước, rồi nhân, rồi cộng).",,
+c1b7,7,Example,"**Ví dụ.** Tính $80:\big\{[(11-2)\cdot 2]+2\big\}$.
+
+**Lời giải.** $=80:\{[9\cdot 2]+2\}=80:\{18+2\}=80:20=4$ (làm trong ngoặc tròn, rồi ngoặc vuông, rồi ngoặc nhọn).",,
+c1b7,8,Note,"**Chú ý.** Nếu chỉ có cộng và trừ, hoặc chỉ có nhân và chia, thì luôn thực hiện từ trái sang phải.",,
+c1lt,1,Heading,# Luyện tập chung — Chương I,,
+c1lt,2,Text,"Ôn lại: cách cho tập hợp, ghi số tự nhiên và giá trị theo vị trí, so sánh và thứ tự, bốn phép tính cùng tính chất, luỹ thừa và thứ tự thực hiện các phép tính.",,
+c1lt,3,Note,**Chú ý.** Hãy làm phần bài tập đính kèm của bài này để tự kiểm tra. Ghi lại những câu sai để ôn lại lý thuyết tương ứng.,,
+c1cc,1,Heading,# Bài tập cuối chương I,,
+c1cc,2,Text,"Tổng hợp toàn chương: tập hợp số tự nhiên $\mathbb{N}$, $\mathbb{N}^*$; tính nhanh bằng tính chất các phép tính; luỹ thừa; tính giá trị biểu thức; giải bài toán thực tế bằng phép tính.",,
+c1cc,3,Note,**Chú ý.** Hãy làm phần bài tập đính kèm của bài này để tự kiểm tra. Ghi lại những câu sai để ôn lại lý thuyết tương ứng.,,
+c2b8,1,Heading,# Bài 8. Quan hệ chia hết và tính chất,,
+c2b8,2,Text,"Chương này nghiên cứu khi nào một số chia hết cho số khác và các ứng dụng: ước, bội, số nguyên tố, ƯCLN, BCNN.",,
+c2b8,3,Definition,"**Chia hết.** Cho hai số tự nhiên $a$ và $b$ với $b\ne 0$. Nếu có số tự nhiên $q$ sao cho $a=b\cdot q$ thì ta nói $a$ chia hết cho $b$, kí hiệu $a\ \vdots\ b$. Khi đó $b$ là *ước* của $a$ và $a$ là *bội* của $b$.",,
+c2b8,4,Formula,"a\ \vdots\ b \iff \exists\,q\in\mathbb{N}:\ a=b\cdot q",,
+c2b8,5,Example,"**Ví dụ.** Tìm tất cả các ước của 12 và năm bội đầu tiên của 4.
+
+**Lời giải.** Ư(12) $=\{1;2;3;4;6;12\}$. Bội của 4: $0;4;8;12;16;\dots$",,
+c2b8,6,Definition,**Tính chất chia hết của một tổng.** Nếu tất cả các số hạng của một tổng đều chia hết cho $m$ thì tổng chia hết cho $m$. Nếu chỉ một số hạng không chia hết cho $m$ còn các số hạng khác chia hết cho $m$ thì tổng không chia hết cho $m$.,,
+c2b8,7,Formula,a\ \vdots\ m\ \text{và}\ b\ \vdots\ m \Rightarrow (a+b)\ \vdots\ m\ \text{và}\ (a-b)\ \vdots\ m,,
+c2b8,8,Note,**Chú ý.** Số 0 chia hết cho mọi số tự nhiên khác 0. Mọi số tự nhiên đều chia hết cho 1 và cho chính nó.,,
+c2b9,1,Heading,# Bài 9. Dấu hiệu chia hết,,
+c2b9,2,Text,"Có thể nhận biết một số chia hết cho 2, 5, 3, 9 mà không cần đặt tính chia.",,
+c2b9,3,Definition,**Dấu hiệu chia hết cho 2 và cho 5.** Số chia hết cho 2 khi và chỉ khi chữ số tận cùng là chữ số chẵn ($0;2;4;6;8$). Số chia hết cho 5 khi và chỉ khi chữ số tận cùng là $0$ hoặc $5$.,,
+c2b9,4,Definition,**Dấu hiệu chia hết cho 3 và cho 9.** Số chia hết cho 9 khi và chỉ khi tổng các chữ số của nó chia hết cho 9. Số chia hết cho 3 khi và chỉ khi tổng các chữ số của nó chia hết cho 3.,,
+c2b9,5,Formula,\overline{a_1a_2\ldots a_n}\ \vdots\ 9 \iff (a_1+a_2+\cdots+a_n)\ \vdots\ 9,,
+c2b9,6,Example,"**Ví dụ.** Trong các số 372; 405; 2130, số nào chia hết cho 3, cho 9, cho cả 2 và 5?
+
+**Lời giải.** $372$: tổng chữ số $12\ \vdots\ 3$ nên $372\ \vdots\ 3$ (không $\vdots\ 9$). $405$: tổng $9\ \vdots\ 9$ nên $\vdots\ 3$ và $\vdots\ 9$. $2130$ tận cùng là 0 nên chia hết cho cả 2 và 5; tổng chữ số $6\ \vdots\ 3$.",,
+c2b9,7,Note,**Chú ý.** Một số chia hết cho 9 thì chắc chắn chia hết cho 3; điều ngược lại không đúng.,,
+c2b10,1,Heading,# Bài 10. Số nguyên tố,,
+c2b10,2,Definition,"**Số nguyên tố – hợp số.** Số nguyên tố là số tự nhiên lớn hơn 1, chỉ có hai ước là 1 và chính nó. Hợp số là số tự nhiên lớn hơn 1 và có nhiều hơn hai ước.",,
+c2b10,3,Text,Các số nguyên tố nhỏ hơn 20: $2;3;5;7;11;13;17;19$. Số 2 là số nguyên tố chẵn duy nhất.,,
+c2b10,4,Definition,**Phân tích một số ra thừa số nguyên tố.** là viết số đó thành tích các thừa số nguyên tố. Mỗi hợp số phân tích được duy nhất (không kể thứ tự). Có thể dùng *sơ đồ cây* hoặc chia lần lượt cho các số nguyên tố tăng dần.,,
+c2b10,5,Formula,120=2^3\cdot 3\cdot 5,,
+c2b10,6,Example,"**Ví dụ.** Phân tích 84 ra thừa số nguyên tố.
+
+**Lời giải.** $84=2\cdot 42=2\cdot 2\cdot 21=2^2\cdot 3\cdot 7$.",,
+c2b10,7,Note,"**Chú ý.** Số 0 và số 1 không phải số nguyên tố, cũng không phải hợp số.",,
+c2b11,1,Heading,# Bài 11. Ước chung. Ước chung lớn nhất,,
+c2b11,2,Definition,"**Ước chung – ƯCLN.** Ước chung của hai hay nhiều số là ước của tất cả các số đó. Ước chung lớn nhất (ƯCLN) là số lớn nhất trong các ước chung, kí hiệu $\mathrm{ƯCLN}(a,b)$.",,
+c2b11,3,Definition,"**Cách tìm ƯCLN bằng phân tích ra thừa số nguyên tố.** Bước 1: phân tích mỗi số ra thừa số nguyên tố. Bước 2: chọn các thừa số nguyên tố *chung*. Bước 3: lập tích các thừa số đó, mỗi thừa số lấy với số mũ *nhỏ nhất*.",,
+c2b11,4,Formula,"36=2^2\cdot 3^2,\quad 60=2^2\cdot 3\cdot 5 \Rightarrow \mathrm{ƯCLN}(36,60)=2^2\cdot 3=12",,
+c2b11,5,Example,"**Ví dụ.** Rút gọn phân số $\dfrac{36}{60}$ về phân số tối giản.
+
+**Lời giải.** $\mathrm{ƯCLN}(36,60)=12$ nên $\dfrac{36}{60}=\dfrac{36:12}{60:12}=\dfrac{3}{5}$.",,
+c2b11,6,Definition,"**Hai số nguyên tố cùng nhau.** là hai số có ƯCLN bằng 1, ví dụ 8 và 15.",,
+c2b11,7,Note,"**Chú ý.** Ước chung của $a$ và $b$ chính là các ước của $\mathrm{ƯCLN}(a,b)$.",,
+c2b12,1,Heading,# Bài 12. Bội chung. Bội chung nhỏ nhất,,
+c2b12,2,Definition,"**Bội chung – BCNN.** Bội chung của hai hay nhiều số là bội của tất cả các số đó. Bội chung nhỏ nhất (BCNN) là số nhỏ nhất khác 0 trong các bội chung, kí hiệu $\mathrm{BCNN}(a,b)$.",,
+c2b12,3,Definition,"**Cách tìm BCNN bằng phân tích ra thừa số nguyên tố.** Bước 1: phân tích mỗi số ra thừa số nguyên tố. Bước 2: chọn các thừa số nguyên tố *chung và riêng*. Bước 3: lập tích các thừa số đó, mỗi thừa số lấy với số mũ *lớn nhất*.",,
+c2b12,4,Formula,"8=2^3,\quad 12=2^2\cdot 3 \Rightarrow \mathrm{BCNN}(8,12)=2^3\cdot 3=24",,
+c2b12,5,Example,"**Ví dụ.** Quy đồng mẫu hai phân số $\dfrac{5}{8}$ và $\dfrac{7}{12}$.
+
+**Lời giải.** Mẫu chung nhỏ nhất là $\mathrm{BCNN}(8,12)=24$: $\dfrac{5}{8}=\dfrac{15}{24}$, $\dfrac{7}{12}=\dfrac{14}{24}$.",,
+c2b12,6,Formula,"\mathrm{ƯCLN}(a,b)\cdot \mathrm{BCNN}(a,b)=a\cdot b",,
+c2b12,7,Note,**Chú ý.** BCNN của các số đôi một nguyên tố cùng nhau bằng tích của chúng.,,
+c2lt,1,Heading,# Luyện tập chung — Chương II,,
+c2lt,2,Text,"Ôn lại: quan hệ chia hết và tính chất của tổng; các dấu hiệu chia hết cho 2, 5, 3, 9; số nguyên tố và phân tích ra thừa số nguyên tố; tìm ƯCLN, BCNN.",,
+c2lt,3,Note,**Chú ý.** Hãy làm phần bài tập đính kèm của bài này để tự kiểm tra. Ghi lại những câu sai để ôn lại lý thuyết tương ứng.,,
+c2cc,1,Heading,# Bài tập cuối chương II,,
+c2cc,2,Text,"Tổng hợp toàn chương: vận dụng dấu hiệu chia hết; phân tích ra thừa số nguyên tố; dùng ƯCLN, BCNN giải bài toán chia đều, xếp hàng, lịch trùng nhau.",,
+c2cc,3,Note,**Chú ý.** Hãy làm phần bài tập đính kèm của bài này để tự kiểm tra. Ghi lại những câu sai để ôn lại lý thuyết tương ứng.,,
+c3b13,1,Heading,# Bài 13. Tập hợp các số nguyên,,
+c3b13,2,Text,"Nhiệt độ dưới $0^\circ\text{C}$, độ cao dưới mực nước biển, số tiền nợ… được biểu thị bằng *số nguyên âm* — viết bằng dấu ""$-$"" đứng trước một số tự nhiên khác 0.",,
+c3b13,3,Definition,"**Tập hợp số nguyên.** gồm các số nguyên âm, số 0 và các số nguyên dương, kí hiệu $\mathbb{Z}$.",,
+c3b13,4,Formula,\mathbb{Z}=\{\ldots;-3;-2;-1;0;1;2;3;\ldots\},,
+c3b13,5,Definition,"**Thứ tự trong $\mathbb{Z}$ và số đối.** Trên trục số nằm ngang, điểm biểu diễn số nhỏ nằm bên trái. Mọi số nguyên âm đều nhỏ hơn 0 và nhỏ hơn mọi số nguyên dương. Số đối của $a$ là $-a$; số đối của $-a$ là $a$.",,
+c3b13,6,Example,"**Ví dụ.** Sắp xếp các số $-5;\ 3;\ 0;\ -1;\ 2$ theo thứ tự tăng dần.
+
+**Lời giải.** $-5<-1<0<2<3$.",,
+c3b13,7,Note,**Chú ý.** $-(-7)=7$. Số 0 là số đối của chính nó. $|a|$ là khoảng cách từ điểm $a$ đến gốc 0 trên trục số.,,
+c3b14,1,Heading,# Bài 14. Phép cộng và phép trừ số nguyên,,
+c3b14,2,Definition,"**Cộng hai số nguyên cùng dấu.** Cộng hai số nguyên dương như cộng hai số tự nhiên. Cộng hai số nguyên âm: cộng hai giá trị tuyệt đối rồi đặt dấu ""$-$"" trước kết quả.",,
+c3b14,3,Formula,"(-a)+(-b)=-(a+b)\quad (a,b>0)",,
+c3b14,4,Definition,"**Cộng hai số nguyên khác dấu.** lấy giá trị tuyệt đối lớn trừ giá trị tuyệt đối nhỏ, rồi đặt trước kết quả dấu của số có giá trị tuyệt đối lớn hơn. Hai số đối nhau có tổng bằng 0.",,
+c3b14,5,Example,"**Ví dụ.** Tính $(-7)+4$ và $(-3)+(-9)$.
+
+**Lời giải.** $(-7)+4=-(7-4)=-3$. $(-3)+(-9)=-(3+9)=-12$.",,
+c3b14,6,Definition,"**Phép trừ hai số nguyên.** Muốn trừ $a$ cho $b$, ta cộng $a$ với số đối của $b$: $a-b=a+(-b)$.",,
+c3b14,7,Example,"**Ví dụ.** Nhiệt độ đang là $-4^\circ\text{C}$, giảm thêm $6^\circ\text{C}$. Nhiệt độ mới là bao nhiêu?
+
+**Lời giải.** $(-4)-6=(-4)+(-6)=-10$. Nhiệt độ mới là $-10^\circ\text{C}$.",,
+c3b14,8,Note,**Chú ý.** Phép cộng số nguyên có tính giao hoán và kết hợp; $a+0=a$; $a+(-a)=0$.,,
+c3b15,1,Heading,# Bài 15. Quy tắc dấu ngoặc,,
+c3b15,2,Definition,"**Quy tắc dấu ngoặc.** Khi bỏ dấu ngoặc có dấu ""$+$"" đứng trước, giữ nguyên dấu các số hạng trong ngoặc. Khi bỏ dấu ngoặc có dấu ""$-$"" đứng trước, đổi dấu tất cả các số hạng trong ngoặc.",,
+c3b15,3,Formula,a+(b-c)=a+b-c;\qquad a-(b-c)=a-b+c,,
+c3b15,4,Example,"**Ví dụ.** Tính hợp lí $(-215)+\big[(-45)+215+45\big]$.
+
+**Lời giải.** $=(-215)+(-45)+215+45=\big[(-215)+215\big]+\big[(-45)+45\big]=0+0=0$.",,
+c3b15,5,Definition,"**Tổng đại số.** là dãy các phép cộng và trừ số nguyên. Trong một tổng đại số, ta có thể đổi chỗ các số hạng kèm dấu của chúng, hoặc nhóm các số hạng một cách tuỳ ý.",,
+c3b15,6,Note,"**Chú ý.** Nhờ quy tắc dấu ngoặc, ta thường nhóm các số đối nhau hoặc các số tròn chục để tính nhanh.",,
+c3b16,1,Heading,# Bài 16. Phép nhân số nguyên,,
+c3b16,2,Definition,"**Nhân hai số nguyên khác dấu.** nhân hai giá trị tuyệt đối rồi đặt dấu ""$-$"" trước kết quả.",,
+c3b16,3,Definition,"**Nhân hai số nguyên cùng dấu.** nhân hai giá trị tuyệt đối; kết quả mang dấu ""$+$"". Đặc biệt, tích hai số nguyên âm là số nguyên dương.",,
+c3b16,4,Formula,(-)\cdot(+)=(-);\quad (+)\cdot(+)=(+);\quad (-)\cdot(-)=(+),,
+c3b16,5,Example,"**Ví dụ.** Tính $(-6)\cdot 5$ và $(-4)\cdot(-7)$.
+
+**Lời giải.** $(-6)\cdot 5=-30$. $(-4)\cdot(-7)=28$.",,
+c3b16,6,Definition,"**Tính chất của phép nhân số nguyên.** giao hoán, kết hợp, nhân với 1, và phân phối đối với phép cộng — tương tự trong $\mathbb{N}$.",,
+c3b16,7,Note,**Chú ý.** Tích chứa một số chẵn thừa số nguyên âm là số dương; chứa một số lẻ thừa số nguyên âm là số âm. $a\cdot 0=0$.,,
+c3b17,1,Heading,# Bài 17. Phép chia hết. Ước và bội của một số nguyên,,
+c3b17,2,Definition,"**Phép chia hết trong $\mathbb{Z}$.** Cho $a,b\in\mathbb{Z}$, $b\ne 0$. Nếu có $q\in\mathbb{Z}$ sao cho $a=b\cdot q$ thì ta nói $a$ chia hết cho $b$.",,
+c3b17,3,Definition,"**Dấu của thương.** Quy tắc dấu của phép chia giống phép nhân: cùng dấu cho thương dương, khác dấu cho thương âm.",,
+c3b17,4,Formula,(-36):(-4)=9;\qquad (-36):4=-9,,
+c3b17,5,Definition,"**Ước và bội của một số nguyên.** Nếu $a\ \vdots\ b$ thì $b$ là ước của $a$, $a$ là bội của $b$. Các ước của một số nguyên gồm cả ước dương và ước âm.",,
+c3b17,6,Example,"**Ví dụ.** Tìm tất cả các ước của $-8$.
+
+**Lời giải.** $Ư(-8)=\{\pm 1;\pm 2;\pm 4;\pm 8\}$.",,
+c3b17,7,Note,**Chú ý.** Nếu $c$ là ước của $a$ và của $b$ thì $c$ cũng là ước của $a+b$ và $a-b$.,,
+c3lt,1,Heading,# Luyện tập chung — Chương III,,
+c3lt,2,Text,"Ôn lại: tập $\mathbb{Z}$, thứ tự và số đối; cộng, trừ số nguyên; quy tắc dấu ngoặc và tổng đại số; nhân, chia số nguyên và quy tắc dấu.",,
+c3lt,3,Note,**Chú ý.** Hãy làm phần bài tập đính kèm của bài này để tự kiểm tra. Ghi lại những câu sai để ôn lại lý thuyết tương ứng.,,
+c3cc,1,Heading,# Bài tập cuối chương III,,
+c3cc,2,Text,"Tổng hợp toàn chương: tính nhanh với số nguyên; bài toán thực tế về nhiệt độ, độ cao, thu – chi; ước và bội của một số nguyên.",,
+c3cc,3,Note,**Chú ý.** Hãy làm phần bài tập đính kèm của bài này để tự kiểm tra. Ghi lại những câu sai để ôn lại lý thuyết tương ứng.,,
+c4b18,1,Heading,# Bài 18. Hình tam giác đều. Hình vuông. Hình lục giác đều,,
+c4b18,2,Text,"Các hình này xuất hiện nhiều trong thực tế: biển báo giao thông, gạch lát nền, tổ ong…",,
+c4b18,3,Definition,"**Hình tam giác đều.** có ba cạnh bằng nhau và ba góc bằng nhau, mỗi góc bằng $60^\circ$.",,
+c4b18,4,Definition,"**Hình vuông.** có bốn cạnh bằng nhau, bốn góc vuông, hai đường chéo bằng nhau và vuông góc với nhau.",,
+c4b18,5,Definition,**Hình lục giác đều.** có sáu cạnh bằng nhau và sáu góc bằng nhau; ba đường chéo chính bằng nhau và cắt nhau tại một điểm chia mỗi đường chéo thành hai phần bằng nhau.,,
+c4b18,6,Formula,"\text{Tam giác đều: } P=3a;\qquad \text{Hình vuông: } P=4a,\ \ S=a^2",,
+c4b18,7,Example,"**Ví dụ.** Một viên gạch hình vuông cạnh 40 cm. Tính chu vi và diện tích viên gạch.
+
+**Lời giải.** $P=4\cdot 40=160$ cm; $S=40^2=1600\ \text{cm}^2$.",,
+c4b18,8,Note,**Chú ý.** Lục giác đều được ghép bởi 6 tam giác đều bằng nhau có chung một đỉnh ở tâm.,,
+c4b19,1,Heading,# Bài 19. Hình chữ nhật. Hình thoi. Hình bình hành. Hình thang cân,,
+c4b19,2,Definition,**Hình chữ nhật.** có bốn góc vuông; các cạnh đối bằng nhau và song song; hai đường chéo bằng nhau và cắt nhau tại trung điểm mỗi đường.,,
+c4b19,3,Definition,**Hình thoi.** có bốn cạnh bằng nhau; các cạnh đối song song; hai đường chéo vuông góc với nhau và cắt nhau tại trung điểm mỗi đường.,,
+c4b19,4,Definition,**Hình bình hành.** có các cạnh đối bằng nhau và song song; các góc đối bằng nhau; hai đường chéo cắt nhau tại trung điểm mỗi đường.,,
+c4b19,5,Definition,"**Hình thang cân.** có hai cạnh đáy song song, hai cạnh bên bằng nhau, hai góc kề một đáy bằng nhau và hai đường chéo bằng nhau.",,
+c4b19,6,Example,"**Ví dụ.** Hình chữ nhật có hai kích thước 5 cm và 8 cm. Tính độ dài đường chéo bằng cách vẽ và đo, rồi tính chu vi.
+
+**Lời giải.** Chu vi $P=2(5+8)=26$ cm. Đường chéo đo được xấp xỉ $9{,}4$ cm (bằng $\sqrt{5^2+8^2}$, học ở lớp trên).",,
+c4b19,7,Note,"**Chú ý.** Hình vuông vừa là hình chữ nhật, vừa là hình thoi.",,
+c4b20,1,Heading,# Bài 20. Chu vi và diện tích của một số tứ giác đã học,,
+c4b20,2,Definition,**Chu vi.** của một hình bằng tổng độ dài các cạnh của hình đó.,,
+c4b20,3,Definition,"**Công thức diện tích.** Hình chữ nhật: $S=a\cdot b$. Hình vuông: $S=a^2$. Hình bình hành: $S=a\cdot h$ ($h$ là chiều cao ứng với cạnh $a$). Hình thoi: $S=\dfrac{1}{2}\cdot m\cdot n$ ($m,n$ là hai đường chéo). Hình thang: $S=\dfrac{1}{2}(a+b)\cdot h$.",,
+c4b20,4,Formula,S_{\text{cn}}=ab;\quad S_{\text{bh}}=ah;\quad S_{\text{thoi}}=\tfrac12 mn;\quad S_{\text{thang}}=\tfrac12 (a+b)h,,
+c4b20,5,Example,"**Ví dụ.** Mảnh vườn hình thang có hai đáy 10 m và 14 m, chiều cao 8 m. Tính diện tích.
+
+**Lời giải.** $S=\dfrac{1}{2}(10+14)\cdot 8=\dfrac{1}{2}\cdot 24\cdot 8=96\ \text{m}^2$.",,
+c4b20,6,Example,"**Ví dụ.** Một mảnh đất hình chữ nhật dài 25 m, rộng 18 m. Tính chu vi và diện tích.
+
+**Lời giải.** $P=2(25+18)=86$ m; $S=25\cdot 18=450\ \text{m}^2$.",,
+c4b20,7,Note,**Chú ý.** Luôn đưa các độ dài về cùng một đơn vị trước khi tính; đơn vị diện tích là đơn vị độ dài bình phương.,,
+c4lt,1,Heading,# Luyện tập chung — Chương IV,,
+c4lt,2,Text,"Ôn lại: nhận biết và nêu tính chất của tam giác đều, hình vuông, lục giác đều, hình chữ nhật, hình thoi, hình bình hành, hình thang cân; công thức chu vi và diện tích.",,
+c4lt,3,Note,**Chú ý.** Hãy làm phần bài tập đính kèm của bài này để tự kiểm tra. Ghi lại những câu sai để ôn lại lý thuyết tương ứng.,,
+c4cc,1,Heading,# Bài tập cuối chương IV,,
+c4cc,2,Text,"Tổng hợp toàn chương: vẽ hình theo yêu cầu; tính chu vi, diện tích các hình trong bài toán thực tế về mảnh đất, viên gạch, khung tranh, mảnh vườn.",,
+c4cc,3,Note,**Chú ý.** Hãy làm phần bài tập đính kèm của bài này để tự kiểm tra. Ghi lại những câu sai để ôn lại lý thuyết tương ứng.,,
+c5b21,1,Heading,# Bài 21. Hình có trục đối xứng,,
+c5b21,2,Definition,**Trục đối xứng.** Đường thẳng $d$ là trục đối xứng của hình $H$ nếu khi gấp hình theo đường thẳng $d$ thì hai phần của hình chồng khít lên nhau. Khi đó $H$ được gọi là *hình có trục đối xứng*.,,
+c5b21,3,Text,Ví dụ: đoạn thẳng có trục đối xứng là đường trung trực của nó; hình tròn có vô số trục đối xứng; hình vuông có 4 trục đối xứng; hình chữ nhật (không phải hình vuông) có 2 trục đối xứng; tam giác đều có 3 trục đối xứng.,,
+c5b21,4,Example,"**Ví dụ.** Trong các chữ cái in hoa $A,\ B,\ D,\ H,\ N$, chữ nào có trục đối xứng?
+
+**Lời giải.** $A$ có 1 trục đối xứng (dọc). $B$ và $D$ có 1 trục đối xứng (ngang). $H$ có 2 trục đối xứng. $N$ không có trục đối xứng.",,
+c5b21,5,Note,"**Chú ý.** Một hình có thể có một, nhiều, hoặc không có trục đối xứng nào.",,
+c5b22,1,Heading,# Bài 22. Hình có tâm đối xứng,,
+c5b22,2,Definition,**Tâm đối xứng.** Điểm $O$ là tâm đối xứng của hình $H$ nếu khi quay hình $H$ nửa vòng ($180^\circ$) quanh điểm $O$ thì hình thu được chồng khít với hình ban đầu. Khi đó $H$ được gọi là *hình có tâm đối xứng*.,,
+c5b22,3,Text,"Ví dụ: hình bình hành, hình chữ nhật, hình thoi, hình vuông đều có tâm đối xứng là giao điểm hai đường chéo; hình tròn có tâm đối xứng là tâm của nó; đoạn thẳng có tâm đối xứng là trung điểm.",,
+c5b22,4,Example,"**Ví dụ.** Chữ cái in hoa nào trong $S,\ H,\ O,\ X,\ A$ có tâm đối xứng?
+
+**Lời giải.** $S,\ H,\ O,\ X$ có tâm đối xứng; $A$ không có tâm đối xứng.",,
+c5b22,5,Note,"**Chú ý.** Một hình vừa có thể có trục đối xứng vừa có tâm đối xứng (ví dụ hình vuông, hình tròn).",,
+c5b23,1,Heading,# Bài 23. Vai trò của tính đối xứng trong thế giới tự nhiên,,
+c5b23,2,Text,"Tính đối xứng có mặt khắp nơi: cánh bướm, bông tuyết, lá cây, tổ ong, hoa văn trang trí, kiến trúc. Đối xứng tạo nên sự cân đối, hài hoà và vững chắc.",,
+c5b23,3,Definition,"**Ý nghĩa.** Trong tự nhiên, đối xứng giúp sinh vật cân bằng khi di chuyển và phát triển ổn định. Trong kĩ thuật và nghệ thuật, đối xứng giúp thiết kế cân đối, tiết kiệm vật liệu và dễ chế tạo.",,
+c5b23,4,Example,"**Ví dụ.** Bông tuyết thường có mấy trục đối xứng?
+
+**Lời giải.** Bông tuyết sáu cánh có 6 trục đối xứng và 1 tâm đối xứng.",,
+c5b23,5,Note,"**Chú ý.** Nhiều công trình như đền, tháp, cầu được thiết kế đối xứng để phân bố lực đều và tạo vẻ đẹp cân đối.",,
+c5lt,1,Heading,# Luyện tập chung — Chương V,,
+c5lt,2,Text,Ôn lại: nhận biết hình có trục đối xứng và tìm các trục đối xứng; nhận biết hình có tâm đối xứng; vẽ thêm để một hình trở nên đối xứng.,,
+c5lt,3,Note,**Chú ý.** Hãy làm phần bài tập đính kèm của bài này để tự kiểm tra. Ghi lại những câu sai để ôn lại lý thuyết tương ứng.,,
+c5cc,1,Heading,# Bài tập cuối chương V,,
+c5cc,2,Text,"Tổng hợp toàn chương: tìm trục và tâm đối xứng của chữ cái, biển báo, hoa văn; thiết kế hoạ tiết đối xứng đơn giản.",,
+c5cc,3,Note,**Chú ý.** Hãy làm phần bài tập đính kèm của bài này để tự kiểm tra. Ghi lại những câu sai để ôn lại lý thuyết tương ứng.,,
+c6b24,1,Heading,# Bài 24. Mở rộng phân số. Phân số bằng nhau,,
+c6b24,2,Definition,"**Phân số.** $\dfrac{a}{b}$ với $a,b\in\mathbb{Z}$ và $b\ne 0$; $a$ là *tử số*, $b$ là *mẫu số*. Mỗi số nguyên $a$ viết được thành phân số $\dfrac{a}{1}$.",,
+c6b24,3,Definition,**Hai phân số bằng nhau.** $\dfrac{a}{b}=\dfrac{c}{d}$ khi và chỉ khi $a\cdot d=b\cdot c$ (tích chéo bằng nhau).,,
+c6b24,4,Formula,"\dfrac{a}{b}=\dfrac{a\cdot m}{b\cdot m}\ (m\ne 0);\qquad \dfrac{a}{b}=\dfrac{a:n}{b:n}\ (n\in\text{ƯC}(a,b))",,
+c6b24,5,Definition,**Rút gọn – phân số tối giản.** Chia cả tử và mẫu cho một ước chung khác 1. Phân số *tối giản* khi ƯCLN của tử và mẫu (theo giá trị tuyệt đối) bằng 1.,,
+c6b24,6,Example,"**Ví dụ.** Rút gọn $\dfrac{-18}{24}$ và so sánh $\dfrac{3}{4}$ với $\dfrac{5}{6}$.
+
+**Lời giải.** $\dfrac{-18}{24}=\dfrac{-18:6}{24:6}=\dfrac{-3}{4}$. Quy đồng: $\dfrac{3}{4}=\dfrac{9}{12}$, $\dfrac{5}{6}=\dfrac{10}{12}$; vì $9<10$ nên $\dfrac{3}{4}<\dfrac{5}{6}$.",,
+c6b24,7,Definition,"**So sánh phân số.** Đưa về cùng mẫu dương rồi so sánh tử số; hoặc so sánh với các mốc như 0, $\dfrac{1}{2}$, 1.",,
+c6b24,8,Note,**Chú ý.** Người ta thường viết phân số với mẫu số dương: $\dfrac{2}{-5}=\dfrac{-2}{5}$.,,
+c6b25,1,Heading,# Bài 25. Phép cộng và phép trừ phân số,,
+c6b25,2,Definition,"**Cộng, trừ hai phân số cùng mẫu.** cộng (trừ) các tử số và giữ nguyên mẫu số.",,
+c6b25,3,Definition,"**Cộng, trừ hai phân số khác mẫu.** quy đồng mẫu số rồi cộng (trừ) như trường hợp cùng mẫu.",,
+c6b25,4,Formula,\dfrac{a}{m}+\dfrac{b}{m}=\dfrac{a+b}{m};\qquad \dfrac{a}{b}+\dfrac{c}{d}=\dfrac{ad+bc}{bd},,
+c6b25,5,Definition,**Số đối của phân số.** Số đối của $\dfrac{a}{b}$ là $-\dfrac{a}{b}=\dfrac{-a}{b}$; tổng của một phân số và số đối của nó bằng 0. Quy tắc trừ: $\dfrac{a}{b}-\dfrac{c}{d}=\dfrac{a}{b}+\left(-\dfrac{c}{d}\right)$.,,
+c6b25,6,Example,"**Ví dụ.** Tính $\dfrac{2}{3}+\dfrac{-1}{4}$.
+
+**Lời giải.** MSC $=12$: $\dfrac{2}{3}=\dfrac{8}{12}$, $\dfrac{-1}{4}=\dfrac{-3}{12}$. Vậy $\dfrac{8}{12}+\dfrac{-3}{12}=\dfrac{5}{12}$.",,
+c6b25,7,Note,**Chú ý.** Phép cộng phân số có tính giao hoán và kết hợp; nên rút gọn kết quả về phân số tối giản.,,
+c6b26,1,Heading,# Bài 26. Phép nhân và phép chia phân số,,
+c6b26,2,Definition,**Nhân hai phân số.** nhân các tử số với nhau và nhân các mẫu số với nhau.,,
+c6b26,3,Definition,"**Phân số nghịch đảo.** Phân số nghịch đảo của $\dfrac{a}{b}$ (với $a,b\ne 0$) là $\dfrac{b}{a}$. Tích của một phân số và phân số nghịch đảo của nó bằng 1.",,
+c6b26,4,Definition,"**Chia hai phân số.** muốn chia cho một phân số khác 0, ta nhân với phân số nghịch đảo của nó.",,
+c6b26,5,Formula,\dfrac{a}{b}\cdot\dfrac{c}{d}=\dfrac{ac}{bd};\qquad \dfrac{a}{b}:\dfrac{c}{d}=\dfrac{a}{b}\cdot\dfrac{d}{c}=\dfrac{ad}{bc},,
+c6b26,6,Example,"**Ví dụ.** Tính $\dfrac{3}{5}\cdot\dfrac{10}{9}$ và $\dfrac{4}{7}:\dfrac{8}{21}$.
+
+**Lời giải.** $\dfrac{3}{5}\cdot\dfrac{10}{9}=\dfrac{30}{45}=\dfrac{2}{3}$. $\dfrac{4}{7}:\dfrac{8}{21}=\dfrac{4}{7}\cdot\dfrac{21}{8}=\dfrac{84}{56}=\dfrac{3}{2}$.",,
+c6b26,7,Note,"**Chú ý.** Nên rút gọn chéo trước khi nhân để phép tính gọn hơn. Phép nhân phân số có tính giao hoán, kết hợp và phân phối với phép cộng.",,
+c6b27,1,Heading,# Bài 27. Hai bài toán về phân số,,
+c6b27,2,Definition,"**Bài toán 1 — tìm giá trị phân số của một số.** Muốn tìm $\dfrac{m}{n}$ của số $a$, ta tính $a\cdot\dfrac{m}{n}$.",,
+c6b27,3,Definition,"**Bài toán 2 — tìm một số khi biết giá trị phân số của nó.** Muốn tìm một số biết $\dfrac{m}{n}$ của nó bằng $b$, ta tính $b:\dfrac{m}{n}$.",,
+c6b27,4,Formula,\text{Giá trị} = a\cdot\dfrac{m}{n};\qquad \text{Số cần tìm} = b:\dfrac{m}{n},,
+c6b27,5,Example,"**Ví dụ.** Một lớp có 40 học sinh, trong đó $\dfrac{3}{5}$ số học sinh là nữ. Tính số học sinh nữ.
+
+**Lời giải.** Số học sinh nữ $=40\cdot\dfrac{3}{5}=24$ (học sinh).",,
+c6b27,6,Example,"**Ví dụ.** $\dfrac{2}{3}$ quãng đường dài 18 km. Hỏi cả quãng đường dài bao nhiêu?
+
+**Lời giải.** Cả quãng đường $=18:\dfrac{2}{3}=18\cdot\dfrac{3}{2}=27$ (km).",,
+c6b27,7,Note,"**Chú ý.** Phân biệt rõ: bài toán 1 cho ""cả"" tìm ""phần""; bài toán 2 cho ""phần"" tìm ""cả"".",,
+c6lt,1,Heading,# Luyện tập chung — Chương VI,,
+c6lt,2,Text,"Ôn lại: rút gọn, quy đồng, so sánh phân số; cộng, trừ, nhân, chia phân số; số đối và số nghịch đảo.",,
+c6lt,3,Note,**Chú ý.** Hãy làm phần bài tập đính kèm của bài này để tự kiểm tra. Ghi lại những câu sai để ôn lại lý thuyết tương ứng.,,
+c6cc,1,Heading,# Bài tập cuối chương VI,,
+c6cc,2,Text,Tổng hợp toàn chương: tính giá trị biểu thức phân số bằng cách hợp lí; hai bài toán về phân số trong tình huống thực tế.,,
+c6cc,3,Note,**Chú ý.** Hãy làm phần bài tập đính kèm của bài này để tự kiểm tra. Ghi lại những câu sai để ôn lại lý thuyết tương ứng.,,
+c7b28,1,Heading,# Bài 28. Số thập phân,,
+c7b28,2,Definition,**Số thập phân.** gồm phần số nguyên viết bên trái dấu phẩy và phần thập phân viết bên phải dấu phẩy. Mỗi phân số thập phân (mẫu là $10;100;1000;\dots$) đều viết được dưới dạng số thập phân và ngược lại.,,
+c7b28,3,Formula,"\dfrac{-325}{100}=-3{,}25;\qquad 0{,}7=\dfrac{7}{10};\qquad -3{,}25=-\Big(3+\dfrac{2}{10}+\dfrac{5}{100}\Big)",,
+c7b28,4,Definition,"**Số thập phân âm và số đối.** Số thập phân âm nhỏ hơn 0. Số đối của $3{,}25$ là $-3{,}25$.",,
+c7b28,5,Definition,"**So sánh hai số thập phân.** Số thập phân âm luôn nhỏ hơn số thập phân dương. Với hai số dương: so sánh phần nguyên trước, phần nguyên bằng nhau thì so sánh lần lượt các chữ số ở từng hàng thập phân. Với hai số âm thì ngược lại.",,
+c7b28,6,Example,"**Ví dụ.** So sánh $-2{,}17$ và $-2{,}9$.
+
+**Lời giải.** Xét hai số đối $2{,}17$ và $2{,}9$: $2{,}17<2{,}9$ nên $-2{,}17>-2{,}9$.",,
+c7b28,7,Note,"**Chú ý.** Thêm hoặc bớt các chữ số 0 ở tận cùng bên phải phần thập phân không làm thay đổi giá trị: $1{,}5=1{,}50$.",,
+c7b29,1,Heading,# Bài 29. Tính toán với số thập phân,,
+c7b29,2,Definition,"**Cộng, trừ số thập phân.** đặt tính sao cho các dấu phẩy thẳng cột, rồi cộng (trừ) như với số tự nhiên và đặt dấu phẩy ở kết quả thẳng cột với các dấu phẩy đã cho. Với số âm, áp dụng quy tắc dấu như với số nguyên.",,
+c7b29,3,Definition,"**Nhân, chia số thập phân.** Nhân: bỏ dấu phẩy để nhân như số tự nhiên, rồi đếm tổng số chữ số ở phần thập phân của các thừa số để đặt dấu phẩy. Chia: chuyển phép chia về chia cho số tự nhiên bằng cách nhân cả số bị chia và số chia với $10;100;\dots$",,
+c7b29,4,Formula,a\cdot(b+c)=ab+ac;\qquad (-a)\cdot b=-(ab);\qquad (-a)\cdot(-b)=ab,,
+c7b29,5,Example,"**Ví dụ.** Tính $3{,}6\cdot 2{,}5$ và $(-7{,}2):0{,}9$.
+
+**Lời giải.** $3{,}6\cdot 2{,}5=9{,}00=9$. $(-7{,}2):0{,}9=(-72):9=-8$.",,
+c7b29,6,Example,"**Ví dụ.** Tính hợp lí $4{,}7+(-3{,}2)+5{,}3+(-6{,}8)$.
+
+**Lời giải.** $=(4{,}7+5{,}3)+\big[(-3{,}2)+(-6{,}8)\big]=10+(-10)=0$.",,
+c7b29,7,Note,"**Chú ý.** Các tính chất giao hoán, kết hợp, phân phối vẫn đúng với số thập phân — dùng để tính nhanh.",,
+c7b30,1,Heading,# Bài 30. Làm tròn và ước lượng,,
+c7b30,2,Definition,**Quy tắc làm tròn số thập phân.** Xác định hàng cần làm tròn. Nhìn chữ số ngay bên phải hàng đó: nếu nó $\ge 5$ thì tăng chữ số ở hàng làm tròn thêm 1; nếu nó $<5$ thì giữ nguyên. Các chữ số bên phải hàng làm tròn bị bỏ đi (hoặc thay bằng 0).,,
+c7b30,3,Example,"**Ví dụ.** Làm tròn $3{,}14159$ đến hàng phần trăm và đến hàng phần mười.
+
+**Lời giải.** Đến hàng phần trăm: chữ số hàng phần nghìn là 1 $(<5)$ nên được $3{,}14$. Đến hàng phần mười: chữ số hàng phần trăm là 4 $(<5)$ nên được $3{,}1$.",,
+c7b30,4,Definition,"**Ước lượng kết quả.** làm tròn các số trong phép tính đến hàng thích hợp rồi tính nhẩm để dự đoán nhanh kết quả, giúp kiểm tra kết quả tính có hợp lí không.",,
+c7b30,5,Example,"**Ví dụ.** Ước lượng $19{,}8\cdot 5{,}1$.
+
+**Lời giải.** $19{,}8\approx 20$; $5{,}1\approx 5$; $20\cdot 5=100$. Kết quả thực tế $\approx 100{,}98$ — phù hợp.",,
+c7b30,6,Note,"**Chú ý.** Kết quả làm tròn được viết với dấu ""$\approx$"" (xấp xỉ). Trong đo đạc, thường làm tròn theo độ chính xác của dụng cụ.",,
+c7b31,1,Heading,# Bài 31. Một số bài toán về tỉ số và tỉ số phần trăm,,
+c7b31,2,Definition,"**Tỉ số.** Tỉ số của $a$ và $b$ (với $b\ne 0$) là thương $a:b$, viết là $\dfrac{a}{b}$ hoặc $a:b$.",,
+c7b31,3,Definition,**Tỉ số phần trăm.** Tỉ số phần trăm của $a$ và $b$ là $\dfrac{a}{b}\cdot 100\%$.,,
+c7b31,4,Formula,\text{Tỉ số phần trăm của }a\text{ và }b=\dfrac{a}{b}\cdot 100\%,,
+c7b31,5,Example,"**Ví dụ.** Một lớp có 40 học sinh, trong đó 22 học sinh nữ. Tính tỉ số phần trăm học sinh nữ.
+
+**Lời giải.** $\dfrac{22}{40}\cdot 100\%=55\%$.",,
+c7b31,6,Example,"**Ví dụ.** Một chiếc áo giá 250 000 đồng được giảm giá $12\%$. Tính số tiền phải trả.
+
+**Lời giải.** Số tiền giảm $=250\,000\cdot\dfrac{12}{100}=30\,000$ đồng. Phải trả $250\,000-30\,000=220\,000$ đồng.",,
+c7b31,7,Note,**Chú ý.** Tìm $p\%$ của $a$: tính $a\cdot\dfrac{p}{100}$. Tìm $a$ khi biết $p\%$ của nó là $b$: tính $b:\dfrac{p}{100}$.,,
+c7lt,1,Heading,# Luyện tập chung — Chương VII,,
+c7lt,2,Text,"Ôn lại: đọc, viết, so sánh số thập phân; bốn phép tính với số thập phân và tính nhanh; làm tròn và ước lượng.",,
+c7lt,3,Note,**Chú ý.** Hãy làm phần bài tập đính kèm của bài này để tự kiểm tra. Ghi lại những câu sai để ôn lại lý thuyết tương ứng.,,
+c7cc,1,Heading,# Bài tập cuối chương VII,,
+c7cc,2,Text,"Tổng hợp toàn chương: bài toán thực tế về tiền, đo lường, phần trăm giảm giá, lãi suất, tỉ lệ.",,
+c7cc,3,Note,**Chú ý.** Hãy làm phần bài tập đính kèm của bài này để tự kiểm tra. Ghi lại những câu sai để ôn lại lý thuyết tương ứng.,,
+c8b32,1,Heading,# Bài 32. Điểm và đường thẳng,,
+c8b32,2,Definition,"**Điểm và đường thẳng.** *Điểm* và *đường thẳng* là những hình cơ bản, không định nghĩa. Điểm được đặt tên bằng chữ in hoa ($A,B,C,\dots$); đường thẳng bằng chữ in thường ($a,b,c,\dots$) hoặc bằng tên hai điểm thuộc nó.",,
+c8b32,3,Definition,"**Quan hệ thuộc.** Nếu điểm $A$ nằm trên đường thẳng $d$, ta viết $A\in d$ và nói $d$ đi qua $A$. Qua hai điểm phân biệt có một và chỉ một đường thẳng.",,
+c8b32,4,Definition,"**Ba điểm thẳng hàng.** là ba điểm cùng thuộc một đường thẳng. Trong ba điểm thẳng hàng, có một và chỉ một điểm nằm giữa hai điểm còn lại.",,
+c8b32,5,Example,"**Ví dụ.** Cho ba điểm $M,N,P$ thẳng hàng, $N$ nằm giữa $M$ và $P$. Kể tên các tia và đoạn thẳng tạo thành.
+
+**Lời giải.** Đoạn thẳng: $MN,\ NP,\ MP$. Trên đường thẳng đó có các tia $NM$ và $NP$ đối nhau.",,
+c8b32,6,Definition,"**Hai đường thẳng cắt nhau, song song, trùng nhau.** Hai đường thẳng phân biệt hoặc có đúng một điểm chung (cắt nhau), hoặc không có điểm chung nào (song song).",,
+c8b32,7,Note,**Chú ý.** Đường thẳng không bị giới hạn về hai phía.,,
+c8b33,1,Heading,# Bài 33. Điểm nằm giữa hai điểm. Tia,,
+c8b33,2,Definition,**Tia.** Hình gồm điểm $O$ và một phần đường thẳng bị chia ra bởi $O$ được gọi là một *tia gốc $O$*.,,
+c8b33,3,Definition,**Hai tia đối nhau.** Hai tia chung gốc và tạo thành một đường thẳng gọi là hai tia đối nhau. Mỗi điểm trên đường thẳng là gốc chung của hai tia đối nhau.,,
+c8b33,4,Definition,**Hai tia trùng nhau.** Tia $Ox$ và tia $Oy$ trùng nhau nếu chúng chung gốc và có thêm một điểm chung khác gốc.,,
+c8b33,5,Example,"**Ví dụ.** Trên đường thẳng $xy$ lấy điểm $O$. Lấy $A$ thuộc tia $Ox$, $B$ thuộc tia $Oy$. Điểm nào nằm giữa?
+
+**Lời giải.** Vì $A$ và $B$ thuộc hai tia đối nhau gốc $O$ nên $O$ nằm giữa $A$ và $B$.",,
+c8b33,6,Note,"**Chú ý.** Khi đọc tên tia, gốc luôn được đọc trước: ""tia $Ox$"".",,
+c8b34,1,Heading,# Bài 34. Đoạn thẳng. Độ dài đoạn thẳng,,
+c8b34,2,Definition,"**Đoạn thẳng $AB$.** là hình gồm hai điểm $A$, $B$ và tất cả các điểm nằm giữa $A$ và $B$. $A$, $B$ là hai *mút*.",,
+c8b34,3,Definition,**Độ dài đoạn thẳng.** Mỗi đoạn thẳng có một độ dài là một số dương. Hai đoạn thẳng bằng nhau nếu có cùng độ dài.,,
+c8b34,4,Definition,"**Cộng độ dài.** Nếu điểm $M$ nằm giữa hai điểm $A$ và $B$ thì $AM+MB=AB$. Ngược lại, nếu $AM+MB=AB$ thì $M$ nằm giữa $A$ và $B$.",,
+c8b34,5,Formula,"M\text{ nằm giữa }A,B \iff AM+MB=AB",,
+c8b34,6,Example,"**Ví dụ.** Cho $AB=7$ cm, điểm $M$ nằm giữa $A$ và $B$ với $AM=3$ cm. Tính $MB$.
+
+**Lời giải.** $MB=AB-AM=7-3=4$ (cm).",,
+c8b34,7,Note,"**Chú ý.** Muốn so sánh hai đoạn thẳng, ta so sánh độ dài của chúng.",,
+c8b35,1,Heading,# Bài 35. Trung điểm của đoạn thẳng,,
+c8b35,2,Definition,"**Trung điểm.** Trung điểm $M$ của đoạn thẳng $AB$ là điểm nằm giữa $A$, $B$ và cách đều $A$, $B$ (tức $MA=MB$). Trung điểm còn được gọi là *điểm chính giữa* của đoạn thẳng.",,
+c8b35,3,Formula,"M\text{ là trung điểm của }AB \iff \big(M\text{ nằm giữa }A,B\ \text{ và }\ MA=MB=\dfrac{AB}{2}\big)",,
+c8b35,4,Example,"**Ví dụ.** Đoạn thẳng $AB=10$ cm có trung điểm $I$. Tính $IA$ và $IB$.
+
+**Lời giải.** $IA=IB=\dfrac{AB}{2}=\dfrac{10}{2}=5$ (cm).",,
+c8b35,5,Definition,"**Cách vẽ trung điểm.** Dùng thước có chia vạch: đo $AB$, tính $\dfrac{AB}{2}$, đặt điểm $M$ trên đoạn $AB$ cách $A$ một khoảng $\dfrac{AB}{2}$. Hoặc gấp giấy sao cho điểm $A$ trùng điểm $B$.",,
+c8b35,6,Note,**Chú ý.** Mỗi đoạn thẳng chỉ có duy nhất một trung điểm.,,
+c8b36,1,Heading,# Bài 36. Góc,,
+c8b36,2,Definition,"**Góc.** là hình gồm hai tia chung gốc. Gốc chung là *đỉnh*, hai tia là hai *cạnh* của góc. Góc có hai cạnh là hai tia đối nhau gọi là *góc bẹt*.",,
+c8b36,3,Text,"Kí hiệu góc: $\widehat{xOy}$, $\widehat{O}$ hoặc $\angle xOy$, trong đó $O$ là đỉnh.",,
+c8b36,4,Definition,"**Điểm trong của góc.** Với góc $\widehat{xOy}$ không bẹt, điểm $M$ nằm trong góc nếu tia $OM$ nằm giữa hai tia $Ox$ và $Oy$.",,
+c8b36,5,Example,"**Ví dụ.** Vẽ hai tia $Oa$, $Ob$. Có mấy góc được tạo thành khi vẽ thêm tia $Oc$ nằm giữa $Oa$ và $Ob$?
+
+**Lời giải.** Có 3 góc: $\widehat{aOc}$, $\widehat{cOb}$ và $\widehat{aOb}$.",,
+c8b36,6,Note,"**Chú ý.** Khi hai cạnh của góc trùng nhau, ta có ""góc không"" với số đo $0^\circ$.",,
+c8b37,1,Heading,# Bài 37. Số đo góc,,
+c8b37,2,Definition,"**Số đo góc.** Mỗi góc có một số đo dương, đo bằng thước đo góc, đơn vị là *độ* (kí hiệu $^\circ$). Số đo của góc bẹt là $180^\circ$; mọi góc có số đo không vượt quá $180^\circ$.",,
+c8b37,3,Definition,**Phân loại góc.** Góc nhọn: $0^\circ<\alpha<90^\circ$. Góc vuông: $\alpha=90^\circ$. Góc tù: $90^\circ<\alpha<180^\circ$. Góc bẹt: $\alpha=180^\circ$.,,
+c8b37,4,Formula,\text{nhọn}<90^\circ;\quad \text{vuông}=90^\circ;\quad 90^\circ<\text{tù}<180^\circ;\quad \text{bẹt}=180^\circ,,
+c8b37,5,Definition,**Hai góc bằng nhau.** nếu có cùng số đo. So sánh hai góc là so sánh số đo của chúng.,,
+c8b37,6,Example,"**Ví dụ.** Tia $Oy$ nằm giữa hai tia $Ox$ và $Oz$; $\widehat{xOy}=40^\circ$, $\widehat{yOz}=75^\circ$. Tính $\widehat{xOz}$.
+
+**Lời giải.** $\widehat{xOz}=\widehat{xOy}+\widehat{yOz}=40^\circ+75^\circ=115^\circ$ — là góc tù.",,
+c8b37,7,Note,**Chú ý.** Nếu tia $Oy$ nằm giữa hai tia $Ox$ và $Oz$ thì $\widehat{xOy}+\widehat{yOz}=\widehat{xOz}$.,,
+c8lt,1,Heading,# Luyện tập chung — Chương VIII,,
+c8lt,2,Text,"Ôn lại: điểm, đường thẳng, tia, đoạn thẳng và hệ thức cộng độ dài; trung điểm; góc và số đo góc.",,
+c8lt,3,Note,**Chú ý.** Hãy làm phần bài tập đính kèm của bài này để tự kiểm tra. Ghi lại những câu sai để ôn lại lý thuyết tương ứng.,,
+c8cc,1,Heading,# Bài tập cuối chương VIII,,
+c8cc,2,Text,Tổng hợp toàn chương: vẽ hình theo diễn đạt; tính độ dài đoạn thẳng và số đo góc; nhận biết trung điểm.,,
+c8cc,3,Note,**Chú ý.** Hãy làm phần bài tập đính kèm của bài này để tự kiểm tra. Ghi lại những câu sai để ôn lại lý thuyết tương ứng.,,
+c9b38,1,Heading,# Bài 38. Dữ liệu và thu thập dữ liệu,,
+c9b38,2,Definition,"**Dữ liệu.** là những thông tin thu thập được về một đối tượng. Dữ liệu có thể là *số* (dữ liệu định lượng) hoặc *không phải số* như tên, màu sắc, mức độ (dữ liệu định tính).",,
+c9b38,3,Definition,"**Thu thập dữ liệu.** có thể bằng cách quan sát, làm thí nghiệm, lập phiếu hỏi, phỏng vấn, hoặc tra cứu từ nguồn có sẵn (sách, internet).",,
+c9b38,4,Example,"**Ví dụ.** Phân loại các dữ liệu sau: chiều cao các bạn trong tổ; môn thể thao yêu thích; số anh chị em.
+
+**Lời giải.** Chiều cao và số anh chị em là dữ liệu số; môn thể thao yêu thích là dữ liệu không phải số.",,
+c9b38,5,Definition,"**Tính hợp lí của dữ liệu.** Dữ liệu thu thập cần chính xác, đầy đủ và phù hợp với đối tượng. Cần loại bỏ các giá trị bất thường, vô lí.",,
+c9b38,6,Note,"**Chú ý.** Trước khi thu thập, cần xác định rõ: thu thập về vấn đề gì, từ ai và bằng cách nào.",,
+c9b39,1,Heading,# Bài 39. Bảng thống kê và biểu đồ tranh,,
+c9b39,2,Definition,"**Bảng thống kê.** trình bày dữ liệu theo hàng và cột, giúp thấy nhanh số liệu của từng loại và so sánh giữa các loại.",,
+c9b39,3,Definition,**Biểu đồ tranh.** dùng biểu tượng (hình vẽ) để biểu diễn số liệu; mỗi biểu tượng thay cho một số lượng nhất định (ghi trong phần chú giải).,,
+c9b39,4,Example,"**Ví dụ.** Trong biểu đồ tranh, mỗi $\bigstar$ ứng với 5 quyển sách. Lớp 6A có 6 ngôi sao. Lớp 6A quyên góp bao nhiêu quyển?
+
+**Lời giải.** $6\cdot 5=30$ quyển sách.",,
+c9b39,5,Note,"**Chú ý.** Khi số lượng không chia hết cho giá trị một biểu tượng, ta dùng một phần biểu tượng (ví dụ nửa ngôi sao).",,
+c9b40,1,Heading,# Bài 40. Biểu đồ cột,,
+c9b40,2,Definition,"**Biểu đồ cột.** biểu diễn số liệu bằng các cột hình chữ nhật có cùng chiều rộng, đặt cách đều nhau; chiều cao mỗi cột tỉ lệ với số liệu mà nó biểu diễn.",,
+c9b40,3,Definition,"**Cách đọc.** Nhìn tên ở trục ngang để biết loại, nhìn vạch ở trục đứng (hoặc số ghi trên đỉnh cột) để biết số liệu; cột cao hơn ứng với số liệu lớn hơn.",,
+c9b40,4,Example,"**Ví dụ.** Biểu đồ cột về số học sinh đăng kí câu lạc bộ: Bóng đá 12, Cờ vua 8, Mĩ thuật 10. Câu lạc bộ nào đông nhất, tổng bao nhiêu?
+
+**Lời giải.** Bóng đá đông nhất (12). Tổng $12+8+10=30$ học sinh.",,
+c9b40,5,Note,"**Chú ý.** Các bước vẽ: kẻ hai trục; chia đơn vị đều trên trục đứng; vẽ các cột có chiều cao đúng số liệu; ghi tên, số liệu và tiêu đề.",,
+c9b41,1,Heading,# Bài 41. Biểu đồ cột kép,,
+c9b41,2,Definition,"**Biểu đồ cột kép.** gồm từng cặp cột đặt sát nhau, dùng để so sánh *hai bộ dữ liệu* cùng loại (ví dụ hai năm, hai lớp, nam và nữ). Mỗi bộ dữ liệu được tô một màu và ghi trong phần chú giải.",,
+c9b41,3,Definition,"**Cách đọc.** Trong mỗi nhóm, so sánh chiều cao hai cột để thấy chênh lệch giữa hai bộ dữ liệu; so sánh giữa các nhóm để thấy xu hướng chung.",,
+c9b41,4,Example,"**Ví dụ.** Biểu đồ cột kép số cây trồng của lớp 6A và 6B trong 2 tháng: Tháng 3 (6A: 20, 6B: 15); Tháng 4 (6A: 25, 6B: 30). Nhận xét.
+
+**Lời giải.** Tháng 3 lớp 6A trồng nhiều hơn; tháng 4 lớp 6B vượt lên. Cả hai lớp đều trồng nhiều hơn ở tháng 4.",,
+c9b41,5,Note,**Chú ý.** Hai cột trong một cặp phải cùng chiều rộng và dùng chung thang đo ở trục đứng.,,
+c9b42,1,Heading,"# Bài 42. Kết quả có thể và sự kiện trong một trò chơi, thí nghiệm",,
+c9b42,2,Definition,"**Kết quả có thể.** Khi thực hiện một phép thử (tung đồng xu, gieo xúc xắc, quay vòng số…), mỗi kết quả có thể xảy ra được gọi là một *kết quả có thể*. Tập hợp mọi kết quả có thể xác định trước khi thực hiện.",,
+c9b42,3,Definition,**Sự kiện.** Một *sự kiện* liên quan đến phép thử có thể *xảy ra* hoặc *không xảy ra* tuỳ theo kết quả nhận được.,,
+c9b42,4,Example,"**Ví dụ.** Gieo một con xúc xắc 6 mặt. Liệt kê các kết quả có thể và cho biết sự kiện ""số chấm là số chẵn"" gồm những kết quả nào.
+
+**Lời giải.** Kết quả có thể: $1;2;3;4;5;6$. Sự kiện ""số chấm chẵn"" xảy ra khi kết quả là $2;4;6$.",,
+c9b42,5,Note,"**Chú ý.** Trước khi gieo, ta không biết chắc kết quả nào xảy ra, nhưng biết chắc tập hợp các kết quả có thể.",,
+c9b43,1,Heading,# Bài 43. Xác suất thực nghiệm,,
+c9b43,2,Definition,"**Xác suất thực nghiệm của một sự kiện.** Khi thực hiện một phép thử nhiều lần, xác suất thực nghiệm của sự kiện $A$ bằng tỉ số giữa *số lần sự kiện $A$ xảy ra* và *tổng số lần thực hiện phép thử*.",,
+c9b43,3,Formula,P_{\text{thực nghiệm}}(A)=\dfrac{\text{số lần }A\text{ xảy ra}}{\text{tổng số lần thử}},,
+c9b43,4,Example,"**Ví dụ.** Tung một đồng xu 50 lần, có 27 lần mặt ngửa. Tính xác suất thực nghiệm của sự kiện ""xuất hiện mặt ngửa"".
+
+**Lời giải.** $P=\dfrac{27}{50}=0{,}54$.",,
+c9b43,5,Example,"**Ví dụ.** Một hộp có bi xanh và bi đỏ. Lấy ngẫu nhiên có hoàn lại 40 lần, được 24 lần bi đỏ. Ước lượng xác suất lấy được bi đỏ.
+
+**Lời giải.** $P\approx\dfrac{24}{40}=0{,}6$.",,
+c9b43,6,Note,"**Chú ý.** Số lần thử càng lớn, xác suất thực nghiệm càng gần một giá trị ổn định (xác suất lí thuyết).",,
+c9lt,1,Heading,# Luyện tập chung — Chương IX,,
+c9lt,2,Text,"Ôn lại: phân loại và thu thập dữ liệu; đọc và vẽ bảng thống kê, biểu đồ tranh, biểu đồ cột, biểu đồ cột kép; kết quả có thể, sự kiện và xác suất thực nghiệm.",,
+c9lt,3,Note,**Chú ý.** Hãy làm phần bài tập đính kèm của bài này để tự kiểm tra. Ghi lại những câu sai để ôn lại lý thuyết tương ứng.,,
+c9cc,1,Heading,# Bài tập cuối chương IX,,
+c9cc,2,Text,"Tổng hợp toàn chương: từ một bảng dữ liệu thực tế, lập biểu đồ phù hợp, nhận xét và tính xác suất thực nghiệm.",,
+c9cc,3,Note,**Chú ý.** Hãy làm phần bài tập đính kèm của bài này để tự kiểm tra. Ghi lại những câu sai để ôn lại lý thuyết tương ứng.,,

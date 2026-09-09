@@ -473,6 +473,16 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             }
         }
 
+        /// <summary>
+        /// Hạn nộp bài của một lượt làm. Bài luyện tập (<see cref="ExerciseType.Practice"/>) luôn
+        /// làm tự do — không đếm giờ. Các loại còn lại chỉ đếm giờ khi đề có
+        /// <c>DurationMinutes &gt; 0</c> trong DB; ngược lại cũng làm tự do.
+        /// </summary>
+        private static DateTime? ComputePlannedEndTime(DateTime start, ExerciseType type, int? durationMinutes)
+            => type != ExerciseType.Practice && durationMinutes is > 0
+                ? start.AddMinutes(durationMinutes.Value)
+                : (DateTime?)null;
+
         public async Task<ApiResponse<ExerciseAttemptDto>> StartExerciseAsync(StartExerciseDto dto)
         {
             try
@@ -548,9 +558,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     StudentId = dto.StudentId,
                     ExerciseId = dto.ExerciseId,
                     StartTime = startTime,
-                    PlannedEndTime = exercise.DurationMinutes.HasValue
-                        ? startTime.AddMinutes(exercise.DurationMinutes.Value)
-                        : (DateTime?)null,
+                    PlannedEndTime = ComputePlannedEndTime(startTime, exercise.ExerciseType, exercise.DurationMinutes),
                     MaxScore = exercise.TotalScores,
                     Status = AttemptStatus.InProgress
                 };
@@ -642,9 +650,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     StudentId = dto.StudentId,
                     ExerciseId = exercise.ExerciseId,
                     StartTime = randomStart,
-                    PlannedEndTime = dto.DurationMinutes.HasValue
-                        ? randomStart.AddMinutes(dto.DurationMinutes.Value)
-                        : (DateTime?)null,
+                    PlannedEndTime = ComputePlannedEndTime(randomStart, dto.ExerciseType, dto.DurationMinutes),
                     MaxScore = dto.MaxScore,
                     Status = AttemptStatus.InProgress
                 };

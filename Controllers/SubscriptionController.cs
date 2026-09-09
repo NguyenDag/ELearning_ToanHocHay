@@ -4,8 +4,10 @@ using ELearning_ToanHocHay_Control.Data.Entities;
 using ELearning_ToanHocHay_Control.Models.DTOs;
 using ELearning_ToanHocHay_Control.Models.DTOs.Subscription;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
+using ELearning_ToanHocHay_Control.Models.DTOs.Sepay;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace ELearning_ToanHocHay_Control.Controllers
 {
@@ -18,17 +20,20 @@ namespace ELearning_ToanHocHay_Control.Controllers
         private readonly ISubscriptionPaymentService _subscriptionPaymentService;
         private readonly ISePayService _sePayService;
         private readonly IResourceAccessService _access;
+        private readonly int _qrTimeoutMinutes;
 
         public SubscriptionController(
             ISubscriptionService service,
             ISubscriptionPaymentService subscriptionPaymentService,
             ISePayService sePayService,
-            IResourceAccessService access)
+            IResourceAccessService access,
+            IOptions<SePayOptions> sePayOptions)
         {
             _service = service;
             _subscriptionPaymentService = subscriptionPaymentService;
             _sePayService = sePayService;
             _access = access;
+            _qrTimeoutMinutes = Math.Max(1, sePayOptions.Value.QrTimeoutMinutes);
         }
 
         // GET: api/subscription — all financial data, Finance/Admin only (paged, ?status=)
@@ -82,7 +87,9 @@ namespace ELearning_ToanHocHay_Control.Controllers
             {
                 subscriptionId = result.Data.SubscriptionId,
                 amount = result.Data.Amount,
-                qrUrl
+                qrUrl,
+                createdAt = result.Data.CreatedAt,
+                expiresAt = result.Data.ExpiresAt
             }, "Đã tạo yêu cầu thanh toán"));
         }
 
@@ -123,7 +130,9 @@ namespace ELearning_ToanHocHay_Control.Controllers
             return Ok(ApiResponse<object>.SuccessResponse(new
             {
                 status = sub.Status.ToString(),
-                endDate = sub.Status == SubscriptionStatus.Active ? sub.EndDate.ToString("dd/MM/yyyy") : null
+                endDate = sub.Status == SubscriptionStatus.Active ? sub.EndDate.ToString("dd/MM/yyyy") : null,
+                createdAt = sub.CreatedAt,
+                expiresAt = sub.CreatedAt.AddMinutes(_qrTimeoutMinutes)
             }));
         }
 

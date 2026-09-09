@@ -14,5 +14,6 @@
         public long AmountToleranceVnd { get; set; } = 0;      // accepted over/under-payment
         public int PendingTimeoutMinutes { get; set; } = 30;   // release stale Pending subscriptions
         public int LifecycleIntervalMinutes { get; set; } = 5; // background sweep cadence (<=0 disables)
+        public int QrTimeoutMinutes { get; set; } = 15;        // QR validity window shown on the checkout page
     }
 }

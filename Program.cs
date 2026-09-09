@@ -322,6 +322,11 @@ namespace ELearning_ToanHocHay_Control
                 // Idempotent — không đổi gì nếu tài khoản admin đã tồn tại.
                 ActivatorUtilities.CreateInstance<Data.Seed.DefaultAdminSeeder>(scope.ServiceProvider)
                     .SeedAsync().GetAwaiter().GetResult();
+
+                // Đảm bảo luôn có bộ gói cước chuẩn (Free / Standard 199k / Premium 299k).
+                // Idempotent — chỉ tạo gói còn thiếu, không ghi đè gói đã có.
+                ActivatorUtilities.CreateInstance<Data.Seed.DefaultPackageSeeder>(scope.ServiceProvider)
+                    .SeedAsync().GetAwaiter().GetResult();
             }
 
             // 8. Middleware pipeline, in the standard order

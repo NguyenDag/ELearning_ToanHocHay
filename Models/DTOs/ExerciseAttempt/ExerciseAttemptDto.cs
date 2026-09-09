@@ -73,6 +73,10 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs.ExerciseAttempt
         public string? ImageUrl { get; set; }
 
         public List<AnswerOptionDto> Options { get; set; } = new();
+
+        // Câu trả lời đã lưu (autosave) — để khôi phục khi tải lại trang làm bài.
+        public int? SavedOptionId { get; set; }
+        public string? SavedAnswerText { get; set; }
     }
 
     public class AnswerOptionDto

@@ -504,9 +504,10 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     if (existingAttempt.PlannedEndTime == null || now < existingAttempt.PlannedEndTime.Value)
                     {
                         var exerciseInfo = await _exerciseRepository.GetExerciseWithQuestionsAsync(dto.ExerciseId);
+                        var savedAnswers = await _answerRepository.GetAttemptAnswersAsync(existingAttempt.AttemptId);
 
                         var resumeDto =
-                            MapToAttemptDto(existingAttempt, exerciseInfo);
+                            MapToAttemptDto(existingAttempt, exerciseInfo, savedAnswers);
 
                         return ApiResponse<ExerciseAttemptDto>
                             .SuccessResponse(resumeDto, "Resuming your previous attempt");
@@ -728,9 +729,13 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             }
         }
 
-        private ExerciseAttemptDto MapToAttemptDto(ExerciseAttempt attempt, Exercise exercise)
+        private ExerciseAttemptDto MapToAttemptDto(
+            ExerciseAttempt attempt, Exercise exercise, IReadOnlyList<StudentAnswer>? savedAnswers = null)
         {
             var questionsDto = new List<QuestionInAttemptDto>();
+            var answerByQuestion = savedAnswers?
+                .GroupBy(a => a.QuestionId)
+                .ToDictionary(g => g.Key, g => g.OrderByDescending(a => a.AnsweredAt).First());
 
             if (exercise.ExerciseQuestions != null)
             {
@@ -738,6 +743,9 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 {
                     if (eq.Question != null)
                     {
+                        StudentAnswer? saved = null;
+                        answerByQuestion?.TryGetValue(eq.Question.QuestionId, out saved);
+
                         questionsDto.Add(new QuestionInAttemptDto
                         {
                             QuestionId = eq.Question.QuestionId,
@@ -745,6 +753,8 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                             QuestionType = eq.Question.QuestionType,
                             Score = eq.Score,
                             ImageUrl = eq.Question.QuestionImageUrl,
+                            SavedOptionId = saved?.SelectedOptionId,
+                            SavedAnswerText = saved?.AnswerText,
                             Options = eq.Question.QuestionOptions?.Select(o => new AnswerOptionDto
                             {
                                 OptionId = o.OptionId,

@@ -49,7 +49,7 @@ namespace ELearning_ToanHocHay_Control.Common
                 CanPublishContent: false, CanManageFinance: false, CanManageConfig: false, CanViewAuditLog: false),
 
             new(UserType.FinanceManager, "Quản lý tài chính",
-                "Đối soát thanh toán, xử lý hoàn tiền, chạy vòng đời gói",
+                "Quản lý gói & giá, theo dõi doanh thu / giao dịch, đối soát thanh toán, xử lý hoàn tiền, chạy vòng đời gói",
                 CanManageUsers: false, CanAuthorContent: false, CanReviewContent: false,
                 CanPublishContent: false, CanManageFinance: true, CanManageConfig: false, CanViewAuditLog: false),
 

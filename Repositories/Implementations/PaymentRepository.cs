@@ -21,7 +21,10 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
                 .ToListAsync();
 
         public IQueryable<Payment> Query()
-            => _context.Payments.AsNoTracking().Include(x => x.Student);
+            => _context.Payments.AsNoTracking()
+                .Include(x => x.Student).ThenInclude(s => s!.User)
+                .Include(x => x.PaidByUser)
+                .Include(x => x.Subscription).ThenInclude(s => s!.Package);
 
         public async Task<Payment?> GetByIdAsync(int id)
             => await _context.Payments

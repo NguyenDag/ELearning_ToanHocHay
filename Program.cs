@@ -425,6 +425,7 @@ namespace ELearning_ToanHocHay_Control
             services.AddScoped<ISePayService, SePayService>();
             services.AddScoped<ISePayIpnService, SePayIpnService>();
             services.AddScoped<ISubscriptionLifecycleService, SubscriptionLifecycleService>();
+            services.AddScoped<IFinanceAnalyticsService, FinanceAnalyticsService>();
             services.AddHostedService<SubscriptionLifecycleHostedService>();
             services.AddScoped<Services.Helpers.IRefundFieldProtector, Services.Helpers.RefundFieldProtector>();
             services.AddScoped<Services.Helpers.IRefundEventWriter, Services.Helpers.RefundEventWriter>();

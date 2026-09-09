@@ -30,6 +30,16 @@ namespace ELearning_ToanHocHay_Control.Controllers
             return response.ToActionResult();
         }
 
+        // GET: api/packages/manage — danh sách đầy đủ (gồm gói đã tắt + số thuê bao) cho Finance/Admin
+        [HttpGet("manage")]
+        [AuthorizeUserType(UserType.FinanceManager, UserType.SystemAdmin)]
+        public async Task<IActionResult> GetAllForManagement()
+        {
+            var response = await _packageService.GetAllForManagementAsync();
+
+            return response.ToActionResult();
+        }
+
         // GET: api/package/5
         [HttpGet("{id:int}")]
         [AllowAnonymous]

@@ -59,26 +59,45 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         }
 
         public async Task<ApiResponse<PagedResult<PaymentDto>>> GetPagedAsync(
-            Common.PagedRequest request, PaymentStatus? status)
+            Common.PagedRequest request, PaymentStatus? status,
+            DateTime? from = null, DateTime? to = null, PaymentMethod? method = null)
         {
             var query = _repository.Query();
             if (status.HasValue) query = query.Where(p => p.Status == status.Value);
+            if (method.HasValue) query = query.Where(p => p.PaymentMethod == method.Value);
+            if (from.HasValue) query = query.Where(p => p.PaymentDate >= from.Value);
+            if (to.HasValue) query = query.Where(p => p.PaymentDate <= to.Value);
+
+            if (!string.IsNullOrWhiteSpace(request.Search))
+            {
+                var term = request.Search.Trim();
+                query = query.Where(p =>
+                    (p.TransactionId != null && p.TransactionId.Contains(term))
+                    || (p.Student != null && p.Student.User != null && p.Student.User.FullName.Contains(term))
+                    || (p.PaidByUser != null && p.PaidByUser.FullName.Contains(term)));
+            }
 
             var pageResult = await query
                 .OrderByDescending(p => p.PaymentDate)
                 .ToPagedResultAsync(request);
 
-            return ApiResponse<PagedResult<PaymentDto>>.SuccessResponse(pageResult.Map(x => new PaymentDto
-            {
-                PaymentId = x.PaymentId,
-                StudentId = x.StudentId ?? 0,
-                Amount = x.Amount,
-                PaymentMethod = x.PaymentMethod,
-                Status = x.Status,
-                PaymentDate = x.PaymentDate,
-                TransactionId = x.TransactionId
-            }));
+            return ApiResponse<PagedResult<PaymentDto>>.SuccessResponse(pageResult.Map(MapRow));
         }
+
+        private static PaymentDto MapRow(Payment x) => new()
+        {
+            PaymentId = x.PaymentId,
+            StudentId = x.StudentId ?? 0,
+            Amount = x.Amount,
+            PaymentMethod = x.PaymentMethod,
+            Status = x.Status,
+            PaymentDate = x.PaymentDate,
+            TransactionId = x.TransactionId,
+            StudentName = x.Student?.User?.FullName,
+            PayerName = x.PaidByUser?.FullName,
+            PackageName = x.Subscription?.Package?.PackageName,
+            PackageTier = x.Subscription?.Package?.Tier
+        };
 
         public async Task<ApiResponse<PagedResult<PaymentDto>>> GetMyPaymentsAsync(int userId, int page, int pageSize)
         {

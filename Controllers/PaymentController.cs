@@ -26,12 +26,19 @@ namespace ELearning_ToanHocHay_Control.Controllers
             _logger = logger;
         }
 
-        // GET: api/payment — all financial data, Finance/Admin only (paged, ?status=)
+        // GET: api/payments — all financial data, Finance/Admin only
+        // (paged, ?status= &method= &from= &to= &search=)
         [HttpGet]
         [AuthorizeUserType(UserType.FinanceManager, UserType.SystemAdmin)]
-        public async Task<IActionResult> GetAll([FromQuery] PagedRequest request, [FromQuery] PaymentStatus? status)
+        public async Task<IActionResult> GetAll(
+            [FromQuery] PagedRequest request,
+            [FromQuery] PaymentStatus? status,
+            [FromQuery] PaymentMethod? method,
+            [FromQuery] DateTime? from,
+            [FromQuery] DateTime? to)
         {
-            var response = await _service.GetPagedAsync(request, status);
+            var toEnd = to?.Date.AddDays(1).AddTicks(-1);
+            var response = await _service.GetPagedAsync(request, status, from?.Date, toEnd, method);
             return response.ToActionResult();
         }
 

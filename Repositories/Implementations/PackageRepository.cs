@@ -21,9 +21,31 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
                                  .ToListAsync();
         }
 
+        public async Task<List<Package>> GetAllIncludingInactiveAsync()
+        {
+            return await _context.Packages
+                                 .OrderBy(x => x.Tier)
+                                 .ThenBy(x => x.Price)
+                                 .ToListAsync();
+        }
+
         public async Task<Package?> GetByIdAsync(int id)
         {
             return await _context.Packages.FirstOrDefaultAsync(x => x.PackageId == id);
+        }
+
+        public async Task<Dictionary<int, int>> GetActiveSubscriberCountsAsync()
+        {
+            return await _context.Subscriptions
+                                 .Where(s => s.Status == SubscriptionStatus.Active)
+                                 .GroupBy(s => s.PackageId)
+                                 .Select(g => new { PackageId = g.Key, Count = g.Count() })
+                                 .ToDictionaryAsync(x => x.PackageId, x => x.Count);
+        }
+
+        public async Task<bool> HasAnySubscriptionAsync(int packageId)
+        {
+            return await _context.Subscriptions.AnyAsync(s => s.PackageId == packageId);
         }
 
         public async Task AddAsync(Package package)

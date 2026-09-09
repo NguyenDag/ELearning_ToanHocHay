@@ -3,6 +3,7 @@ using ELearning_ToanHocHay_Control.Attributes;
 using ELearning_ToanHocHay_Control.Data.Entities;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using ELearning_ToanHocHay_Control.Models.DTOs;
+using ELearning_ToanHocHay_Control.Models.DTOs.Finance;
 using ELearning_ToanHocHay_Control.Models.DTOs.Refund;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -21,15 +22,54 @@ namespace ELearning_ToanHocHay_Control.Controllers
         private readonly ISubscriptionLifecycleService _lifecycle;
         private readonly IRefundService _refunds;
         private readonly IRefundBatchService _batches;
+        private readonly IFinanceAnalyticsService _analytics;
 
         public FinanceController(
             ISubscriptionLifecycleService lifecycle,
             IRefundService refunds,
-            IRefundBatchService batches)
+            IRefundBatchService batches,
+            IFinanceAnalyticsService analytics)
         {
             _lifecycle = lifecycle;
             _refunds = refunds;
             _batches = batches;
+            _analytics = analytics;
+        }
+
+        // ---------------------------------------------------------------- revenue analytics
+
+        /// <summary>Khoảng ngày báo cáo: mặc định 30 ngày gần nhất, tối đa 366 ngày, <c>to</c> hết ngày.</summary>
+        private static (DateTime From, DateTime To) ResolveRange(DateTime? from, DateTime? to)
+        {
+            var toDate = (to?.Date ?? DateTime.UtcNow.Date).AddDays(1).AddTicks(-1);
+            var fromDate = from?.Date ?? toDate.Date.AddDays(-29);
+            if (fromDate > toDate) (fromDate, toDate) = (toDate.Date, fromDate.Date.AddDays(1).AddTicks(-1));
+            if ((toDate - fromDate).TotalDays > 366) fromDate = toDate.AddDays(-366);
+            return (fromDate, toDate);
+        }
+
+        [HttpGet("analytics/summary")]
+        public async Task<IActionResult> RevenueSummary([FromQuery] DateTime? from, [FromQuery] DateTime? to)
+        {
+            var (f, t) = ResolveRange(from, to);
+            return Ok(ApiResponse<RevenueSummaryDto>.SuccessResponse(await _analytics.GetSummaryAsync(f, t)));
+        }
+
+        [HttpGet("analytics/revenue-series")]
+        public async Task<IActionResult> RevenueSeries(
+            [FromQuery] DateTime? from, [FromQuery] DateTime? to, [FromQuery] RevenueInterval interval = RevenueInterval.Day)
+        {
+            var (f, t) = ResolveRange(from, to);
+            return Ok(ApiResponse<List<RevenueBucketDto>>.SuccessResponse(
+                await _analytics.GetRevenueTimeSeriesAsync(f, t, interval)));
+        }
+
+        [HttpGet("analytics/by-package")]
+        public async Task<IActionResult> RevenueByPackage([FromQuery] DateTime? from, [FromQuery] DateTime? to)
+        {
+            var (f, t) = ResolveRange(from, to);
+            return Ok(ApiResponse<List<PackageRevenueDto>>.SuccessResponse(
+                await _analytics.GetRevenueByPackageAsync(f, t)));
         }
 
         // ---------------------------------------------------------------- subscriptions

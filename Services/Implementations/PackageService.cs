@@ -1,4 +1,4 @@
-﻿using ELearning_ToanHocHay_Control.Data.Entities;
+using ELearning_ToanHocHay_Control.Data.Entities;
 using ELearning_ToanHocHay_Control.Models.DTOs;
 using ELearning_ToanHocHay_Control.Models.DTOs.Package;
 using ELearning_ToanHocHay_Control.Repositories.Interfaces;
@@ -15,27 +15,42 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             _repository = repository;
         }
 
+        private static PackageDto ToDto(Package x, IReadOnlyDictionary<int, int>? subscriberCounts = null) => new()
+        {
+            PackageId = x.PackageId,
+            PackageName = x.PackageName,
+            Description = x.Description,
+            Tier = x.Tier,
+            Price = x.Price,
+            DurationDays = x.DurationDays,
+            MaxMembers = x.MaxMembers,
+            AiHintLimitDaily = x.AiHintLimitDaily,
+            UnlimitedAiHint = x.UnlimitedAiHint,
+            PersonalizedPath = x.PersonalizedPath,
+            MistakeRetry = x.MistakeRetry,
+            SmartReminder = x.SmartReminder,
+            PrioritySupport = x.PrioritySupport,
+            IsActive = x.IsActive,
+            CreatedAt = x.CreatedAt,
+            LastUpdated = x.LastUpdated,
+            ActiveSubscriberCount = subscriberCounts != null && subscriberCounts.TryGetValue(x.PackageId, out var c) ? c : 0
+        };
+
         public async Task<ApiResponse<IEnumerable<PackageDto>>> GetAllAsync()
         {
             var packages = await _repository.GetAllAsync();
 
-            var data = packages.Select(x => new PackageDto
-            {
-                PackageId = x.PackageId,
-                PackageName = x.PackageName,
-                Description = x.Description,
-                Price = x.Price,
-                DurationDays = x.DurationDays,
-                UnlimitedAiHint = x.UnlimitedAiHint,
-                PersonalizedPath = x.PersonalizedPath,
-                MistakeRetry = x.MistakeRetry,
-                SmartReminder = x.SmartReminder,
-                PrioritySupport = x.PrioritySupport,
-                IsActive = x.IsActive
-            });
+            return ApiResponse<IEnumerable<PackageDto>>
+                .SuccessResponse(packages.Select(x => ToDto(x)), "Lấy danh sách gói thành công");
+        }
+
+        public async Task<ApiResponse<IEnumerable<PackageDto>>> GetAllForManagementAsync()
+        {
+            var packages = await _repository.GetAllIncludingInactiveAsync();
+            var counts = await _repository.GetActiveSubscriberCountsAsync();
 
             return ApiResponse<IEnumerable<PackageDto>>
-                .SuccessResponse(data, "Lấy danh sách gói thành công");
+                .SuccessResponse(packages.Select(x => ToDto(x, counts)), "Lấy danh sách gói thành công");
         }
 
         public async Task<ApiResponse<PackageDto>> GetByIdAsync(int packageId)
@@ -43,25 +58,12 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             var package = await _repository.GetByIdAsync(packageId);
             if (package == null)
                 return ApiResponse<PackageDto>
-                    .ErrorResponse("Không tìm thấy gói");
+                    .NotFound("Không tìm thấy gói");
 
-            var dto = new PackageDto
-            {
-                PackageId = package.PackageId,
-                PackageName = package.PackageName,
-                Description = package.Description,
-                Price = package.Price,
-                DurationDays = package.DurationDays,
-                UnlimitedAiHint = package.UnlimitedAiHint,
-                PersonalizedPath = package.PersonalizedPath,
-                MistakeRetry = package.MistakeRetry,
-                SmartReminder = package.SmartReminder,
-                PrioritySupport = package.PrioritySupport,
-                IsActive = package.IsActive
-            };
+            var counts = await _repository.GetActiveSubscriberCountsAsync();
 
             return ApiResponse<PackageDto>
-                .SuccessResponse(dto, "Lấy thông tin gói thành công");
+                .SuccessResponse(ToDto(package, counts), "Lấy thông tin gói thành công");
         }
 
         public async Task<ApiResponse<PackageDto>> CreateAsync(int userId, CreateOrUpdatePackageDto dto)
@@ -85,7 +87,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             await _repository.AddAsync(package);
 
             return ApiResponse<PackageDto>
-                .SuccessResponse(null, "Tạo gói thành công");
+                .SuccessResponse(ToDto(package), "Tạo gói thành công");
         }
 
         public async Task<ApiResponse<PackageDto>> UpdateAsync(int packageId, CreateOrUpdatePackageDto dto)
@@ -93,8 +95,9 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             var package = await _repository.GetByIdAsync(packageId);
             if (package == null)
                 return ApiResponse<PackageDto>
-                    .ErrorResponse("Không tìm thấy gói");
+                    .NotFound("Không tìm thấy gói");
 
+            // Tier cố định — không cho đổi bậc gói ở màn hình quản lý giá.
             package.PackageName = dto.PackageName;
             package.Description = dto.Description;
             package.Price = dto.Price;
@@ -111,7 +114,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             await _repository.UpdateAsync(package);
 
             return ApiResponse<PackageDto>
-                .SuccessResponse(null, "Cập nhật gói thành công");
+                .SuccessResponse(ToDto(package), "Cập nhật gói thành công");
         }
 
         public async Task<ApiResponse<bool>> DeleteAsync(int packageId)
@@ -119,7 +122,11 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             var package = await _repository.GetByIdAsync(packageId);
             if (package == null)
                 return ApiResponse<bool>
-                    .ErrorResponse("Không tìm thấy gói");
+                    .NotFound("Không tìm thấy gói");
+
+            if (await _repository.HasAnySubscriptionAsync(packageId))
+                return ApiResponse<bool>
+                    .Conflict("Gói đã có người đăng ký — hãy tắt hoạt động thay vì xoá");
 
             await _repository.DeleteAsync(package);
 

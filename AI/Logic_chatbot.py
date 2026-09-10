@@ -1,12 +1,6 @@
-import openai
 import os
-# Clean up proxy environment variables that cause issues with OpenAI v1.x
-for key in ["HTTP_PROXY", "HTTPS_PROXY", "http_proxy", "https_proxy"]:
-    if key in os.environ:
-        os.environ.pop(key)
 import json
 import logging
-import httpx
 from enum import Enum
 from typing import Dict
 from dotenv import load_dotenv
@@ -19,11 +13,13 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(me
 logger = logging.getLogger(__name__)
 
 try:
-    from AI_model.Openai_api import api_key_manager
+    from Config_manager import api_key_manager
+    from AI_model.Gemini_api import GeminiAIService
 except ImportError:
     import sys
     sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-    from AI_model.Openai_api import api_key_manager
+    from Config_manager import api_key_manager
+    from AI_model.Gemini_api import GeminiAIService
 
 
 # ==================== USER STATE ====================
@@ -54,17 +50,13 @@ class ChatbotLogicBackend:
     def __init__(self):
         self.users: Dict[str, User] = {}
         self.api_manager = api_key_manager
-        self.model_name = "gpt-4o-mini"
-        self._init_model()
-    
-    def _init_model(self):
-        """Initialize OpenAI configuration"""
-        from openai import OpenAI
-        # Inject an explicit httpx client to bypass the internal 'proxies' error
-        self.client = OpenAI(
-            api_key=self.api_manager.get_current_key(),
-            http_client=httpx.Client()
-        )
+        self._ai = None
+
+    def _get_ai(self) -> GeminiAIService:
+        """Lazily build the Gemini client so a missing key doesn't break startup."""
+        if self._ai is None:
+            self._ai = GeminiAIService()
+        return self._ai
 
     def get_user(self, user_id: str) -> User:
         if user_id not in self.users:
@@ -152,100 +144,74 @@ class ChatbotLogicBackend:
         return self._call_llm_with_retry(user, text)
     
     def _call_llm_with_retry(self, user: User, text: str) -> Dict:
-        """Call LLM with retry logic on key rotation"""
-        max_retries = len(self.api_manager.api_keys)
-        # Import OpenAI v1.0+ classes (excluding OpenAI client if it causes proxies issue)
-        from openai import RateLimitError, APIError
-        
-        for attempt in range(max_retries):
-            try:
-                # Update key for the client instance
-                self.client.api_key = self.api_manager.get_current_key()
-                
-                # Prompt cho LLM
-                system_prompt = (
-                    "Bạn là trợ lý ảo thông minh của web toán học hay, khi người dùng hỏi hãy trả lời lịch sự. "
-                    "Mục tiêu của bạn là khi người dùng chào bạn bạn hãy chào lại, với câu hỏi người dùng thì quyết định xem nó thuộc flow nào và gọi tới flow đó. "
-                    "Khi cảm thấy không thuộc flow nào thì hãy điều hướng tới flow fall back."
-                    "\n\nCác flow có sẵn:\n"
-                    "- tu_van: Tư vấn cho con lớp 6\n"
-                    "- con_hay_lam_sai: Con hay làm sai, không hiểu vì sao\n"
-                    "- con_hoc_cham: Con học chậm, dễ quên bài\n"
-                    "- con_ngai_hoc: Con ngại học Toán\n"
-                    "- theo_sat: Tôi muốn theo sát việc học của con\n"
-                    "- hoc_thu: Học thử miễn phí\n"
-                    "- bao_cao: Xem báo cáo tiến độ\n"
-                    "- hoc_phi: Học phí & lộ trình\n"
-                    "- handover: Cần tư vấn chi tiết / liên hệ nhân viên\n"
-                    "- fallback: Không rõ / không thuộc flow nào\n"
-                    "- greeting: Chào hỏi (trả lời lịch sự)\n"
-                    "\n"
-                    "Hãy trả lời với format JSON: {\"flow\": \"<flow_name>\", \"message\": \"<your_response>\"}"
-                )
-                
-                # Gọi OpenAI API (v1.0+) - using client completions
-                response = self.client.chat.completions.create(
-                    model=self.model_name,
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": text}
-                    ],
-                    temperature=0.5,
-                    max_tokens=2000,
-                    response_format={"type": "json_object"}
-                )
-                
-                response_text = response.choices[0].message.content.strip()
-                logger.info(f"LLM response: {response_text}")
-                
-                # Thử parse JSON response
-                try:
-                    result = json.loads(response_text)
-                    flow_name = result.get("flow", "fallback")
-                    message = result.get("message", "")
-                except json.JSONDecodeError as e:
-                    logger.warning(f"Failed to parse LLM response: {response_text}, error: {str(e)}")
-                    return self._flow_fallback(user)
-                
-                # Mapping flow name to flow handler
-                flow_handlers = {
-                    "tu_van": self._flow_tu_van,
-                    "con_hay_lam_sai": self._flow_con_hay_lam_sai,
-                    "con_hoc_cham": self._flow_con_hoc_cham,
-                    "con_ngai_hoc": self._flow_con_ngai_hoc,
-                    "theo_sat": self._flow_theo_sat,
-                    "hoc_thu": self._flow_hoc_thu_student,
-                    "bao_cao": self._flow_bao_cao,
-                    "hoc_phi": self._flow_hoc_phi,
-                    "handover": self._flow_handover,
-                    "greeting": self._flow_greeting,
-                    "fallback": self._flow_fallback,
-                }
-                
-                handler = flow_handlers.get(flow_name, self._flow_fallback)
-                result_flow = handler(user)
-                
-                # Thêm LLM message vào response nếu có (chỉ khi không phải fallback)
-                if message and flow_name != "fallback":
-                    if result_flow.get("type") == "quick_reply":
-                        result_flow["message"] = message + "\n" + result_flow.get("message", "")
-                    else:
-                        result_flow["message"] = message
-                
-                return result_flow
-                
-            except (RateLimitError, APIError) as e:
-                logger.error(f"API key error on attempt {attempt + 1}: {str(e)}")
-                if attempt < max_retries - 1:
-                    self.api_manager.rotate_key()
-                    logger.info(f"Retrying with next API key...")
-                else:
-                    return self._flow_fallback(user)
-            except Exception as e:
-                logger.error(f"Unexpected error on attempt {attempt + 1}: {str(e)}")
-                return self._flow_fallback(user)
-        
-        return self._flow_fallback(user)
+        """Route free text through Gemini (key rotation handled inside GeminiAIService)."""
+        system_prompt = (
+            "Bạn là trợ lý ảo thông minh của web toán học hay, khi người dùng hỏi hãy trả lời lịch sự. "
+            "Mục tiêu của bạn là khi người dùng chào bạn bạn hãy chào lại, với câu hỏi người dùng thì quyết định xem nó thuộc flow nào và gọi tới flow đó. "
+            "Khi cảm thấy không thuộc flow nào thì hãy điều hướng tới flow fall back."
+            "\n\nCác flow có sẵn:\n"
+            "- tu_van: Tư vấn cho con lớp 6\n"
+            "- con_hay_lam_sai: Con hay làm sai, không hiểu vì sao\n"
+            "- con_hoc_cham: Con học chậm, dễ quên bài\n"
+            "- con_ngai_hoc: Con ngại học Toán\n"
+            "- theo_sat: Tôi muốn theo sát việc học của con\n"
+            "- hoc_thu: Học thử miễn phí\n"
+            "- bao_cao: Xem báo cáo tiến độ\n"
+            "- hoc_phi: Học phí & lộ trình\n"
+            "- handover: Cần tư vấn chi tiết / liên hệ nhân viên\n"
+            "- fallback: Không rõ / không thuộc flow nào\n"
+            "- greeting: Chào hỏi (trả lời lịch sự)\n"
+            "\n"
+            "Hãy trả lời với format JSON: {\"flow\": \"<flow_name>\", \"message\": \"<your_response>\"}"
+        )
+
+        try:
+            response = self._get_ai().generate_chat_response(system_prompt, text)
+        except Exception as e:
+            logger.error(f"Gemini chat call failed: {str(e)}")
+            return self._flow_fallback(user)
+
+        if response.get("status") != "success" or not response.get("text", "").strip():
+            logger.warning(f"Empty/failed LLM response: {response.get('error')}")
+            return self._flow_fallback(user)
+
+        response_text = response["text"].strip()
+        logger.info(f"LLM response: {response_text}")
+
+        try:
+            result = json.loads(response_text)
+            flow_name = result.get("flow", "fallback")
+            message = result.get("message", "")
+        except json.JSONDecodeError as e:
+            logger.warning(f"Failed to parse LLM response: {response_text}, error: {str(e)}")
+            return self._flow_fallback(user)
+
+        # Mapping flow name to flow handler
+        flow_handlers = {
+            "tu_van": self._flow_tu_van,
+            "con_hay_lam_sai": self._flow_con_hay_lam_sai,
+            "con_hoc_cham": self._flow_con_hoc_cham,
+            "con_ngai_hoc": self._flow_con_ngai_hoc,
+            "theo_sat": self._flow_theo_sat,
+            "hoc_thu": self._flow_hoc_thu_student,
+            "bao_cao": self._flow_bao_cao,
+            "hoc_phi": self._flow_hoc_phi,
+            "handover": self._flow_handover,
+            "greeting": self._flow_greeting,
+            "fallback": self._flow_fallback,
+        }
+
+        handler = flow_handlers.get(flow_name, self._flow_fallback)
+        result_flow = handler(user)
+
+        # Thêm LLM message vào response nếu có (chỉ khi không phải fallback)
+        if message and flow_name != "fallback":
+            if result_flow.get("type") == "quick_reply":
+                result_flow["message"] = message + "\n" + result_flow.get("message", "")
+            else:
+                result_flow["message"] = message
+
+        return result_flow
 
     # ---------- Flow handlers với message đầy đủ ----------
     def _flow_tu_van(self, user: User) -> Dict:

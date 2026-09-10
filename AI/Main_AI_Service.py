@@ -33,7 +33,7 @@ logging.getLogger('werkzeug').setLevel(logging.INFO)
 # ==================== IMPORTS ====================
 try:
     from Logic_chatbot import ChatbotLogicBackend, UserState
-    from AI_model.Openai_api import OpenAIService
+    from AI_model.Gemini_api import GeminiAIService
     logger_msg = "Successfully imported all AI modules"
 except ImportError as e:
     logger_msg = f"Import error: {str(e)}"
@@ -54,7 +54,7 @@ _PUBLIC_PATHS = {"/api/health", "/api/chatbot/health", "/api/status", "/api/chat
 
 # Initialise services
 chatbot = ChatbotLogicBackend()
-openai_ai = OpenAIService()
+ai_service = GeminiAIService()
 
 @app.before_request
 def guard_request():
@@ -185,7 +185,7 @@ def generate_hint():
         if not is_valid: return jsonify({"error": error}), 400
 
         logger.info(f"[AI] Generating hint for: {data.get('question_text')[:50]}...")
-        result = openai_ai.generate_hint(
+        result = ai_service.generate_hint(
             question_text=data.get('question_text'),
             question_type=data.get('question_type'),
             difficulty_level=data.get('difficulty_level'),
@@ -210,7 +210,7 @@ def generate_hints_batch():
     results = []
     for idx, hint in enumerate(data['hints']):
         try:
-            result = openai_ai.generate_hint(
+            result = ai_service.generate_hint(
                 question_text=hint.get('question_text'),
                 question_type=hint.get('question_type'),
                 difficulty_level=hint.get('difficulty_level'),
@@ -236,7 +236,7 @@ def generate_feedback():
         if not is_valid: return jsonify({"error": error}), 400
 
         logger.info(f"[AI] Generating feedback for attempt: {data.get('attempt_id')}")
-        result = openai_ai.generate_feedback(
+        result = ai_service.generate_feedback(
             question_text=data.get('question_text'),
             question_type=data.get('question_type'),
             student_answer=data.get('student_answer'),
@@ -260,7 +260,7 @@ def generate_ai_insight():
         if not is_valid: return jsonify({"error": error}), 400
 
         logger.info(f"[AI] Generating insight for: {data.get('question_text')[:50]}...")
-        result = openai_ai.generate_insight(
+        result = ai_service.generate_insight(
             question_text=data.get('question_text'),
             student_answer=data.get('student_answer'),
             correct_answer=data.get('correct_answer'),
@@ -281,7 +281,7 @@ def generate_feedback_batch():
     results = []
     for idx, fb in enumerate(data['feedbacks']):
         try:
-            result = openai_ai.generate_feedback(
+            result = ai_service.generate_feedback(
                 question_text=fb.get('question_text'),
                 question_type=fb.get('question_type'),
                 student_answer=fb.get('student_answer'),
@@ -310,7 +310,7 @@ def status():
     return jsonify({
         "status": "running",
         "chatbot_users": len(chatbot.users),
-        "ai_model": openai_ai.model_name
+        "ai_model": ai_service.model_name
     }), 200
 
 @app.route('/', methods=['GET'])

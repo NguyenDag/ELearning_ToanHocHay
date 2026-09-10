@@ -37,17 +37,34 @@ api_key_manager.configure()
 
 class GeminiAIService:
     """Service to interact with Google Gemini AI for educational hints and feedback"""
-    
-    def __init__(self, model_name: str = "gemini-2.5-flash"):
+
+    def __init__(self, model_name: Optional[str] = None):
         # Initialize model with JSON mode for structured responses
-        self.model_name = model_name
+        self.model_name = model_name or os.getenv("GEMINI_MODEL", "gemini-3.6-flash")
         self.model = genai.GenerativeModel(
-            model_name,
+            self.model_name,
             generation_config=genai.types.GenerationConfig(
                 response_mime_type="application/json"
             )
         )
-    
+
+    def generate_chat_response(
+        self,
+        system_prompt: str,
+        user_message: str
+    ) -> Dict[str, Any]:
+        """
+        Free-form chat turn for the marketing chatbot.
+        Returns {"text": "<json string from the model>", "status": "success"|"error"}.
+        """
+        prompt = f"{system_prompt}\n\n---\nTin nhắn của người dùng: {user_message}"
+        response = self._call_api_with_retry([prompt])
+
+        if response.get("Status") == "error":
+            return {"text": "", "status": "error", "error": response.get("Error", "Unknown error")}
+
+        return {"text": response.get("text", ""), "status": "success"}
+
     def generate_hint(
         self,
         question_text: str,

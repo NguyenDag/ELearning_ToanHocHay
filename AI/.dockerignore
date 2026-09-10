@@ -19,3 +19,8 @@ coverage.xml
 .mypy_cache
 .pytest_cache
 .hypotheses
+
+# Secrets: provided at runtime via docker-compose env_file, never baked into the image
+.env
+.env.*
+!.env.example

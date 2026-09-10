@@ -9,4 +9,5 @@ COPY . .
 
 EXPOSE 5001
 
-CMD ["gunicorn", "-w", "2", "-b", "0.0.0.0:5001", "Main_AI_Service:app"]
+# --timeout 120: a Gemini call (esp. with an image) can exceed gunicorn's 30s default.
+CMD ["gunicorn", "-w", "2", "--timeout", "120", "-b", "0.0.0.0:5001", "Main_AI_Service:app"]

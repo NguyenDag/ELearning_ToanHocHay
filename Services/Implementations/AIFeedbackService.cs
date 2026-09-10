@@ -64,16 +64,18 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 // Lấy câu trả lời của học sinh cho câu hỏi này trong lượt làm bài
                 var studentAnswer = attempt.StudentAnswers?.FirstOrDefault(a => a.QuestionId == dto.QuestionId);
                 
+                var isSkipped = string.IsNullOrWhiteSpace(dto.StudentAnswer)
+                                || dto.StudentAnswer!.Equals("Bạn chưa trả lời câu hỏi này");
+
                 var aiRequest = new AIFeedbackRequest
                 {
                     QuestionText = question.QuestionText ?? string.Empty,
                     QuestionType = question.QuestionType.ToString(),
-                    StudentAnswer = dto.StudentAnswer ?? "Không có câu trả lời",
+                    StudentAnswer = isSkipped ? "Học sinh chưa trả lời câu hỏi này" : dto.StudentAnswer!,
                     CorrectAnswer = question.CorrectAnswer ?? string.Empty,
-                    // So sánh đúng: câu trả lời của học sinh có trùng với đáp án đúng không 
-                    IsCorrect = !string.IsNullOrWhiteSpace(dto.StudentAnswer)
-                                && !dto.StudentAnswer.Equals("Bạn chưa trả lời câu hỏi này")
-                                && dto.StudentAnswer.Trim().Equals(question.CorrectAnswer?.Trim() ?? "", StringComparison.OrdinalIgnoreCase),
+                    // So sánh đúng: câu trả lời của học sinh có trùng với đáp án đúng không
+                    IsCorrect = !isSkipped
+                                && dto.StudentAnswer!.Trim().Equals(question.CorrectAnswer?.Trim() ?? "", StringComparison.OrdinalIgnoreCase),
                     Explanation = question.Explanation,
                     AttemptId = dto.AttemptId,
                     QuestionId = dto.QuestionId,
@@ -91,13 +93,25 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
                 if (aiResponse != null && aiResponse.Status == "success")
                 {
-                    fullSolution = aiResponse.FullSolution;
-                    mistakeAnalysis = aiResponse.MistakeAnalysis;
-                    improvementAdvice = aiResponse.ImprovementAdvice;
+                    fullSolution = aiResponse.FullSolution ?? string.Empty;
+                    mistakeAnalysis = aiResponse.MistakeAnalysis ?? string.Empty;
+                    improvementAdvice = aiResponse.ImprovementAdvice ?? string.Empty;
                 }
                 else
                 {
                     _logger.LogError("AI chưa tạo được nhận xét. Vui lòng thử lại sau.");
+                    return ApiResponse<AIFeedbackDto>.ErrorResponse("AI chưa tạo được nhận xét. Vui lòng thử lại sau.");
+                }
+
+                // An all-empty payload = failure. Do NOT persist it, or the result page would show a
+                // blank "AI analysis" card and its poll would never settle.
+                if (string.IsNullOrWhiteSpace(fullSolution)
+                    && string.IsNullOrWhiteSpace(mistakeAnalysis)
+                    && string.IsNullOrWhiteSpace(improvementAdvice))
+                {
+                    _logger.LogWarning(
+                        "AI feedback returned empty content for attempt {AttemptId} question {QuestionId}",
+                        dto.AttemptId, dto.QuestionId);
                     return ApiResponse<AIFeedbackDto>.ErrorResponse("AI chưa tạo được nhận xét. Vui lòng thử lại sau.");
                 }
             }

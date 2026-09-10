@@ -102,6 +102,10 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs.ExerciseAttempt
         public DateTime SubmittedAt { get; set; }
 
         public TimeSpan Duration { get; set; }
+
+        // False cho bài luyện tập (Practice) / bài không đặt thời lượng — trang kết quả ẩn ô "Thời gian".
+        public bool IsTimed { get; set; }
+
         public double TotalScore { get; set; }
         public double MaxScore { get; set; }
         public decimal CompletionPercentage { get; set; }

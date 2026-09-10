@@ -199,12 +199,14 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                // 7. Queue AI feedback for wrong (answered) questions — do NOT wait for it (A2-04).
-                var wrongAnswerDetails = answerDetails
-                    .Where(d => !d.IsCorrect && !d.NeedsManualGrading && d.StudentAnswer != null)
+                // 7. Queue AI feedback for every question the student got wrong OR skipped — do NOT
+                //    wait for it (A2-04). Skipped questions (StudentAnswer == null) also get a full
+                //    AI walkthrough so the result page can explain them.
+                var needsFeedback = answerDetails
+                    .Where(d => !d.IsCorrect && !d.NeedsManualGrading)
                     .ToList();
 
-                foreach (var w in wrongAnswerDetails)
+                foreach (var w in needsFeedback)
                     _aiFeedbackQueue.Enqueue(attempt.AttemptId, w.QuestionId, w.StudentAnswer);
 
                 // P4 (A2-06): fold this attempt into NodeProgress + the activity snapshot.
@@ -225,6 +227,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     StartTime = attempt.StartTime,
                     SubmittedAt = now,
                     Duration = now - attempt.StartTime,
+                    IsTimed = attempt.PlannedEndTime.HasValue,
                     TotalScore = attempt.TotalScore,
                     MaxScore = attempt.MaxScore,
                     CompletionPercentage = attempt.CompletionPercentage,
@@ -306,6 +309,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                         CorrectAnswer = question.CorrectAnswer ??
                                         question.QuestionOptions?.FirstOrDefault(o => o.IsCorrect)?.OptionText,
 
+                        IsAnswered = isAnswered,
                         IsCorrect = isCorrect,
                         NeedsManualGrading = isAnswered && answer!.NeedsManualGrading,
                         PointsEarned = isAnswered ? answer!.PointsEarned : 0,
@@ -317,6 +321,24 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                         MistakeAnalysis = fb?.MistakeAnalysis,
                         ImprovementAdvice = fb?.ImprovementAdvice
                     });
+                }
+
+                // 4b. Best-effort retry: re-queue AI feedback for any wrong/skipped question that
+                //     still has none (e.g. the AI service was down right after submit). CreateAsync
+                //     is idempotent — it skips questions that already have a feedback row.
+                if (attempt.Status != AttemptStatus.InProgress)
+                {
+                    var missingFeedback = answerDetails
+                        .Where(d => !d.IsCorrect
+                                    && !d.NeedsManualGrading
+                                    && !feedbackLookup.ContainsKey(d.QuestionId))
+                        .ToList();
+
+                    foreach (var m in missingFeedback)
+                        _aiFeedbackQueue.Enqueue(
+                            attemptId,
+                            m.QuestionId,
+                            m.IsAnswered ? m.StudentAnswer : null);
                 }
 
                 // 5. Map the result
@@ -336,6 +358,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     Duration = attempt.SubmittedAt.HasValue
                         ? attempt.SubmittedAt.Value - attempt.StartTime
                         : TimeSpan.Zero,
+                    IsTimed = attempt.PlannedEndTime.HasValue,
 
                     TotalScore = attempt.TotalScore,
                     MaxScore = attempt.MaxScore,
@@ -373,6 +396,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                         StartTime = a.StartTime,
                         SubmittedAt = a.SubmittedAt.Value,
                         Duration = a.SubmittedAt.Value - a.StartTime,
+                        IsTimed = a.PlannedEndTime.HasValue,
                         TotalScore = a.TotalScore,
                         MaxScore = a.MaxScore,
                         CompletionPercentage = a.CompletionPercentage,
@@ -709,18 +733,33 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         {
             try
             {
+                var attempt = await _attemptRepository.GetAttemptByIdAsync(attemptId);
+                if (attempt == null)
+                    return ApiResponse<FeedbackStatusDto>.ErrorResponse("Không tìm thấy lượt làm bài", new List<string>());
+
+                // Count against the exercise's full question list so SKIPPED questions
+                // (which have no answer row) are included — they get AI feedback too.
+                var exerciseQuestions = await _exerciseQuestionRepository.GetByExerciseIdAsync(attempt.ExerciseId);
                 var answers = await _answerRepository.GetAttemptAnswersAsync(attemptId);
-                var wrong = answers.Count(a => !a.IsCorrect && !a.NeedsManualGrading
-                                               && (a.AnswerText != null || a.SelectedOptionId != null));
+                var answerLookup = answers.ToDictionary(a => a.QuestionId);
+
+                var needsFeedback = 0;
+                foreach (var eq in exerciseQuestions)
+                {
+                    answerLookup.TryGetValue(eq.QuestionId, out var a);
+                    var correct = a != null && a.IsCorrect;
+                    var manual = a != null && a.NeedsManualGrading;
+                    if (!correct && !manual) needsFeedback++;
+                }
 
                 var feedbacks = await _feedbackRepository.GetByAttemptAsync(attemptId);
                 var ready = feedbacks.Select(f => f.QuestionId).Distinct().Count();
 
                 return ApiResponse<FeedbackStatusDto>.SuccessResponse(new FeedbackStatusDto
                 {
-                    TotalWrong = wrong,
+                    TotalWrong = needsFeedback,
                     Ready = ready,
-                    Pending = Math.Max(0, wrong - ready)
+                    Pending = Math.Max(0, needsFeedback - ready)
                 });
             }
             catch (Exception)

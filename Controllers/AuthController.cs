@@ -75,6 +75,7 @@ namespace ELearning_ToanHocHay_Control.Controllers
 
         [HttpPost("register")]
         [AllowAnonymous]
+        [EnableRateLimiting("auth")]
         public async Task<IActionResult> Register(RegisterRequestDto request)
         {
             if (!ModelState.IsValid)

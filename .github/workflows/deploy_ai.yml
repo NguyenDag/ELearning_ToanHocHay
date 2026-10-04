@@ -1,0 +1,26 @@
+# Deploy the Flask AI service (AI/) to Azure Web App ToanHocHay-AI.
+# Azure installs requirements.txt itself (SCM_DO_BUILD_DURING_DEPLOYMENT=true in App Settings).
+
+name: Deploy AI service to Azure Web App - ToanHocHay-AI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'AI/**'
+      - '.github/workflows/deploy_ai.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'ToanHocHay-AI'
+          publish-profile: ${{ secrets.AZURE_AI_PUBLISH_PROFILE }}
+          package: AI

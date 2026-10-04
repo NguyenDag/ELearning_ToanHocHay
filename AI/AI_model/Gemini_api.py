@@ -40,7 +40,7 @@ class GeminiAIService:
 
     def __init__(self, model_name: Optional[str] = None):
         # Initialize model with JSON mode for structured responses
-        self.model_name = model_name or os.getenv("GEMINI_MODEL", "gemini-3.6-flash")
+        self.model_name = model_name or os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
         self.model = genai.GenerativeModel(
             self.model_name,
             generation_config=genai.types.GenerationConfig(

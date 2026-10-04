@@ -46,7 +46,8 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     {
                         AttemptId = job.AttemptId,
                         QuestionId = job.QuestionId,
-                        StudentAnswer = job.StudentAnswer
+                        StudentAnswer = job.StudentAnswer,
+                        BypassQuota = true   // auto-generated; quota gate is for explicit user requests only
                     });
 
                     if (!result.Success)

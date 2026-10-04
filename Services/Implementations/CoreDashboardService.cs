@@ -6,6 +6,7 @@ using ELearning_ToanHocHay_Control.Data.Entities;
 using ELearning_ToanHocHay_Control.Repositories.Interfaces;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using SendGrid.Helpers.Errors.Model;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace ELearning_ToanHocHay_Control.Services.Implementations
 {
@@ -21,6 +22,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         private readonly IMapper _mapper;
         private readonly SubscriptionInfoHelper _subscriptionInfoHelper;
         private readonly ILogger<CoreDashboardService> _logger;
+        private readonly IMemoryCache _cache;
 
         public CoreDashboardService(
     IDashboardRepository dashboardRepo,
@@ -31,7 +33,8 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
     IParentLinkRepository parentLinkRepo,
     IParentRepository parentRepo,
     IMapper mapper,
-    SubscriptionInfoHelper subscriptionInfoHelper, // ← THÊM
+    SubscriptionInfoHelper subscriptionInfoHelper,
+    IMemoryCache cache,
     ILogger<CoreDashboardService> logger)
         {
             _dashboardRepo = dashboardRepo;
@@ -42,12 +45,19 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             _parentLinkRepo = parentLinkRepo;
             _parentRepo = parentRepo;
             _mapper = mapper;
-            _subscriptionInfoHelper = subscriptionInfoHelper; // ← THÊM
+            _subscriptionInfoHelper = subscriptionInfoHelper;
+            _cache = cache;
             _logger = logger;
         }
 
         public async Task<CoreDashboardDto> GetCoreDashboardAsync(int studentId)
         {
+            var cacheKey = $"CoreDashboard_{studentId}";
+            if (_cache.TryGetValue(cacheKey, out CoreDashboardDto? cachedDashboard))
+            {
+                return cachedDashboard!;
+            }
+
             var studentInfoTask = await GetStudentInfoAsync(studentId);
             var statsTask = await GetOverviewStatsAsync(studentId);
             var recentLessonsTask = await GetRecentLessonsAsync(studentId, 5);
@@ -68,6 +78,8 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 SubscriptionInfo = await _subscriptionInfoHelper.BuildSubscriptionInfo(subscription),
                 Links = GenerateDashboardLinks(studentId, packageTier)
             };
+
+            _cache.Set(cacheKey, dashboard, TimeSpan.FromMinutes(5));
 
             return dashboard;
         }
@@ -158,8 +170,17 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
         public async Task<PackageTier> GetPackageTierAsync(int studentId)
         {
+            var cacheKey = $"PackageTier_{studentId}";
+            if (_cache.TryGetValue(cacheKey, out PackageTier cachedTier))
+            {
+                return cachedTier;
+            }
+
             var subscription = await _packageRepo.GetActivePackageAsync(studentId);
-            return subscription?.Package?.Tier ?? PackageTier.Free; // A2-05 — tier from Package.Tier only
+            var tier = subscription?.Package?.Tier ?? PackageTier.Free; // A2-05 — tier from Package.Tier only
+
+            _cache.Set(cacheKey, tier, TimeSpan.FromMinutes(15));
+            return tier;
         }
 
         private DashboardLinksDto GenerateDashboardLinks(int studentId, PackageTier tier)
@@ -199,17 +220,23 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
         public async Task<AIInsightResponse?> GetAIInsightAsync(int studentId)
         {
+            var cacheKey = $"AIInsight_{studentId}";
+            if (_cache.TryGetValue(cacheKey, out AIInsightResponse? cachedInsight))
+            {
+                return cachedInsight;
+            }
+
             _logger.LogInformation("Generating detailed strengths/weaknesses AI analysis for student {StudentId}", studentId);
-            
+
             // 1. Lấy dữ liệu hiệu suất toàn diện
             var performance = await _dashboardRepo.GetFullPerformanceAsync(studentId);
-            
+
             if (performance == null || !performance.Any())
             {
-                return new AIInsightResponse { 
+                return new AIInsightResponse {
                     Summary = "Chào em! Hệ thống đang chờ em hoàn thành bài kiểm tra đầu tiên để bắt đầu phân tích năng lực. Cố lên nhé!",
                     ConceptsToReview = new List<string> { "Làm bài kiểm tra đầu tiên" },
-                    Status = "success" 
+                    Status = "success"
                 };
             }
 
@@ -218,7 +245,9 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             var weaknesses = performance.Where(p => p.IsWeakness).OrderBy(p => p.AverageScore).Take(3).ToList();
 
             // 2. Lấy ví dụ câu sai gần nhất
-            var attempts = await _attemptRepo.GetStudentAttemptsAsync(studentId);
+            // Giới hạn 50 attempt gần nhất — chỉ để tìm 1 ví dụ câu sai minh hoạ,
+            // không dùng để tính điểm mạnh/yếu (xem GetFullPerformanceAsync ở trên).
+            var attempts = await _attemptRepo.GetStudentAttemptsAsync(studentId, take: 50);
             var lastMistake = attempts.FirstOrDefault(a => a.WrongAnswers > 0);
             string specificMistakeInfo = "";
             if (lastMistake != null)
@@ -232,8 +261,16 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             }
 
             // 3. Xây dựng prompt
-            var strengthsText = strengths.Any() ? string.Join("\n", strengths.Select(s => $"- {s.TopicName} ({s.AverageScore}/10)")) : "Chưa xác định";
-            var weaknessesText = weaknesses.Any() ? string.Join("\n", weaknesses.Select(w => $"- {w.TopicName} ({w.AverageScore}/10)")) : "Chưa xác định";
+            var strengthsText = strengths.Any() ? string.Join("\n", strengths.Select(s =>
+            {
+                var trend = s.TrendDirection != null ? $" [{s.TrendDirection}, Δ{s.ScoreDelta:+0.0;-0.0}]" : "";
+                return $"- {s.TopicName} ({s.AverageScore}/10){trend}";
+            })) : "Chưa xác định";
+            var weaknessesText = weaknesses.Any() ? string.Join("\n", weaknesses.Select(w =>
+            {
+                var trend = w.TrendDirection != null ? $" [{w.TrendDirection}, Δ{w.ScoreDelta:+0.0;-0.0}]" : "";
+                return $"- {w.TopicName} ({w.AverageScore}/10){trend}";
+            })) : "Chưa xác định";
 
             var aiRequest = new AIInsightRequest
             {
@@ -243,25 +280,38 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 Type = "assessment"
             };
 
-            return await _aiService.GenerateInsightStructuredAsync(aiRequest);
+            var insight = await _aiService.GenerateInsightStructuredAsync(aiRequest);
+
+            if (insight != null && insight.Status == "success")
+            {
+                _cache.Set(cacheKey, insight, TimeSpan.FromHours(24));
+            }
+
+            return insight;
         }
 
         public async Task<AIInsightResponse?> GetAIRoadmapAsync(int studentId)
         {
+            var cacheKey = $"AIRoadmap_{studentId}";
+            if (_cache.TryGetValue(cacheKey, out AIInsightResponse? cachedRoadmap))
+            {
+                return cachedRoadmap;
+            }
+
             _logger.LogInformation("Generating personalized roadmap AI analysis for student {StudentId}", studentId);
-            
+
             var weakTopics = await _dashboardRepo.GetWeakTopicsAsync(studentId, 5);
-            
+
             if (weakTopics == null || !weakTopics.Any())
             {
-                return new AIInsightResponse { 
+                return new AIInsightResponse {
                     Summary = "Lộ trình hoàn hảo! Em đang đi đúng hướng, AI khuyên em nên bắt đầu các bài thi thử nâng cao.",
                     ConceptsToReview = new List<string> { "Luyện đề nâng cao" },
-                    Status = "success" 
+                    Status = "success"
                 };
             }
 
-            var weakTopicsSummary = string.Join("\n", weakTopics.Select(t => 
+            var weakTopicsSummary = string.Join("\n", weakTopics.Select(t =>
                 $"- {t.TopicName} ({t.ChapterName}). Bài học: {string.Join(", ", t.LessonNames)}"));
 
             var aiRequest = new AIInsightRequest
@@ -277,6 +327,12 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             {
                 result.LessonId = weakTopics.First().FirstLessonId;
             }
+
+            if (result != null && result.Status == "success")
+            {
+                _cache.Set(cacheKey, result, TimeSpan.FromHours(24));
+            }
+
             return result;
         }
 

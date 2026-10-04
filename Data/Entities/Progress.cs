@@ -127,6 +127,9 @@ namespace ELearning_ToanHocHay_Control.Data.Entities
         public int LessonsDone { get; set; }
         public int QuestionsAnswered { get; set; }
 
+        [Column(TypeName = "decimal(5,4)")]
+        public decimal? AverageRatio { get; set; } // Thêm ở Phase 3: Điểm trung bình của ngày (từ 0-1)
+
         // Navigation
         public Student? Student { get; set; }
     }

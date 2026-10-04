@@ -58,6 +58,18 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 });
             }
 
+            // Check chat quota for Free-tier students before hitting Flask.
+            if (studentId is int sidCheck)
+            {
+                var q = await _quota.TryConsumeChatAsync(sidCheck);
+                if (!q.Allowed)
+                {
+                    _logger.LogWarning("Student {StudentId} exceeded daily chat quota ({Used}/{Limit}).", sidCheck, q.Used, q.Limit);
+                    return ApiResponse<ChatTurnResultDto>.ErrorResponse(
+                        $"Đã hết lượt chat AI hôm nay ({q.Used}/{q.Limit}). Vui lòng nâng cấp gói để không giới hạn.");
+                }
+            }
+
             // Call Flask. On any failure we still persist a System message and return 200.
             ChatbotResponse? ai = null;
             try
@@ -87,11 +99,6 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             };
             _context.ChatMessages.Add(reply);
             await _context.SaveChangesAsync();
-
-            if (aiOk && studentId is int sid)
-            {
-                try { await _quota.RecordChatAsync(sid); } catch { /* best effort */ }
-            }
 
             // Suggest a human once the bot has had enough turns (or if it just failed).
             var handoffAfter = await _config.GetIntAsync("support.chat.aiHandoffAfterTurns", 3);

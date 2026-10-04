@@ -316,19 +316,38 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
             return result;
         }
 
-        public async Task<List<TopicPerformanceDto>> GetFullPerformanceAsync(int studentId)
+        public async Task<List<TopicPerformanceDto>> GetFullPerformanceAsync(int studentId, int windowDays = 30)
         {
             // P4 — average score per node, from real submitted attempts.
-            var rows = await _context.ExerciseAttempts
-                .AsNoTracking()
-                .Where(a => a.StudentId == studentId
-                            && a.Status != AttemptStatus.InProgress
-                            && a.MaxScore > 0
-                            && a.Exercise!.NodeId != null)
-                .Select(a => new { NodeId = a.Exercise!.NodeId!.Value, Ratio = a.TotalScore / a.MaxScore })
-                .ToListAsync();
+            // Windowed + per-day rollup: a 25-exercise day counts as ONE data point (that day's
+            // average), so it can't outweigh quieter days just because the student grinded that day.
+            var now = DateTime.UtcNow;
+            var cutoff = now.AddDays(-windowDays);
+            var rows = await GetPerformanceRowsAsync(studentId, from: cutoff, until: null);
+
+            // Not enough recent activity in the window to judge fairly (e.g. student paused
+            // for a while) — fall back to full history instead of reporting "no data".
+            bool usedFallback = rows.Select(r => r.Day).Distinct().Count() < 3;
+            if (usedFallback)
+                rows = await GetPerformanceRowsAsync(studentId, from: null, until: null);
 
             if (rows.Count == 0) return new List<TopicPerformanceDto>();
+
+            // Prior-window rows for delta (only if we are using the normal window, not fallback).
+            Dictionary<int, double> priorAvgByNode = new();
+            if (!usedFallback)
+            {
+                var priorRows = await GetPerformanceRowsAsync(
+                    studentId,
+                    from: now.AddDays(-2 * windowDays),
+                    until: cutoff);
+
+                priorAvgByNode = priorRows
+                    .GroupBy(r => r.NodeId)
+                    .ToDictionary(
+                        g => g.Key,
+                        g => g.GroupBy(r => r.Day).Select(d => d.Average(x => x.Ratio)).Average());
+            }
 
             var nodeIds = rows.Select(r => r.NodeId).Distinct().ToList();
             var nodes = await _context.ContentNodes
@@ -351,15 +370,52 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
                     chapterNameCache[node.MaterializedPath] = chapterName;
                 }
 
+                // Trung-bình-của-trung-bình-ngày: mỗi ngày chỉ đóng góp 1 điểm dữ liệu
+                // (dù ngày đó làm 1 đề hay 25 đề), rồi mới lấy trung bình các ngày đó.
+                var avgOfDailyAvg = g.GroupBy(r => r.Day).Select(d => d.Average(x => x.Ratio)).Average();
+                var currentScore = Math.Round((decimal)avgOfDailyAvg * 10m, 1);
+
+                decimal? scoreDelta = null;
+                string? trendDirection = null;
+                if (priorAvgByNode.TryGetValue(g.Key, out var priorRatio))
+                {
+                    var priorScore = Math.Round((decimal)priorRatio * 10m, 1);
+                    scoreDelta = currentScore - priorScore;
+                    trendDirection = scoreDelta > 0.5m ? "up" : scoreDelta < -0.5m ? "down" : "stable";
+                }
+
                 result.Add(new TopicPerformanceDto
                 {
                     TopicName = node.Title,
                     ChapterName = chapterName,
-                    AverageScore = Math.Round((decimal)g.Average(x => x.Ratio) * 10m, 1),
-                    TotalAttempts = g.Count()
+                    AverageScore = currentScore,
+                    TotalAttempts = g.Count(),
+                    ScoreDelta = scoreDelta,
+                    TrendDirection = trendDirection
                 });
             }
             return result.OrderBy(r => r.AverageScore).ToList();
+        }
+
+        private record PerformanceRow(int NodeId, DateTime Day, double Ratio);
+
+        private async Task<List<PerformanceRow>> GetPerformanceRowsAsync(int studentId, DateTime? from, DateTime? until)
+        {
+            var query = _context.ExerciseAttempts
+                .AsNoTracking()
+                .Where(a => a.StudentId == studentId
+                            && a.Status != AttemptStatus.InProgress
+                            && a.MaxScore > 0
+                            && a.Exercise!.NodeId != null);
+
+            if (from.HasValue)
+                query = query.Where(a => a.StartTime >= from.Value);
+            if (until.HasValue)
+                query = query.Where(a => a.StartTime < until.Value);
+
+            return await query
+                .Select(a => new PerformanceRow(a.Exercise!.NodeId!.Value, a.StartTime.Date, a.TotalScore / a.MaxScore))
+                .ToListAsync();
         }
 
         /// <summary>Title of the Chapter-type ancestor named in a MaterializedPath ("" if none).</summary>

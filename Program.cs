@@ -464,6 +464,9 @@ namespace ELearning_ToanHocHay_Control
             services.AddSingleton<IAiFeedbackQueue, AiFeedbackBackgroundService>();
             services.AddHostedService<AiFeedbackBackgroundService>(provider =>
                 (AiFeedbackBackgroundService)provider.GetRequiredService<IAiFeedbackQueue>());
+
+            services.AddHostedService<DataCleanupHostedService>();
+            services.AddHostedService<DailyProgressJob>();
         }
 
         private static void ConfigureSwagger(IServiceCollection services)

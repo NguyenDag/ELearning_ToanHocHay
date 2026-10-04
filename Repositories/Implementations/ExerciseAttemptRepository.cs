@@ -47,13 +47,18 @@ namespace ELearning_ToanHocHay_Control.Repositories.Implementations
                 .FirstOrDefaultAsync(a => a.AttemptId == attemptId);
         }
 
-        public async Task<List<ExerciseAttempt>> GetStudentAttemptsAsync(int studentId)
+        public async Task<List<ExerciseAttempt>> GetStudentAttemptsAsync(int studentId, int? take = null)
         {
-            return await _context.ExerciseAttempts
+            var query = _context.ExerciseAttempts
                 .Include(a => a.Exercise)
                 .Where(a => a.StudentId == studentId)
                 .OrderByDescending(a => a.StartTime)
-                .ToListAsync();
+                .AsQueryable();
+
+            if (take.HasValue)
+                query = query.Take(take.Value);
+
+            return await query.ToListAsync();
         }
 
         public async Task<bool> HasActiveAttemptAsync(int studentId, int exerciseId)

@@ -56,6 +56,20 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 return ApiResponse<AIFeedbackDto>.SuccessResponse(MapToDto(existing), "Feedback already exists");
             }
 
+            // Check AI quota before generating
+            var studentId = attempt.StudentId;
+            var isGenerating = string.IsNullOrWhiteSpace(string.Join("", dto.FullSolution, dto.MistakeAnalysis, dto.ImprovementAdvice));
+
+            if (isGenerating && studentId != null && !dto.BypassQuota)
+            {
+                var q = await _quota.TryConsumeFeedbackAsync(studentId.Value);
+                if (!q.Allowed)
+                {
+                    _logger.LogWarning("Tài khoản {StudentId} đã hết lượt AI Feedback hôm nay ({Used}/{Limit}).", studentId, q.Used, q.Limit);
+                    return ApiResponse<AIFeedbackDto>.ErrorResponse($"Đã hết lượt nhận xét AI hôm nay ({q.Used}/{q.Limit}). Vui lòng nâng cấp gói để không giới hạn.");
+                }
+            }
+
             // Nếu dữ liệu trống, gọi AI sinh mới
             if (string.IsNullOrWhiteSpace(fullSolution))
             {
@@ -126,10 +140,6 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             };
 
             var created = await _feedbackRepository.CreateAsync(feedback);
-
-            // P6 — cost visibility (not gated: auto feedback is part of the result flow).
-            if (attempt.StudentId is int sid)
-                await _quota.RecordFeedbackAsync(sid);
 
             return ApiResponse<AIFeedbackDto>.SuccessResponse(
                 MapToDto(created),

@@ -8,5 +8,14 @@ namespace ELearning_ToanHocHay_Control.Models.DTOs.Student.Dashboard
         public int TotalAttempts { get; set; }
         public bool IsStrength => AverageScore >= 8.0m;
         public bool IsWeakness => AverageScore < 5.0m;
+
+        /// <summary>
+        /// Chênh lệch điểm so với cùng window kỳ trước (null = chưa đủ dữ liệu kỳ trước).
+        /// Dương = tiến bộ, âm = giảm sút.
+        /// </summary>
+        public decimal? ScoreDelta { get; set; }
+
+        /// <summary>"up" | "down" | "stable" | null</summary>
+        public string? TrendDirection { get; set; }
     }
 }

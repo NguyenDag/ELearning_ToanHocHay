@@ -6,6 +6,7 @@ using ELearning_ToanHocHay_Control.Services.Helpers;
 using ELearning_ToanHocHay_Control.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 
 namespace ELearning_ToanHocHay_Control.Services.Implementations
@@ -26,6 +27,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
         private readonly IPackageTierResolver _packageTierResolver;
         private readonly IRefreshTokenIssuer _refreshTokenIssuer;
         private readonly TimeProvider _clock;
+        private readonly IConfiguration _configuration;
 
         public AuthService(
             AppDbContext context,
@@ -41,7 +43,8 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             IMemoryCache cache,
             IPackageTierResolver packageTierResolver,
             IRefreshTokenIssuer refreshTokenIssuer,
-            TimeProvider clock)
+            TimeProvider clock,
+            IConfiguration configuration)
         {
             _cache = cache;
             _context = context;
@@ -57,9 +60,14 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             _packageTierResolver = packageTierResolver;
             _refreshTokenIssuer = refreshTokenIssuer;
             _clock = clock;
+            _configuration = configuration;
         }
 
         private DateTime Now => _clock.GetUtcNow().UtcDateTime;
+
+        // Temporary SendGrid-outage bypass — flip Auth:RequireEmailConfirmation (or env var
+        // Auth__RequireEmailConfirmation) back to true to restore verification, no code change needed.
+        private bool RequireEmailConfirmation => _configuration.GetValue("Auth:RequireEmailConfirmation", true);
 
         // ==================================================================
         // Login
@@ -79,7 +87,7 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                         $"Tài khoản tạm khoá do đăng nhập sai nhiều lần. Thử lại sau {mins} phút.");
                 }
 
-                if (!user.IsEmailConfirmed)
+                if (RequireEmailConfirmation && !user.IsEmailConfirmed)
                     // A1 — mã máy đọc được để WebApp hiện nút "Gửi lại email xác nhận" ngay tại form login.
                     return ApiResponse<LoginResponseDto>.ErrorResponse(
                         "Vui lòng xác nhận email trước khi đăng nhập",
@@ -379,6 +387,8 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 if (existingUser != null && existingUser.IsEmailConfirmed)
                     return ApiResponse<bool>.ErrorResponse("Email đã được đăng ký");
 
+                var skipEmailConfirmation = !RequireEmailConfirmation;
+
                 var user = new User
                 {
                     Email = request.Email,
@@ -388,7 +398,9 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                     Dob = request.Dob,
                     UserType = request.UserType,
                     CreatedAt = Now,
-                    IsActive = true
+                    IsActive = true,
+                    IsEmailConfirmed = skipEmailConfirmation,
+                    EmailConfirmedAt = skipEmailConfirmation ? Now : null
                 };
 
                 await _userRepository.CreateUserAsync(user);
@@ -416,6 +428,12 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
                     default:
                         return ApiResponse<bool>.ErrorResponse("Không cho phép đăng ký role này");
+                }
+
+                if (skipEmailConfirmation)
+                {
+                    await transaction.CommitAsync();
+                    return ApiResponse<bool>.SuccessResponse(true, "Đăng ký thành công");
                 }
 
                 var tokenValue = Guid.NewGuid().ToString("N");

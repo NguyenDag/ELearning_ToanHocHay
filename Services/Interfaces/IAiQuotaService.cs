@@ -13,6 +13,10 @@ namespace ELearning_ToanHocHay_Control.Services.Interfaces
         /// <summary>Consumes one hint if the student is under their daily limit.</summary>
         Task<QuotaCheck> TryConsumeHintAsync(int studentId);
 
+        Task<QuotaCheck> TryConsumeFeedbackAsync(int studentId);
+
+        Task<QuotaCheck> TryConsumeChatAsync(int studentId);
+
         /// <summary>Records an auto-generated feedback (not gated — for cost visibility).</summary>
         Task RecordFeedbackAsync(int studentId);
 

@@ -42,6 +42,32 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
             return new QuotaCheck(true, row.HintCount, limit, unlimited);
         }
 
+        public async Task<QuotaCheck> TryConsumeFeedbackAsync(int studentId)
+        {
+            var (limit, unlimited) = await ResolveFeedbackLimitAsync(studentId);
+            var row = await GetOrCreateTodayAsync(studentId);
+
+            if (!unlimited && row.FeedbackCount >= limit)
+                return new QuotaCheck(false, row.FeedbackCount, limit, false);
+
+            row.FeedbackCount += 1;
+            await _context.SaveChangesAsync();
+            return new QuotaCheck(true, row.FeedbackCount, limit, unlimited);
+        }
+
+        public async Task<QuotaCheck> TryConsumeChatAsync(int studentId)
+        {
+            var (limit, unlimited) = await ResolveChatLimitAsync(studentId);
+            var row = await GetOrCreateTodayAsync(studentId);
+
+            if (!unlimited && row.ChatCount >= limit)
+                return new QuotaCheck(false, row.ChatCount, limit, false);
+
+            row.ChatCount += 1;
+            await _context.SaveChangesAsync();
+            return new QuotaCheck(true, row.ChatCount, limit, unlimited);
+        }
+
         public async Task RecordFeedbackAsync(int studentId)
         {
             var row = await GetOrCreateTodayAsync(studentId);
@@ -72,6 +98,34 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
                 return (int.MaxValue, true);
 
             return (package.AiHintLimitDaily ?? 0, false);
+        }
+
+        private async Task<(int Limit, bool Unlimited)> ResolveFeedbackLimitAsync(int studentId)
+        {
+            var sub = await _packageRepo.GetActivePackageAsync(studentId);
+            var package = sub?.Package;
+
+            if (package == null || package.Tier == PackageTier.Free)
+            {
+                var freeLimit = await _config.GetIntAsync("ai.feedback.dailyLimitFreeTier", 5);
+                return (freeLimit, false);
+            }
+
+            return (int.MaxValue, true);
+        }
+
+        private async Task<(int Limit, bool Unlimited)> ResolveChatLimitAsync(int studentId)
+        {
+            var sub = await _packageRepo.GetActivePackageAsync(studentId);
+            var package = sub?.Package;
+
+            if (package == null || package.Tier == PackageTier.Free)
+            {
+                var freeLimit = await _config.GetIntAsync("ai.chat.dailyLimitFreeTier", 10);
+                return (freeLimit, false);
+            }
+
+            return (int.MaxValue, true);
         }
 
         private Task<int> TodayHintCountAsync(int studentId)

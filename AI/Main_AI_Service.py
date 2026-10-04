@@ -200,33 +200,6 @@ def generate_hint():
         logger.exception("Error in generating hint")
         return jsonify({"error": str(e)}), 500
 
-@app.route('/api/hint/batch', methods=['POST'])
-def generate_hints_batch():
-    print(">>> [AI] BATCH HINT REQUEST RECEIVED!")
-    data = request.get_json(force=True)
-    if not data or 'hints' not in data:
-        return jsonify({"error": "Missing hints array"}), 400
-
-    results = []
-    for idx, hint in enumerate(data['hints']):
-        try:
-            result = ai_service.generate_hint(
-                question_text=hint.get('question_text'),
-                question_type=hint.get('question_type'),
-                difficulty_level=hint.get('difficulty_level'),
-                student_answer=hint.get('student_answer'),
-                hint_level=hint.get('hint_level', 1),
-                options=hint.get('options'),
-                question_id=hint.get('question_id'),
-                question_image_url=hint.get('question_image_url')
-            )
-            result['index'] = idx
-            results.append(result)
-        except Exception as e:
-            results.append({"index": idx, "error": str(e)})
-
-    return jsonify({"results": results}), 200
-
 @app.route('/api/feedback', methods=['POST'])
 def generate_feedback():
     try:
@@ -270,33 +243,6 @@ def generate_ai_insight():
     except Exception as e:
         logger.exception("Error in generating AI insight")
         return jsonify({"error": str(e)}), 500
-
-@app.route('/api/feedback/batch', methods=['POST'])
-def generate_feedback_batch():
-    print(">>> [AI] BATCH FEEDBACK REQUEST RECEIVED!")
-    data = request.get_json(force=True)
-    if not data or 'feedbacks' not in data:
-        return jsonify({"error": "Missing feedbacks array"}), 400
-
-    results = []
-    for idx, fb in enumerate(data['feedbacks']):
-        try:
-            result = ai_service.generate_feedback(
-                question_text=fb.get('question_text'),
-                question_type=fb.get('question_type'),
-                student_answer=fb.get('student_answer'),
-                correct_answer=fb.get('correct_answer'),
-                is_correct=fb.get('is_correct'),
-                explanation=fb.get('explanation'),
-                options=fb.get('options'),
-                attempt_id=fb.get('attempt_id')
-            )
-            result['index'] = idx
-            results.append(result)
-        except Exception as e:
-            results.append({"index": idx, "error": str(e)})
-
-    return jsonify({"results": results}), 200
 
 # ==================== SYSTEM ROUTES ====================
 @app.route('/api/health', methods=['GET'])
@@ -355,16 +301,8 @@ def documentation():
             <pre>{"question_text": "2+2=?", "question_type": "MultipleChoice", "difficulty_level": "Easy", "student_answer": "5"}</pre>
         </div>
         <div class="card">
-            <p><span class="method">POST</span> /api/hint/batch</p>
-            <pre>{"hints": [{"question_text": "2+2=?", ...}]}</pre>
-        </div>
-        <div class="card">
             <p><span class="method">POST</span> /api/feedback</p>
             <pre>{"question_text": "2+2=?", "question_type": "MultipleChoice", "student_answer": "5", "correct_answer": "4", "is_correct": false}</pre>
-        </div>
-        <div class="card">
-            <p><span class="method">POST</span> /api/feedback/batch</p>
-            <pre>{"feedbacks": [{"question_text": "2+2=?", ...}]}</pre>
         </div>
         <div class="card">
             <p><span class="method">POST</span> /api/ai-insights</p>

@@ -7,7 +7,7 @@ namespace ELearning_ToanHocHay_Control.Repositories.Interfaces
         Task<ExerciseAttempt> CreateAttemptAsync(ExerciseAttempt attempt);
         Task<ExerciseAttempt> GetAttemptByIdAsync(int attemptId);
         Task<ExerciseAttempt> GetAttemptWithDetailsAsync(int attemptId);
-        Task<List<ExerciseAttempt>> GetStudentAttemptsAsync(int studentId);
+        Task<List<ExerciseAttempt>> GetStudentAttemptsAsync(int studentId, int? take = null);
         Task<ExerciseAttempt> UpdateAttemptAsync(ExerciseAttempt attempt);
         void Update(ExerciseAttempt attempt);
         Task<bool> HasActiveAttemptAsync(int studentId, int exerciseId);

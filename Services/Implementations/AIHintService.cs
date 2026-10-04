@@ -69,10 +69,11 @@ namespace ELearning_ToanHocHay_Control.Services.Implementations
 
                 var aiResponse = await _aiService.GenerateHintStructuredAsync(aiRequest);
                 
-                if (aiResponse == null || string.IsNullOrWhiteSpace(aiResponse.HintText))
+                // Flask returns 200 with status "error" when Gemini fails — never persist/show that as a hint.
+                if (aiResponse == null || aiResponse.Status == "error" || string.IsNullOrWhiteSpace(aiResponse.HintText))
                 {
-                    _logger.LogError("AI Service failed to generate hint");
-                    return ApiResponse<AIHintDto>.ErrorResponse("Không tạo được gợi ý từ AI. Vui lòng thử lại.");
+                    _logger.LogError("AI Service failed to generate hint: {Hint}", aiResponse?.HintText);
+                    return ApiResponse<AIHintDto>.ErrorResponse("AI hiện đang không hoạt động. Vui lòng thử lại sau.");
                 }
 
                 hintText = aiResponse.HintText;

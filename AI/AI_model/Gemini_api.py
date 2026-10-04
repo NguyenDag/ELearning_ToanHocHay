@@ -40,7 +40,7 @@ class GeminiAIService:
 
     def __init__(self, model_name: Optional[str] = None):
         # Initialize model with JSON mode for structured responses
-        self.model_name = model_name or os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+        self.model_name = model_name or os.getenv("GEMINI_MODEL", "gemini-3.6-flash")
         self.model = genai.GenerativeModel(
             self.model_name,
             generation_config=genai.types.GenerationConfig(
@@ -103,8 +103,9 @@ class GeminiAIService:
             response = self._call_api_with_retry(content)
             
             if response.get("Status") == "error":
+                logger.error(f"Gemini hint call failed: {response.get('Error', 'Unknown error')}")
                 return {
-                    "hint_text": "AI đang gặp sự cố khi tạo gợi ý: " + response.get("Error", "Unknown error"),
+                    "hint_text": "AI hiện đang không hoạt động. Vui lòng thử lại sau.",
                     "hint_level": hint_level,
                     "question_id": question_id,
                     "status": "error"
@@ -127,7 +128,7 @@ class GeminiAIService:
         except Exception as e:
             logger.error(f"Error generating hint: {str(e)}")
             return {
-                "hint_text": "Lỗi hệ thống khi tạo gợi ý.",
+                "hint_text": "AI hiện đang không hoạt động. Vui lòng thử lại sau.",
                 "hint_level": hint_level,
                 "question_id": question_id,
                 "status": "error",
